@@ -274,8 +274,8 @@ const OrdersSection = () => {
             const itemGst = Number(item?.gstAmount || 0) * itemQty;
             const effStatus = (item.status || order.status || 'pending').toLowerCase();
             const prodId = String(item.product?._id || item.product || "");
-            const varId = typeof item.variant === 'object' ? (item.variant?._id || '') : (item.variant || '');
-            const existingRev = (varId ? myReviews[`${prodId}_${varId}`] : null) || myReviews[prodId] || null;
+            const varId = String(typeof item.variant === 'object' ? (item.variant?._id || '') : (item.variant || ''));
+            const existingRev = varId ? (myReviews[`${prodId}_${varId}`] || null) : (myReviews[prodId] || null);
 
             return (
               <div
@@ -589,7 +589,7 @@ const OrdersSection = () => {
         existingReview={reviewModalState.existingReview}
         onSuccess={(updatedRev) => {
           const prodId = String(reviewModalState.product?._id || reviewModalState.product || "");
-          const varId = typeof reviewModalState.variant === 'object' ? (reviewModalState.variant?._id || '') : (reviewModalState.variant || '');
+          const varId = String(typeof reviewModalState.variant === 'object' ? (reviewModalState.variant?._id || '') : (reviewModalState.variant || ''));
           const key = varId ? `${prodId}_${varId}` : prodId;
           if (key) {
             setMyReviews(prev => ({ ...prev, [key]: updatedRev }));

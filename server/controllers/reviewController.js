@@ -153,12 +153,19 @@ export const createReview = async (req, res) => {
 
     // Recalculate product ratings
     const allReviews = await ProductReview.find({ product: productId });
-    const totalRating = allReviews.reduce((sum, r) => sum + r.rating, 0);
-    const ratingAverage = totalRating / allReviews.length;
+    let ratingAverage = 0;
+    let ratingCount = 0;
 
-    product.ratingAverage = Math.round(ratingAverage * 10) / 10;
-    product.ratingCount = allReviews.length;
-    await product.save();
+    if (allReviews.length > 0) {
+      const totalRating = allReviews.reduce((sum, r) => sum + r.rating, 0);
+      ratingAverage = Math.round((totalRating / allReviews.length) * 10) / 10;
+      ratingCount = allReviews.length;
+    }
+
+    await Product.findByIdAndUpdate(productId, {
+      ratingAverage,
+      ratingCount,
+    });
 
     const populatedReview = await ProductReview.findById(review._id)
       .populate("user", "username email")
@@ -172,9 +179,16 @@ export const createReview = async (req, res) => {
     });
   } catch (error) {
     console.error("Error in createReview:", error);
+    if (error.code === 11000) {
+      return res.status(409).json({
+        success: false,
+        message: "You have already reviewed this product/variant. Please update your existing review.",
+        data: null,
+      });
+    }
     return res.status(500).json({
       success: false,
-      message: "Failed to create review",
+      message: error.message || "Failed to create review",
       data: null,
     });
   }
@@ -230,12 +244,18 @@ export const updateReview = async (req, res) => {
     // Recalculate product ratings
     const productId = review.product;
     const allReviews = await ProductReview.find({ product: productId });
-    const totalRating = allReviews.reduce((sum, r) => sum + r.rating, 0);
-    const ratingAverage = totalRating / allReviews.length;
+    let ratingAverage = 0;
+    let ratingCount = 0;
+
+    if (allReviews.length > 0) {
+      const totalRating = allReviews.reduce((sum, r) => sum + r.rating, 0);
+      ratingAverage = Math.round((totalRating / allReviews.length) * 10) / 10;
+      ratingCount = allReviews.length;
+    }
 
     await Product.findByIdAndUpdate(productId, {
-      ratingAverage: Math.round(ratingAverage * 10) / 10,
-      ratingCount: allReviews.length,
+      ratingAverage,
+      ratingCount,
     });
 
     const populatedReview = await ProductReview.findById(reviewId)
