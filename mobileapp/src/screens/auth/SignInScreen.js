@@ -32,7 +32,7 @@ export default function SignInScreen({ navigation }) {
         className="flex-1 px-6 justify-center"
       >
         <View className="mb-8 items-center">
-          <Text className="text-4xl font-bold text-primary mb-2">Vyntra</Text>
+          <Text className="text-4xl font-bold text-primary mb-2">SwagSync</Text>
           <Text className="text-gray-500 text-lg">Sign in to your account</Text>
         </View>
 

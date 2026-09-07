@@ -605,7 +605,7 @@ export const createOrder = async (req, res) => {
     try {
       if (populatedOrder.user && populatedOrder.user.email) {
         transport.sendMail({
-          from: `"Vyntra Orders" <${process.env.NODE_CODE_SENDING_EMAIL_ADDRESS}>`,
+          from: `"SwagSync Orders" <${process.env.NODE_CODE_SENDING_EMAIL_ADDRESS}>`,
           to: populatedOrder.user.email,
           subject: `Order Confirmation - ${orderId}`,
           html: orderEmailTemplate(populatedOrder, populatedOrder.user),
@@ -929,7 +929,7 @@ export const cancelOrder = async (req, res) => {
     try {
       if (populatedOrder.user && populatedOrder.user.email) {
         transport.sendMail({
-          from: `"Vyntra Orders" <${process.env.NODE_CODE_SENDING_EMAIL_ADDRESS}>`,
+          from: `"SwagSync Orders" <${process.env.NODE_CODE_SENDING_EMAIL_ADDRESS}>`,
           to: populatedOrder.user.email,
           subject: `Order Cancelled - ${populatedOrder.orderId}`,
           html: cancelEmailTemplate(populatedOrder, populatedOrder.user),

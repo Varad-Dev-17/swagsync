@@ -60,7 +60,7 @@ const Sidebar = ({ onClose, isCollapsed, toggleCollapse }) => {
               <span className="text-white font-bold text-sm">V</span>
             </div>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <h1 className="text-xl font-extrabold text-slate-900 mt-0.5 tracking-tight">Vyntra Admin</h1>
+              <h1 className="text-xl font-extrabold text-slate-900 mt-0.5 tracking-tight">SwagSync Admin</h1>
             </motion.div>
           </div>
         )}
@@ -122,7 +122,7 @@ const Sidebar = ({ onClose, isCollapsed, toggleCollapse }) => {
                   {user?.username || "Admin"}
                 </p>
                 <p className="text-xs text-gray-500 truncate">
-                  {user?.email || "admin@vyntra.com"}
+                  {user?.email || "admin@swagsync.com"}
                 </p>
               </div>
               <div className="p-2">

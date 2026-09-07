@@ -126,7 +126,7 @@ const AdminSignInPage = () => {
                 letterSpacing: "-0.01em",
               }}
             >
-              Vyntra
+              SwagSync
             </h1>
             <p
               className="mt-2 text-center"

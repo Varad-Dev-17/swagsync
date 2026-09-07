@@ -109,7 +109,7 @@ const ForgotPasswordPage = () => {
                 letterSpacing: "-0.01em",
               }}
             >
-              Vyntra
+              SwagSync
             </h1>
             <p
               className="mt-2 text-center"
@@ -199,7 +199,7 @@ const ForgotPasswordPage = () => {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="hello@vyntra.com"
+                    placeholder="hello@swagsync.com"
                     required
                     className="w-full h-12 pl-12 pr-4 rounded-xl transition-all duration-300"
                     style={{

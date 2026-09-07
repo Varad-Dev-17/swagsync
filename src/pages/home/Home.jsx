@@ -69,7 +69,7 @@ const Home = () => {
         <PromoBanners />
         <HomeNewArrivalsSection
           title="New Arrivals"
-          subtitle="Discover the latest additions to the Vyntra collection."
+          subtitle="Discover the latest additions to the SwagSync collection."
         />
         <OfficialBrandStores />
         <Newsletter />

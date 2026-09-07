@@ -53,7 +53,7 @@ const HeroSlider = () => {
             className="text-3xl sm:text-4xl md:text-6xl lg:text-[72px] font-bold text-white leading-[1.05] tracking-tight mb-4 md:mb-6 whitespace-pre-line"
             style={{ fontFamily: "'Poppins', sans-serif" }}
           >
-            Welcome to Vyntra
+            Welcome to SwagSync
           </motion.h1>
 
           <motion.p

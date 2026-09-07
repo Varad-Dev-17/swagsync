@@ -150,7 +150,7 @@ const SignUp = () => {
         >
           {/* Logo */}
           <div className="flex flex-col items-center mb-6">
-            <img src="/Logo/logo.png" alt="Vyntra Logo" className="h-16 w-auto mb-2 object-contain" />
+            <img src="/Logo/logo.png" alt="SwagSync Logo" className="h-16 w-auto mb-2 object-contain" />
             <p
               className="mt-1 text-center"
               style={{
@@ -244,7 +244,7 @@ const SignUp = () => {
                       type="email"
                       value={formData.email}
                       onChange={handleChange}
-                      placeholder="hello@vyntra.com"
+                      placeholder="hello@swagsync.com"
                       required
                       className="w-full h-12 pl-12 pr-4 rounded-xl transition-all duration-300"
                       style={inputStyle}

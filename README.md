@@ -1,8 +1,8 @@
-# 💜 Vyntra
+# 💜 SwagSync
 
 &gt; _"Style that speaks, tech that delivers."_
 
-Vyntra is a modern fullstack e-commerce platform built for seamless shopping experiences — from browsing trendy collections to secure checkout.
+SwagSync is a modern fullstack e-commerce platform built for seamless shopping experiences — from browsing trendy collections to secure checkout.
 
 ---
 

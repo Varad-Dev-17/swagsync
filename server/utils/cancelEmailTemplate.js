@@ -83,7 +83,7 @@ export const cancelEmailTemplate = (order, user) => {
         <!-- Footer -->
         <div style="font-size: 14px; color: #555; line-height: 1.6; margin-top: 30px;">
           Best regards,<br/>
-          <strong style="color: #111;">Vyntra Team</strong>
+          <strong style="color: #111;">SwagSync Team</strong>
         </div>
 
       </div>

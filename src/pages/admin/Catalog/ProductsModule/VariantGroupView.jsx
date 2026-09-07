@@ -209,7 +209,7 @@ const VariantGroupView = () => {
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-gray-500 font-medium mb-3">
               <span className="font-bold text-gray-600">{groupDetails.firstVariant?.sku || 'SKU-N/A'}</span>
               <span className="text-gray-300">•</span>
-              <span>{product?.brand?.name || 'Vyntra'}</span>
+              <span>{product?.brand?.name || 'SwagSync'}</span>
               <span className="text-gray-300">•</span>
               <span className="flex items-center gap-1 text-yellow-500 font-bold">
                 <Star size={12} fill="currentColor" /> {avgRating} <span className="text-purple-600 hover:underline cursor-pointer font-medium">({totalReviews} Reviews)</span>

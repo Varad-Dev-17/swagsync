@@ -39,10 +39,10 @@ const Footer = () => {
           {/* Left - Logo & Copyright */}
           <div className="text-center md:text-left">
             <span className="text-xl font-bold" style={{ color: "#6366F1" }}>
-              Vyntra
+              SwagSync
             </span>
             <p className="text-sm text-gray-500 mt-1">
-              © 2026 Vyntra Premium. All rights reserved.
+              © 2026 SwagSync Premium. All rights reserved.
             </p>
           </div>
 

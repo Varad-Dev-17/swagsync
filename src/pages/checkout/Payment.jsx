@@ -126,7 +126,7 @@ const Payment = () => {
             key: key_id,
             amount: amount,
             currency: currency,
-            name: "Vyntra",
+            name: "SwagSync",
             description: "Secure Payment",
             order_id: order_id,
             handler: async function (response) {

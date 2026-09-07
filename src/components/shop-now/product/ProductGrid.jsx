@@ -182,7 +182,7 @@ const ProductGrid = ({ paginatedProducts, activeColors = [], priceRange = { min:
           const formattedProduct = {
             _id: `${product._id}-${colorName}`,
             slug: product.slug,
-            brand: product.brand?.name || product.brand || "Vyntra",
+            brand: product.brand?.name || product.brand || "SwagSync",
             title: product.title,
             productName: product.title,
             price,

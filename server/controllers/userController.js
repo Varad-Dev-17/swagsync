@@ -170,7 +170,7 @@ export const updateProfilePhoto = async (req, res) => {
     const dataURI = "data:" + req.file.mimetype + ";base64," + b64;
     
     const result = await cloudinary.uploader.upload(dataURI, {
-      folder: "vyntra-users",
+      folder: "swagsync-users",
       resource_type: "image",
     });
 
@@ -241,7 +241,7 @@ export const updateProfileInfo = async (req, res) => {
       
       try {
         let info = await transport.sendMail({
-          from: `"Vyntra" <${process.env.NODE_CODE_SENDING_EMAIL_ADDRESS}>`,
+          from: `"SwagSync" <${process.env.NODE_CODE_SENDING_EMAIL_ADDRESS}>`,
           to: email,
           subject: "Verify Your New Email",
           html: verificationEmailTemplate(verificationCode, username || user.username),

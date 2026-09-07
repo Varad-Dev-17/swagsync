@@ -102,7 +102,7 @@ const WishlistCard = ({ item }) => {
       <div className="p-3 flex flex-col grow">
         <Link to={productUrl} className="block mb-2">
           <h3 className="text-[14px] font-bold text-[#282c3f] line-clamp-1">
-            {product.brand?.name || "Vyntra"}
+            {product.brand?.name || "SwagSync"}
           </h3>
           <p className="text-[13px] text-[#535766] line-clamp-1 mt-0.5 font-light">
             {product.title}

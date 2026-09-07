@@ -182,7 +182,7 @@ const ProductInfo = ({ product, activeVariant, onVariantChange }) => {
       {/* Brand, Title & Wishlist Icon */}
       <div className="flex items-start justify-between gap-4 mb-4">
         <div>
-          <h1 className="text-[22px] font-bold text-[#282c3f] mb-1">{product.brand?.name || product.brand || 'Vyntra'}</h1>
+          <h1 className="text-[22px] font-bold text-[#282c3f] mb-1">{product.brand?.name || product.brand || 'SwagSync'}</h1>
           <h2 className="text-[18px] text-[#535766] font-normal leading-relaxed">{product.title}</h2>
           <div 
             onClick={() => {

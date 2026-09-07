@@ -44,7 +44,7 @@ export default function ProductCard({ product, onPress }) {
 
       <View className="p-3">
         <Text className="text-xs font-bold uppercase text-primary mb-1" numberOfLines={1}>
-          {product.brand?.name || product.brand || 'Vyntra'}
+          {product.brand?.name || product.brand || 'SwagSync'}
         </Text>
         <Text className="text-sm font-semibold text-gray-900 mb-2" numberOfLines={1}>
           {product.name || product.title}

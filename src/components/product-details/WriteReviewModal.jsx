@@ -192,7 +192,7 @@ const WriteReviewModal = ({
               </div>
             )}
             <div className="text-[12px] font-bold uppercase tracking-wider text-[#7e818c]">
-              {product.brand?.name || product.brand || "VYNTRA"}
+              {product.brand?.name || product.brand || "SWAGSYNC"}
             </div>
             <h4 className="text-[15px] font-extrabold text-[#282c3f] mt-0.5 line-clamp-2">
               {product.title || product.productName || "Product Title"}

@@ -216,7 +216,7 @@ export default function ProductDetailsScreen({ route }) {
         {/* Product Info */}
         <View className="p-4">
           <Text className="text-primary font-bold tracking-wider mb-1 uppercase">
-            {product.brand?.name || product.brand || 'Vyntra'}
+            {product.brand?.name || product.brand || 'SwagSync'}
           </Text>
           <Text className="text-xl font-semibold text-gray-900 mb-2">
             {product.name || product.title}

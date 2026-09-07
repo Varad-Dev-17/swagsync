@@ -95,7 +95,7 @@ const BagItem = ({ item, isSelected, toggleSelection, updateQuantity, removeItem
                 {item.title}
               </Link>
               <p className="text-[13px] md:text-[14px] text-[#535766] mb-1.5 line-clamp-1">
-                {item.brand?.name || item.brand || "Vyntra"}
+                {item.brand?.name || item.brand || "SwagSync"}
               </p>
 
               {/* Pricing */}

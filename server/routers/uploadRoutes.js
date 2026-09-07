@@ -22,7 +22,7 @@ const upload = multer({
 });
 
 // Helper: upload buffer to Cloudinary
-const uploadToCloudinary = async (buffer, mimetype, folder = "vyntra-products") => {
+const uploadToCloudinary = async (buffer, mimetype, folder = "swagsync-products") => {
   let optimizedBuffer = buffer;
   let optimizedMimetype = mimetype;
 
@@ -165,7 +165,7 @@ router.post(
       }
 
       const uploadPromises = req.files.map((file) =>
-        uploadToCloudinary(file.buffer, file.mimetype, "vyntra-returns")
+        uploadToCloudinary(file.buffer, file.mimetype, "swagsync-returns")
       );
 
       const results = await Promise.all(uploadPromises);

@@ -61,7 +61,7 @@ export const signUp = async (req, res) => {
     try {
       console.log("Sending email...");
       let info = await transport.sendMail({
-        from: `"Vyntra" <${process.env.NODE_CODE_SENDING_EMAIL_ADDRESS}>`,
+        from: `"SwagSync" <${process.env.NODE_CODE_SENDING_EMAIL_ADDRESS}>`,
         to: email,
         subject: "Verify Your Email",
         html: verificationEmailTemplate(verificationCode, username),
@@ -356,7 +356,7 @@ export const sendForgotPasswordCode = async (req, res) => {
 
     const codeValue = Math.floor(Math.random() * 1000000).toString();
     let info = await transport.sendMail({
-      from: `"Vyntra" <${process.env.NODE_CODE_SENDING_EMAIL_ADDRESS}>`,
+      from: `"SwagSync" <${process.env.NODE_CODE_SENDING_EMAIL_ADDRESS}>`,
       to: existingUser.email,
       subject: "Forgot password code",
       html: forgotPasswordEmailTemplate(codeValue, existingUser.username),

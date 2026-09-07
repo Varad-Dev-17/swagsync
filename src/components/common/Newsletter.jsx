@@ -32,7 +32,7 @@ const Newsletter = () => {
               transition={{ duration: 0.7 }}
             >
               <img 
-                src="/home/newsletter_vyntra_bag.png" 
+                src="/home/newsletter_swagsync_bag.png" 
                 alt="Subscribe" 
                 className="w-full max-w-[350px] object-contain mix-blend-multiply"
               />

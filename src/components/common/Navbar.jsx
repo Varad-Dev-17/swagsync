@@ -235,9 +235,9 @@ const Navbar = () => {
               >
                 <img
                   src="/Logo/logo.png"
-                  alt="Vyntra Logo"
+                  alt="SwagSync Logo"
                   fetchPriority="high"
-                  className="h-14 sm:h-15 lg:h-20 w-auto transition-all duration-300 pt-2"
+                  className="h-14 sm:h-15 lg:h-18 w-auto transition-all duration-300 pt-2"
                   style={{ filter: isScrolled ? "none" : "drop-shadow(0px 0px 4px rgba(255,255,255,1)) drop-shadow(0px 0px 10px rgba(255,255,255,0.8))" }}
                 />
               </Link>

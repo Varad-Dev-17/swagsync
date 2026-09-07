@@ -399,7 +399,7 @@ const CustomerTrackingCard = ({ order = null }) => {
           {customerVisibleNotes.map((noteItem, index) => (
             <div key={index} className="p-4 bg-white rounded-xl border border-indigo-200/70 shadow-2xs space-y-1.5">
               <div className="flex items-center justify-between text-[11px] text-gray-400 font-bold">
-                <span className="uppercase text-[#4F46E5] tracking-wider">Vyntra Support Notification</span>
+                <span className="uppercase text-[#4F46E5] tracking-wider">SwagSync Support Notification</span>
                 <span>{formatDate(noteItem.createdAt)}</span>
               </div>
               <p className="text-sm font-semibold text-slate-700 leading-snug">

@@ -45,7 +45,7 @@ export default function HomeScreen({ navigation }) {
           <View className="absolute inset-0 bg-black/40" />
           <View className="absolute inset-0 p-6 justify-end pb-10">
             <Text className="text-white text-xs font-bold tracking-widest uppercase mb-2 text-red-500">New Season 2026</Text>
-            <Text className="text-white text-4xl font-bold mb-2">Welcome to Vyntra</Text>
+            <Text className="text-white text-4xl font-bold mb-2">Welcome to SwagSync</Text>
             <Text className="text-gray-200 text-sm mb-4">Where timeless fashion meets modern living.</Text>
             <TouchableOpacity 
               className="bg-primary py-3 px-6 rounded w-3/4 items-center"

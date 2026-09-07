@@ -364,7 +364,7 @@ const OrderDetails = () => {
             </div>
             <span>Paid by {order.paymentMethod === "cod" ? "Cash on Delivery" : "Online Payment"}</span>
           </div>
-          <p className="text-[11px] text-gray-400 mt-4 mb-3 font-medium">Item sold by: Vyntra Retail</p>
+          <p className="text-[11px] text-gray-400 mt-4 mb-3 font-medium">Item sold by: SwagSync Retail</p>
           <button className="w-full py-2.5 border border-gray-200 rounded-none text-[13px] font-bold text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer">
             Get Invoice
           </button>

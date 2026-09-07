@@ -18,7 +18,7 @@ body {
   overscroll-behavior-y: none;
 }
 
-/* Optional: Custom scrollbar that matches Vyntra's design */
+/* Optional: Custom scrollbar that matches SwagSync's design */
 ::-webkit-scrollbar {
   width: 6px;
 }

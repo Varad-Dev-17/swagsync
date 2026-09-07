@@ -92,7 +92,7 @@ const BagSummary = ({ totals }) => {
             )}
           </div>
           <p className="text-[12px] text-[#535766] leading-relaxed select-none">
-            By placing the order, you agree to Vyntra's{" "}
+            By placing the order, you agree to SwagSync's{" "}
             <a href="#" onClick={(e) => e.stopPropagation()} className="text-[#4F46E5] font-semibold hover:underline">Terms of Use</a>{" "}
             and{" "}
             <a href="#" onClick={(e) => e.stopPropagation()} className="text-[#4F46E5] font-semibold hover:underline">Privacy Policy</a>

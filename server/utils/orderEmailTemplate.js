@@ -135,7 +135,7 @@ export const orderEmailTemplate = (order, user) => {
       
       <!-- Footer -->
       <div style="background-color: #f9f9fb; padding: 20px 30px; font-size: 12px; color: #777; text-align: center; border-top: 1px solid #eaeaea;">
-        © ${new Date().getFullYear()} Vyntra. All rights reserved.
+        © ${new Date().getFullYear()} SwagSync. All rights reserved.
       </div>
 
     </div>

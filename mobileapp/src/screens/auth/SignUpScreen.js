@@ -45,7 +45,7 @@ export default function SignUpScreen({ navigation }) {
         <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingHorizontal: 24 }}>
           <View className="mb-8 items-center mt-10">
             <Text className="text-4xl font-bold text-primary mb-2">Create Account</Text>
-            <Text className="text-gray-500 text-lg">Join Vyntra today!</Text>
+            <Text className="text-gray-500 text-lg">Join SwagSync today!</Text>
           </View>
 
           {error ? <Text className="text-red-500 text-center mb-4">{error}</Text> : null}
