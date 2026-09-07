@@ -46,7 +46,7 @@ const BrandFilter = ({ brands = [], activeBrands = [], onChange }) => {
                   }}
                 >
                   <div className="flex items-center gap-3">
-                    <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${isActive ? 'bg-[#6D4AFF] border-[#6D4AFF]' : 'border-[#E5E7EB] group-hover:border-[#6D4AFF]'}`}>
+                    <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${isActive ? 'bg-[#FD7100] border-[#FD7100]' : 'border-[#E5E7EB] group-hover:border-[#FD7100]'}`}>
                       {isActive && <Check size={12} className="text-white" />}
                     </div>
                     <span className={`text-[15px] transition-colors ${isActive ? 'text-[#111827] font-medium' : 'text-[#4B5563] group-hover:text-[#111827]'}`}>
@@ -64,7 +64,7 @@ const BrandFilter = ({ brands = [], activeBrands = [], onChange }) => {
                   e.preventDefault();
                   setShowAll(!showAll);
                 }}
-                className="text-[#6D4AFF] text-left text-[14px] font-semibold pt-1 pl-1 hover:underline w-fit transition-all"
+                className="text-[#FD7100] text-left text-[14px] font-semibold pt-1 pl-1 hover:underline w-fit transition-all"
               >
                 {showAll ? "- show less" : `+ ${brands.length - 5} more`}
               </button>

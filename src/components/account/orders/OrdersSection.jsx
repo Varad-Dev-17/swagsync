@@ -184,7 +184,7 @@ const OrdersSection = () => {
                 }}
                 className={`pb-3 px-1 text-sm sm:text-[15px] transition-all duration-200 whitespace-nowrap cursor-pointer relative ${
                   isActive 
-                    ? 'text-[#4F46E5] font-bold border-b-2 border-[#4F46E5]' 
+                    ? 'text-[#FD7100] font-bold border-b-2 border-[#FD7100]' 
                     : 'text-gray-500 hover:text-slate-700 font-medium border-b-2 border-transparent'
                 }`}
               >
@@ -198,19 +198,19 @@ const OrdersSection = () => {
           onClick={openFilterModal}
           className="flex items-center gap-1.5 px-4 py-2 mb-2 border border-gray-300 hover:bg-gray-50 text-xs font-bold uppercase tracking-wider text-gray-700 transition-all shadow-xs shrink-0 cursor-pointer"
         >
-          <Filter className="w-3.5 h-3.5 text-[#4F46E5]" />
+          <Filter className="w-3.5 h-3.5 text-[#FD7100]" />
           <span>Filters</span>
         </button>
       </div>
 
       {isLoading ? (
         <div className="flex justify-center items-center h-80">
-          <Loader2 className="w-10 h-10 text-[#4F46E5] animate-spin" />
+          <Loader2 className="w-10 h-10 text-[#FD7100] animate-spin" />
         </div>
       ) : orderItems.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-24 bg-white border border-gray-200 shadow-xs text-center px-4">
-          <div className="w-16 h-16 bg-[#EEF2FF] flex items-center justify-center mb-5 border border-[#4F46E5]/20">
-            <Package className="w-8 h-8 text-[#4F46E5]" />
+          <div className="w-16 h-16 bg-[#FFF5ED] flex items-center justify-center mb-5 border border-[#FD7100]/20">
+            <Package className="w-8 h-8 text-[#FD7100]" />
           </div>
           <h2 className="text-xl font-bold text-slate-700 mb-2">No Orders Found</h2>
           <p className="text-gray-500 max-w-md text-sm leading-relaxed">
@@ -218,7 +218,7 @@ const OrdersSection = () => {
           </p>
           <button
             onClick={clearFilters}
-            className="mt-6 px-6 py-3 bg-[#4F46E5] hover:bg-[#4338CA] text-white text-xs font-bold uppercase tracking-wider transition-all shadow-xs cursor-pointer"
+            className="mt-6 px-6 py-3 bg-[#FD7100] hover:bg-[#E06400] text-white text-xs font-bold uppercase tracking-wider transition-all shadow-xs cursor-pointer"
           >
             Reset Filters
           </button>
@@ -288,7 +288,7 @@ const OrdersSection = () => {
                   <div className="flex flex-wrap items-center gap-x-6 gap-y-1">
                     <div>
                       <span className="font-medium text-gray-600">Order ID: </span>
-                      <span className="font-bold text-[#4F46E5]">#{order.orderId || order._id}</span>
+                      <span className="font-bold text-[#FD7100]">#{order.orderId || order._id}</span>
                     </div>
                     <div className="text-gray-500">
                       Placed on: <span className="text-gray-700 font-medium">{new Date(order.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
@@ -303,12 +303,12 @@ const OrdersSection = () => {
                         <CheckCircle2 className="w-4 h-4 text-green-700 shrink-0" />
                       </div>
                     ) : effStatus === 'on_the_way' ? (
-                      <div className="flex items-center gap-1.5 text-purple-700 font-bold">
+                      <div className="flex items-center gap-1.5 text-orange-700 font-bold">
                         <span>On The Way (Out for Delivery)</span>
                         <Truck className="w-4 h-4 shrink-0" />
                       </div>
                     ) : effStatus === 'shipped' ? (
-                      <div className="flex items-center gap-1.5 text-indigo-700 font-bold">
+                      <div className="flex items-center gap-1.5 text-orange-600 font-bold">
                         <span>Shipped</span>
                         <Truck className="w-4 h-4 shrink-0" />
                       </div>
@@ -351,8 +351,8 @@ const OrdersSection = () => {
                       {/* Status Tag Pill Badge above title */}
                       <div className="mb-2">
                         {activeRequest ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider bg-[#EEF2FF] text-[#4F46E5] border border-indigo-200">
-                            <RefreshCw className="w-3 h-3 animate-spin-slow text-[#4F46E5]" />
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider bg-[#FFF5ED] text-[#FD7100] border border-orange-200">
+                            <RefreshCw className="w-3 h-3 animate-spin-slow text-[#FD7100]" />
                             {activeRequest.type === 'exchange' ? 'Exchange' : 'Return'} Requested
                           </span>
                         ) : completedRequest ? (
@@ -368,7 +368,7 @@ const OrdersSection = () => {
                             Delivered
                           </span>
                         ) : effStatus === 'on_the_way' ? (
-                          <span className="inline-flex items-center px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-300">
+                          <span className="inline-flex items-center px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider bg-orange-50 text-orange-700 border border-orange-300">
                             On The Way
                           </span>
                         ) : effStatus === 'shipped' ? (
@@ -457,7 +457,7 @@ const OrdersSection = () => {
                           className={`w-full flex items-center justify-center gap-1.5 py-2 px-4 text-xs font-bold uppercase tracking-wider border transition-all cursor-pointer shadow-xs ${
                             existingRev
                               ? "bg-amber-50 text-amber-900 border-amber-300 hover:bg-amber-100"
-                              : "bg-[#eef2ff] text-[#4F46E5] border-[#4F46E5]/40 hover:bg-[#4F46E5] hover:text-white hover:border-[#4F46E5]"
+                              : "bg-[#FFF5ED] text-[#FD7100] border-[#FD7100]/40 hover:bg-[#FD7100] hover:text-white hover:border-[#FD7100]"
                           }`}
                         >
                           <Star className="w-3.5 h-3.5 fill-[#FFB800] text-[#FFB800] shrink-0" />
@@ -480,7 +480,7 @@ const OrdersSection = () => {
                       }}
                       className="w-full flex items-center justify-center gap-1.5 py-2 px-4 text-xs font-bold uppercase tracking-wider text-gray-700 border border-gray-300 bg-white hover:bg-gray-50 transition-all duration-200 cursor-pointer group"
                     >
-                      <ShoppingBag className="w-3.5 h-3.5 text-gray-500 group-hover:text-[#4F46E5] transition-colors shrink-0" />
+                      <ShoppingBag className="w-3.5 h-3.5 text-gray-500 group-hover:text-[#FD7100] transition-colors shrink-0" />
                       <span>Buy Again</span>
                     </button>
                   </div>
@@ -514,7 +514,7 @@ const OrdersSection = () => {
                     { id: 'return_exchange', label: 'Return / Exchange' }
                   ].map((option) => (
                     <label key={option.id} className="flex items-center gap-3 cursor-pointer group">
-                      <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${tempStatus === option.id ? 'border-[#4F46E5] bg-[#4F46E5]' : 'border-gray-300 group-hover:border-gray-400'}`}>
+                      <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${tempStatus === option.id ? 'border-[#FD7100] bg-[#FD7100]' : 'border-gray-300 group-hover:border-gray-400'}`}>
                         {tempStatus === option.id && <div className="w-2 h-2 rounded-full bg-white" />}
                       </div>
                       <span className="text-sm font-medium text-gray-700">{option.label}</span>
@@ -544,7 +544,7 @@ const OrdersSection = () => {
                     { id: 'last_year', label: 'Last year' }
                   ].map((option) => (
                     <label key={option.id} className="flex items-center gap-3 cursor-pointer group">
-                      <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${tempTime === option.id ? 'border-[#4F46E5] bg-[#4F46E5]' : 'border-gray-300 group-hover:border-gray-400'}`}>
+                      <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${tempTime === option.id ? 'border-[#FD7100] bg-[#FD7100]' : 'border-gray-300 group-hover:border-gray-400'}`}>
                         {tempTime === option.id && <div className="w-2 h-2 rounded-full bg-white" />}
                       </div>
                       <span className="text-sm font-medium text-gray-700">{option.label}</span>
@@ -571,7 +571,7 @@ const OrdersSection = () => {
               </button>
               <button
                 onClick={applyFilters}
-                className="flex-1 py-3 px-4 bg-[#4F46E5] hover:bg-[#4338ca] text-white text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer shadow-xs"
+                className="flex-1 py-3 px-4 bg-[#FD7100] hover:bg-[#E06400] text-white text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer shadow-xs"
               >
                 APPLY
               </button>

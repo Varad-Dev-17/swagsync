@@ -5,6 +5,20 @@ import toast from 'react-hot-toast';
 import { useState, useEffect, useRef, useCallback, forwardRef, useImperativeHandle } from 'react';
 import SearchableSelect from '../../../../components/admin/ui/SearchableSelect';
 
+const slugify = (text = '', preserveTrailingDash = false) => {
+  let s = text
+    .toString()
+    .toLowerCase()
+    .trimStart()
+    .replace(/['’]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+/, '');
+  if (!preserveTrailingDash) {
+    s = s.replace(/-+$/, '');
+  }
+  return s;
+};
+
 const ProductForm = forwardRef(({ isEdit = false, isUnifiedMode = false, onFormChange = () => {} }, ref) => {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -45,6 +59,8 @@ const ProductForm = forwardRef(({ isEdit = false, isUnifiedMode = false, onFormC
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(isEdit);
   const fetchedAttributesRef = useRef([]);
+  const initialBrandRef = useRef(null);
+  const initialCategoryRef = useRef(null);
 
   // Validation State & Refs
   const [errors, setErrors] = useState({});
@@ -120,9 +136,10 @@ const ProductForm = forwardRef(({ isEdit = false, isUnifiedMode = false, onFormC
         });
         if (response.data.success) {
           const prod = response.data.data.product || response.data.data;
+          const currentSlug = prod.slug || '';
           setFormData({
             title: prod.title || '',
-            slug: prod.slug || '',
+            slug: currentSlug,
             shortDescription: prod.shortDescription || '',
             longDescription: prod.longDescription || '',
             status: prod.status || 'Inactive',
@@ -133,7 +150,37 @@ const ProductForm = forwardRef(({ isEdit = false, isUnifiedMode = false, onFormC
             exchangeable: prod.returnPolicy?.exchangeable ?? true,
             returnDays: prod.returnPolicy?.returnDays ?? 7
           });
-          setSlugModified(true);
+          // If product had a custom slug differing from auto-slug, mark as modified, else keep auto-typing enabled
+          const autoSlug = slugify(prod.title || '');
+          if (currentSlug && currentSlug !== autoSlug) {
+            setSlugModified(true);
+          } else {
+            setSlugModified(false);
+          }
+          if (prod.brand) {
+            const brandObj = typeof prod.brand === 'object'
+              ? { _id: prod.brand._id, name: prod.brand.name }
+              : { _id: prod.brand, name: 'Current Brand' };
+            initialBrandRef.current = brandObj;
+            setBrands(prev => {
+              if (brandObj._id && !prev.some(b => (b._id || b.id) === brandObj._id)) {
+                return [brandObj, ...prev];
+              }
+              return prev;
+            });
+          }
+          if (prod.category) {
+            const catObj = typeof prod.category === 'object'
+              ? { _id: prod.category._id, name: prod.category.name }
+              : { _id: prod.category, name: 'Current Category' };
+            initialCategoryRef.current = catObj;
+            setCategories(prev => {
+              if (catObj._id && !prev.some(c => (c._id || c.id) === catObj._id)) {
+                return [catObj, ...prev];
+              }
+              return prev;
+            });
+          }
           fetchedAttributesRef.current = prod.attributes || [];
         }
       } catch (error) {
@@ -176,25 +223,26 @@ const ProductForm = forwardRef(({ isEdit = false, isUnifiedMode = false, onFormC
         setIsCategoriesLoading(true);
         setIsBrandsLoading(true);
 
-        // We will fetch all and filter client side since backend doesn't have by-department route explicitly yet
-        // OR we can pass departmentId as query param if backend supports it. Assuming query param `departmentId`.
         const [catsRes, brandsRes] = await Promise.all([
-          axios.get(`${(import.meta.env.PROD ? '' : 'http://localhost:8000')}/categories`, { params: { limit: 1000, status: 'Active', departmentId: formData.department } }),
-          axios.get(`${(import.meta.env.PROD ? '' : 'http://localhost:8000')}/brands`, { params: { limit: 1000, status: 'Active', departmentId: formData.department } })
+          axios.get(`${(import.meta.env.PROD ? '' : 'http://localhost:8000')}/categories`, { params: { limit: 1000, status: 'Active', department: formData.department, departmentId: formData.department } }),
+          axios.get(`${(import.meta.env.PROD ? '' : 'http://localhost:8000')}/brands`, { params: { limit: 1000, status: 'Active', department: formData.department, departmentId: formData.department } })
         ]);
 
         if (catsRes.data.success) {
-          // If backend doesn't filter, we filter client-side:
-          let cats = catsRes.data.categories || catsRes.data.data;
-          // client side fallback
-          cats = cats.filter(c => c.departmentIds && c.departmentIds.some(d => (d._id || d) === formData.department));
+          let cats = catsRes.data.categories || catsRes.data.data || [];
+          cats = cats.filter(c => c.departmentIds && c.departmentIds.some(d => (d._id ? d._id.toString() : d.toString()) === formData.department.toString()));
+          if (initialCategoryRef.current?._id && !cats.some(c => (c._id || c.id) === initialCategoryRef.current._id)) {
+            cats.unshift(initialCategoryRef.current);
+          }
           setCategories(cats);
         }
 
         if (brandsRes.data.success) {
-          let bs = brandsRes.data.brands || brandsRes.data.data;
-          // client side fallback
-          bs = bs.filter(b => b.departmentIds && b.departmentIds.some(d => (d._id || d) === formData.department));
+          let bs = brandsRes.data.brands || brandsRes.data.data || [];
+          bs = bs.filter(b => b.departmentIds && b.departmentIds.some(d => (d._id ? d._id.toString() : d.toString()) === formData.department.toString()));
+          if (initialBrandRef.current?._id && !bs.some(b => (b._id || b.id) === initialBrandRef.current._id)) {
+            bs.unshift(initialBrandRef.current);
+          }
           setBrands(bs);
         }
       } catch (error) {
@@ -299,11 +347,8 @@ const ProductForm = forwardRef(({ isEdit = false, isUnifiedMode = false, onFormC
   const handleNameChange = (e) => {
     const newTitle = e.target.value;
     clearError('title');
-    if (!slugModified) {
-      const generatedSlug = newTitle
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/(^-|-$)+/g, '');
+    if (!slugModified || !formData.slug.trim()) {
+      const generatedSlug = slugify(newTitle, true);
       setFormData(prev => ({ ...prev, title: newTitle, slug: generatedSlug }));
       clearError('slug');
     } else {
@@ -312,9 +357,33 @@ const ProductForm = forwardRef(({ isEdit = false, isUnifiedMode = false, onFormC
   };
 
   const handleSlugChange = (e) => {
-    setSlugModified(true);
+    const val = e.target.value;
     clearError('slug');
-    setFormData(prev => ({ ...prev, slug: e.target.value }));
+    if (!val.trim()) {
+      setSlugModified(false);
+      setFormData(prev => ({ ...prev, slug: '' }));
+    } else {
+      setSlugModified(true);
+      setFormData(prev => ({ ...prev, slug: val }));
+    }
+  };
+
+  const handleTitleBlur = () => {
+    if (!slugModified && formData.slug) {
+      setFormData(prev => ({
+        ...prev,
+        slug: slugify(prev.slug)
+      }));
+    }
+  };
+
+  const handleSlugBlur = () => {
+    if (formData.slug) {
+      setFormData(prev => ({
+        ...prev,
+        slug: slugify(prev.slug)
+      }));
+    }
   };
 
   const handleChange = (e) => {
@@ -512,19 +581,38 @@ const ProductForm = forwardRef(({ isEdit = false, isUnifiedMode = false, onFormC
               name="title"
               value={formData.title}
               onChange={handleNameChange}
+              onBlur={handleTitleBlur}
               placeholder="e.g. Men Solid Polo Collar T-shirt"
               className={`w-full px-4 h-11 border ${errors.title ? 'border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-[#4648d4] focus:ring-[#4648d4]'} rounded-lg outline-none focus:ring-1 transition-colors`}
             />
             {errors.title && <span className="text-red-500 text-xs mt-1 block">❌ {errors.title}</span>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Product Slug <span className="text-red-500">*</span></label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-sm font-medium text-gray-700">Product Slug <span className="text-red-500">*</span></label>
+              {formData.title && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const generated = slugify(formData.title);
+                    setFormData(prev => ({ ...prev, slug: generated }));
+                    setSlugModified(false);
+                    clearError('slug');
+                  }}
+                  className="text-xs text-[#4648d4] hover:underline font-medium cursor-pointer"
+                  title="Generate slug from product name"
+                >
+                  Auto-generate
+                </button>
+              )}
+            </div>
             <input
               ref={setRef('slug')}
               type="text"
               name="slug"
               value={formData.slug}
               onChange={handleSlugChange}
+              onBlur={handleSlugBlur}
               placeholder="e.g. men-solid-polo-collar-t-shirt"
               className={`w-full px-4 h-11 border ${errors.slug ? 'border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-[#4648d4] focus:ring-[#4648d4]'} rounded-lg outline-none focus:ring-1 transition-colors font-mono text-sm`}
             />

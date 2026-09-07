@@ -90,8 +90,8 @@ const ForgotPasswordPage = () => {
             <div
               className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4 shadow-lg"
               style={{
-                background: "linear-gradient(135deg, #3730A3 0%, #4F46E5 100%)",
-                boxShadow: "0 10px 40px rgba(67, 56, 202, 0.2)",
+                background: "linear-gradient(135deg, #EA580C 0%, #FD7100 100%)",
+                boxShadow: "0 10px 40px rgba(253, 113, 0, 0.2)",
               }}
             >
               {step === "success" ? (
@@ -402,10 +402,10 @@ const ForgotPasswordPage = () => {
                 className="w-full h-12 rounded-xl text-white font-semibold shadow-lg flex items-center justify-center gap-2 transition-all duration-300 disabled:opacity-70"
                 style={{
                   background:
-                    "linear-gradient(135deg, #3730A3 0%, #4F46E5 100%)",
+                    "linear-gradient(135deg, #EA580C 0%, #FD7100 100%)",
 
                   fontSize: "16px",
-                  boxShadow: "0 10px 25px rgba(67, 56, 202, 0.25)",
+                  boxShadow: "0 10px 25px rgba(253, 113, 0, 0.25)",
                 }}
               >
                 {isLoading ? (

@@ -37,10 +37,10 @@ const Footer = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row justify-between items-center gap-6">
           {/* Left - Logo & Copyright */}
-          <div className="text-center md:text-left">
-            <span className="text-xl font-bold" style={{ color: "#6366F1" }}>
-              SwagSync
-            </span>
+          <div className="text-center md:text-left flex flex-col items-center md:items-start">
+            <Link to="/" className="inline-block">
+              <img src="/Logo/logo.png" alt="SwagSync Logo" className="h-10 w-auto mb-1" />
+            </Link>
             <p className="text-sm text-gray-500 mt-1">
               © 2026 SwagSync Premium. All rights reserved.
             </p>
@@ -49,25 +49,25 @@ const Footer = () => {
           <div className="flex flex-wrap justify-center gap-6 text-sm text-gray-600">
             <Link
               to="/about"
-              className="hover:text-[#6366F1] transition-colors"
+              className="hover:text-[#FD7100] transition-colors"
             >
               About Us
             </Link>
             <Link
               to="/shipping"
-              className="hover:text-[#6366F1] transition-colors"
+              className="hover:text-[#FD7100] transition-colors"
             >
               Shipping Policy
             </Link>
             <Link
               to="/terms"
-              className="hover:text-[#6366F1] transition-colors"
+              className="hover:text-[#FD7100] transition-colors"
             >
               Terms of Service
             </Link>
             <Link
               to="/contact"
-              className="hover:text-[#6366F1] transition-colors"
+              className="hover:text-[#FD7100] transition-colors"
             >
               Contact
             </Link>
@@ -79,7 +79,7 @@ const Footer = () => {
                 key={label}
                 href="#"
                 aria-label={label}
-                className="p-2 text-gray-400 hover:text-[#6366F1] hover:bg-[#6366F1]/10 rounded-full transition-colors"
+                className="p-2 text-gray-400 hover:text-[#FD7100] hover:bg-[#FD7100]/10 rounded-full transition-colors"
               >
                 <Icon />
               </a>

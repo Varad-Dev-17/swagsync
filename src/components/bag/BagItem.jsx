@@ -67,7 +67,7 @@ const BagItem = ({ item, isSelected, toggleSelection, updateQuantity, removeItem
               toggleSelection();
             }}
             className={`absolute top-2 left-2 w-5 h-5 rounded-[4px] flex items-center justify-center shadow-sm z-10 transition-colors cursor-pointer ${
-              isSelected ? 'bg-[#4F46E5] border border-[#4F46E5]' : 'bg-white border border-gray-300 hover:border-gray-400'
+              isSelected ? 'bg-[#FD7100] border border-[#FD7100]' : 'bg-white border border-gray-300 hover:border-gray-400'
             }`}
           >
             {isSelected && (
@@ -90,7 +90,7 @@ const BagItem = ({ item, isSelected, toggleSelection, updateQuantity, removeItem
             <div className="flex-grow min-w-0 w-full">
               <Link 
                 to={productLink}
-                className="text-[16px] md:text-[18px] font-semibold text-[#282c3f] mb-1 hover:text-[#4F46E5] transition-colors block line-clamp-1"
+                className="text-[16px] md:text-[18px] font-semibold text-[#282c3f] mb-1 hover:text-[#FD7100] transition-colors block line-clamp-1"
               >
                 {item.title}
               </Link>
@@ -198,8 +198,8 @@ const BagItem = ({ item, isSelected, toggleSelection, updateQuantity, removeItem
                     onClick={() => setTempQty(num)}
                     className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-[15px] transition-colors border-2 ${
                       tempQty === num 
-                        ? 'border-[#4F46E5] text-[#4F46E5] bg-[#4F46E5]/5' 
-                        : 'border-gray-200 text-[#282c3f] hover:border-[#4F46E5]'
+                        ? 'border-[#FD7100] text-[#FD7100] bg-[#FD7100]/5' 
+                        : 'border-gray-200 text-[#282c3f] hover:border-[#FD7100]'
                     }`}
                   >
                     {num}
@@ -209,7 +209,7 @@ const BagItem = ({ item, isSelected, toggleSelection, updateQuantity, removeItem
 
               <button 
                 onClick={handleDone}
-                className="w-full bg-[#4F46E5] text-white font-bold text-[14px] py-3.5 rounded-[4px] hover:bg-[#6D4AFF] transition-colors"
+                className="w-full bg-[#FD7100] text-white font-bold text-[14px] py-3.5 rounded-[4px] hover:bg-[#E06400] transition-colors"
               >
                 DONE
               </button>

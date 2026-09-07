@@ -98,7 +98,7 @@ const AddressModal = ({ isOpen, onClose, onSave, address, isProcessing }) => {
                     required
                     disabled={isProcessing}
                     placeholder="Enter your full name"
-                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/20 focus:border-[#4F46E5] transition-colors disabled:opacity-60"
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#FD7100]/20 focus:border-[#FD7100] transition-colors disabled:opacity-60"
                   />
                 </div>
                 <div>
@@ -113,7 +113,7 @@ const AddressModal = ({ isOpen, onClose, onSave, address, isProcessing }) => {
                     title="Please enter a valid 10-digit mobile number"
                     disabled={isProcessing}
                     placeholder="10-digit mobile number"
-                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/20 focus:border-[#4F46E5] transition-colors disabled:opacity-60"
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#FD7100]/20 focus:border-[#FD7100] transition-colors disabled:opacity-60"
                   />
                 </div>
               </div>
@@ -136,7 +136,7 @@ const AddressModal = ({ isOpen, onClose, onSave, address, isProcessing }) => {
                       title="Please enter a valid 6-digit pincode"
                       disabled={isProcessing}
                       placeholder="6-digit pincode"
-                      className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/20 focus:border-[#4F46E5] transition-colors disabled:opacity-60"
+                      className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#FD7100]/20 focus:border-[#FD7100] transition-colors disabled:opacity-60"
                     />
                   </div>
                   <div>
@@ -149,7 +149,7 @@ const AddressModal = ({ isOpen, onClose, onSave, address, isProcessing }) => {
                       required
                       disabled={isProcessing}
                       placeholder="City/District/Town"
-                      className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/20 focus:border-[#4F46E5] transition-colors disabled:opacity-60"
+                      className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#FD7100]/20 focus:border-[#FD7100] transition-colors disabled:opacity-60"
                     />
                   </div>
                 </div>
@@ -164,7 +164,7 @@ const AddressModal = ({ isOpen, onClose, onSave, address, isProcessing }) => {
                     required
                     disabled={isProcessing}
                     placeholder="House No., Building Name, Area, Colony"
-                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/20 focus:border-[#4F46E5] transition-colors disabled:opacity-60"
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#FD7100]/20 focus:border-[#FD7100] transition-colors disabled:opacity-60"
                   />
                 </div>
 
@@ -177,7 +177,7 @@ const AddressModal = ({ isOpen, onClose, onSave, address, isProcessing }) => {
                     onChange={handleChange}
                     disabled={isProcessing}
                     placeholder="Street, Sector, Village"
-                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/20 focus:border-[#4F46E5] transition-colors disabled:opacity-60"
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#FD7100]/20 focus:border-[#FD7100] transition-colors disabled:opacity-60"
                   />
                 </div>
 
@@ -191,7 +191,7 @@ const AddressModal = ({ isOpen, onClose, onSave, address, isProcessing }) => {
                       onChange={handleChange}
                       disabled={isProcessing}
                       placeholder="E.g. near Apollo Hospital"
-                      className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/20 focus:border-[#4F46E5] transition-colors disabled:opacity-60"
+                      className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#FD7100]/20 focus:border-[#FD7100] transition-colors disabled:opacity-60"
                     />
                   </div>
                   <div>
@@ -204,7 +204,7 @@ const AddressModal = ({ isOpen, onClose, onSave, address, isProcessing }) => {
                       required
                       disabled={isProcessing}
                       placeholder="State"
-                      className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/20 focus:border-[#4F46E5] transition-colors disabled:opacity-60"
+                      className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#FD7100]/20 focus:border-[#FD7100] transition-colors disabled:opacity-60"
                     />
                   </div>
                 </div>
@@ -221,7 +221,7 @@ const AddressModal = ({ isOpen, onClose, onSave, address, isProcessing }) => {
                   onClick={() => setFormData((prev) => ({ ...prev, label: 'Home' }))}
                   className={`flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-medium transition-colors ${
                     formData.label === 'Home'
-                      ? 'border-[#4F46E5] bg-[#EEF2FF] text-[#4F46E5]'
+                      ? 'border-[#FD7100] bg-[#FFF5ED] text-[#FD7100]'
                       : 'border-gray-200 text-gray-600 hover:border-gray-300 bg-white'
                   }`}
                 >
@@ -233,7 +233,7 @@ const AddressModal = ({ isOpen, onClose, onSave, address, isProcessing }) => {
                   onClick={() => setFormData((prev) => ({ ...prev, label: 'Work' }))}
                   className={`flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-medium transition-colors ${
                     formData.label === 'Work'
-                      ? 'border-[#4F46E5] bg-[#EEF2FF] text-[#4F46E5]'
+                      ? 'border-[#FD7100] bg-[#FFF5ED] text-[#FD7100]'
                       : 'border-gray-200 text-gray-600 hover:border-gray-300 bg-white'
                   }`}
                 >
@@ -245,7 +245,7 @@ const AddressModal = ({ isOpen, onClose, onSave, address, isProcessing }) => {
                   onClick={() => setFormData((prev) => ({ ...prev, label: 'Other' }))}
                   className={`flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-medium transition-colors ${
                     formData.label === 'Other'
-                      ? 'border-[#4F46E5] bg-[#EEF2FF] text-[#4F46E5]'
+                      ? 'border-[#FD7100] bg-[#FFF5ED] text-[#FD7100]'
                       : 'border-gray-200 text-gray-600 hover:border-gray-300 bg-white'
                   }`}
                 >
@@ -261,7 +261,7 @@ const AddressModal = ({ isOpen, onClose, onSave, address, isProcessing }) => {
                     checked={formData.isDefault}
                     onChange={handleChange}
                     disabled={isProcessing}
-                    className="w-5 h-5 appearance-none border-2 border-gray-300 rounded cursor-pointer checked:bg-[#4F46E5] checked:border-[#4F46E5] transition-colors disabled:opacity-50"
+                    className="w-5 h-5 appearance-none border-2 border-gray-300 rounded cursor-pointer checked:bg-[#FD7100] checked:border-[#FD7100] transition-colors disabled:opacity-50"
                   />
                   {formData.isDefault && (
                     <svg
@@ -298,7 +298,7 @@ const AddressModal = ({ isOpen, onClose, onSave, address, isProcessing }) => {
             <button
               type="submit"
               disabled={isProcessing}
-              className="px-6 py-2.5 text-sm font-medium text-white bg-[#4F46E5] rounded-lg hover:bg-[#4338ca] transition-colors disabled:opacity-50 flex items-center gap-2 min-w-[140px] justify-center"
+              className="px-6 py-2.5 text-sm font-medium text-white bg-[#FD7100] rounded-lg hover:bg-[#E06400] transition-colors disabled:opacity-50 flex items-center gap-2 min-w-[140px] justify-center"
             >
               {isProcessing ? (
                 <>

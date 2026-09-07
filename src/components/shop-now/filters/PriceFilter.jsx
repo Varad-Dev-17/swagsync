@@ -57,7 +57,7 @@ const PriceFilter = ({ priceRange = { min: "", max: "" }, onChange }) => {
               
               {/* Active Track */}
               <div 
-                className="absolute top-1/2 h-1 bg-[#6D4AFF] rounded-full -translate-y-1/2 pointer-events-none"
+                className="absolute top-1/2 h-1 bg-[#FD7100] rounded-full -translate-y-1/2 pointer-events-none"
                 style={{ left: `calc(${minPercent}% + 4px)`, width: `${maxPercent - minPercent}%` }}
               />
 
@@ -71,7 +71,7 @@ const PriceFilter = ({ priceRange = { min: "", max: "" }, onChange }) => {
                 onChange={handleMinChange}
                 onMouseUp={handleApply}
                 onTouchEnd={handleApply}
-                className="absolute top-1/2 left-0 w-full -translate-y-1/2 appearance-none bg-transparent pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-[#6D4AFF] [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:cursor-pointer z-10"
+                className="absolute top-1/2 left-0 w-full -translate-y-1/2 appearance-none bg-transparent pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-[#FD7100] [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:cursor-pointer z-10"
               />
 
               {/* Max Slider */}
@@ -84,7 +84,7 @@ const PriceFilter = ({ priceRange = { min: "", max: "" }, onChange }) => {
                 onChange={handleMaxChange}
                 onMouseUp={handleApply}
                 onTouchEnd={handleApply}
-                className="absolute top-1/2 left-0 w-full -translate-y-1/2 appearance-none bg-transparent pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-[#6D4AFF] [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:cursor-pointer z-20"
+                className="absolute top-1/2 left-0 w-full -translate-y-1/2 appearance-none bg-transparent pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-[#FD7100] [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:cursor-pointer z-20"
               />
             </div>
             

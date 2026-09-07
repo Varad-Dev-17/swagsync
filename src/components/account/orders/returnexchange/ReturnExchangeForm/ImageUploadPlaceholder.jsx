@@ -73,9 +73,9 @@ const ImageUploadPlaceholder = ({ images, setImages }) => {
           className={`w-full border-2 border-dashed border-gray-300 rounded-lg p-10 flex flex-col items-center justify-center text-center transition-colors bg-white ${isUploading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 cursor-pointer'}`}
         >
           {isUploading ? (
-            <Loader2 className="w-8 h-8 text-[#4F46E5] animate-spin mb-4" />
+            <Loader2 className="w-8 h-8 text-[#FD7100] animate-spin mb-4" />
           ) : (
-            <div className="w-12 h-12 bg-[#eef2ff] text-[#4F46E5] rounded-full flex items-center justify-center mb-4">
+            <div className="w-12 h-12 bg-[#FFF5ED] text-[#FD7100] rounded-full flex items-center justify-center mb-4">
               <ImagePlus className="w-6 h-6" />
             </div>
           )}

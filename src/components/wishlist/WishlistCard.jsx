@@ -8,8 +8,7 @@ import toast from "react-hot-toast";
 
 const WishlistCard = ({ item }) => {
   const { removeFromWishlist } = useWishlist();
-  const navigate = useNavigate();
-  const location = useLocation();
+  const { refreshCart, updateCartCount } = useCart();
 
   const product = item.productId;
   const variant = item.variantId;
@@ -39,8 +38,6 @@ const WishlistCard = ({ item }) => {
     removeFromWishlist(product._id, variant._id);
     toast.success("Removed from wishlist");
   };
-
-  const { refreshCart, updateCartCount } = useCart();
 
   const handleMoveToBag = async (e) => {
     e.preventDefault();
@@ -135,7 +132,7 @@ const WishlistCard = ({ item }) => {
             className={`w-full py-2.5 rounded-md font-bold text-[13px] uppercase tracking-wide transition-all ${
               variant.stock === 0
                 ? "bg-gray-100 text-gray-500 hover:bg-gray-200"
-                : "bg-white border border-[#4F46E5] text-[#4F46E5] hover:bg-[#4F46E5] hover:text-white"
+                : "bg-white border border-[#FD7100] text-[#FD7100] hover:bg-[#FD7100] hover:text-white"
             }`}
           >
             {variant.stock === 0 ? "Remove" : "Move to Bag"}

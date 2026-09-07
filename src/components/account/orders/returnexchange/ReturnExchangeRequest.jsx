@@ -129,7 +129,7 @@ const ReturnExchangeRequest = () => {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[60vh]">
-        <Loader2 className="w-8 h-8 text-[#4F46E5] animate-spin" />
+        <Loader2 className="w-8 h-8 text-[#FD7100] animate-spin" />
       </div>
     );
   }
@@ -224,7 +224,7 @@ const ReturnExchangeRequest = () => {
               value={additionalDetails}
               onChange={(e) => setAdditionalDetails(e.target.value)}
               placeholder="Please provide any additional details about your request..."
-              className="w-full border border-gray-300 rounded-lg px-4 py-3 text-[14px] text-slate-700 focus:outline-none focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5] placeholder-gray-400 resize-none transition-colors"
+              className="w-full border border-gray-300 rounded-lg px-4 py-3 text-[14px] text-slate-700 focus:outline-none focus:border-[#FD7100] focus:ring-1 focus:ring-[#FD7100] placeholder-gray-400 resize-none transition-colors"
             ></textarea>
           </div>
           
@@ -236,7 +236,7 @@ const ReturnExchangeRequest = () => {
             <button
               type="submit"
               disabled={isSubmitting}
-              className={`px-8 py-3 bg-[#4F46E5] text-white rounded-lg text-[14px] font-bold hover:bg-[#4338ca] transition-colors shadow-sm flex items-center justify-center min-w-[160px] ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}
+              className={`px-8 py-3 bg-[#FD7100] text-white rounded-lg text-[14px] font-bold hover:bg-[#E06400] transition-colors shadow-sm flex items-center justify-center min-w-[160px] ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}
             >
               {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Submit Request'}
             </button>

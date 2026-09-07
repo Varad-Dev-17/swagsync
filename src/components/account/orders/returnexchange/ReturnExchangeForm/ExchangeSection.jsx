@@ -82,7 +82,7 @@ const ExchangeSection = ({ requestedVariantId, setRequestedVariantId, productVar
                 }}
                 className={`px-4 py-2 rounded-full border text-[14px] font-medium transition-colors ${
                   selectedColor === color 
-                    ? 'border-[#4F46E5] bg-[#eef2ff] text-[#4F46E5]' 
+                    ? 'border-[#FD7100] bg-[#FFF5ED] text-[#FD7100]' 
                     : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
                 }`}
               >
@@ -119,14 +119,14 @@ const ExchangeSection = ({ requestedVariantId, setRequestedVariantId, productVar
                     disabled={isDisabled}
                     className={`min-w-[70px] h-[52px] rounded-lg flex flex-col items-center justify-center border transition-colors px-3 ${
                       requestedVariantId === variant._id 
-                        ? 'border-[#4F46E5] bg-[#4F46E5] text-white' 
+                        ? 'border-[#FD7100] bg-[#FD7100] text-white' 
                         : isDisabled
                           ? 'border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed opacity-60'
                           : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
                     }`}
                   >
                     <span className="text-[14px] font-bold leading-tight">{size}</span>
-                    <span className={`text-[12px] font-medium leading-tight ${requestedVariantId === variant._id ? 'text-indigo-200' : 'text-gray-500'}`}>₹{variant.price}</span>
+                    <span className={`text-[12px] font-medium leading-tight ${requestedVariantId === variant._id ? 'text-orange-200' : 'text-gray-500'}`}>₹{variant.price}</span>
                   </button>
                   {/* Tooltip for disabled reasons */}
                   {isDisabled && (
@@ -163,7 +163,7 @@ const ExchangeSection = ({ requestedVariantId, setRequestedVariantId, productVar
                     {currAttrs.color && <div>Color: <strong className="text-slate-700 font-bold">{currAttrs.color}</strong></div>}
                     {currAttrs.size && <div>Size: <strong className="text-slate-700 font-bold">{currAttrs.size}</strong></div>}
                   </div>
-                  <div className="text-sm font-bold text-[#4648d4] font-mono pt-1">
+                  <div className="text-sm font-bold text-[#FD7100] font-mono pt-1">
                     ₹{totalCurrentPrice.toLocaleString("en-IN")}
                     {qty > 1 && <span className="text-[11px] font-normal text-slate-500 ml-1">({qty} × ₹{safeCurrentPrice.toLocaleString("en-IN")})</span>}
                   </div>
@@ -172,14 +172,14 @@ const ExchangeSection = ({ requestedVariantId, setRequestedVariantId, productVar
             </div>
 
             {/* Middle Arrow divider on wide screens */}
-            <div className="hidden sm:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-[#4648d4] text-white items-center justify-center z-10 shadow-lg border-2 border-white">
+            <div className="hidden sm:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-[#FD7100] text-white items-center justify-center z-10 shadow-lg border-2 border-white">
               <svg className="w-5 h-5 stroke-[2.5]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
               </svg>
             </div>
 
             {/* New Requested Variant */}
-            <div className="space-y-3 p-4 bg-white rounded-xl border border-[#4648d4]/30 ring-2 ring-[#4648d4]/10 shadow-sm">
+            <div className="space-y-3 p-4 bg-white rounded-xl border border-[#FD7100]/30 ring-2 ring-[#FD7100]/10 shadow-sm">
               <span className="inline-block px-2.5 py-1 bg-emerald-50 text-emerald-700 text-[11px] font-bold rounded-md border border-emerald-100">
                 Requested Replacement
               </span>
@@ -191,10 +191,10 @@ const ExchangeSection = ({ requestedVariantId, setRequestedVariantId, productVar
                 )}
                 <div className="space-y-1">
                   <div className="text-xs text-gray-700 font-medium space-y-0.5">
-                    {reqAttrs.color && <div>Color: <strong className="text-indigo-600 font-bold">{reqAttrs.color}</strong></div>}
-                    {reqAttrs.size && <div>Size: <strong className="text-indigo-600 font-bold">{reqAttrs.size}</strong></div>}
+                    {reqAttrs.color && <div>Color: <strong className="text-orange-600 font-bold">{reqAttrs.color}</strong></div>}
+                    {reqAttrs.size && <div>Size: <strong className="text-orange-600 font-bold">{reqAttrs.size}</strong></div>}
                   </div>
-                  <div className="text-sm font-bold text-[#4648d4] font-mono pt-1">
+                  <div className="text-sm font-bold text-[#FD7100] font-mono pt-1">
                     ₹{totalSelectedPrice.toLocaleString("en-IN")}
                     {qty > 1 && <span className="text-[11px] font-normal text-slate-500 ml-1">({qty} × ₹{safeSelectedPrice.toLocaleString("en-IN")})</span>}
                   </div>

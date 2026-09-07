@@ -71,7 +71,7 @@ const OrderDetails = () => {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[60vh]">
-        <Loader2 className="w-8 h-8 text-[#4F46E5] animate-spin" />
+        <Loader2 className="w-8 h-8 text-[#FD7100] animate-spin" />
       </div>
     );
   }
@@ -130,7 +130,7 @@ const OrderDetails = () => {
           <div className="bg-white border border-gray-200 rounded-none overflow-hidden shadow-xs">
           <div className="bg-gray-50 px-5 py-3.5 border-b border-gray-200 flex items-center justify-between">
             <h3 className="font-bold text-sm text-slate-700 flex items-center gap-2">
-              <Package className="w-4 h-4 text-indigo-600" />
+              <Package className="w-4 h-4 text-[#FD7100]" />
               Items in this Order ({order.items?.length || 0})
             </h3>
             <span className="text-xs font-semibold text-gray-500 font-mono">
@@ -283,8 +283,8 @@ const OrderDetails = () => {
                   <p className="text-[12px] text-gray-500 mt-0.5 pr-12 leading-relaxed">
                     {order.shippingAddress.address}, {order.shippingAddress.city}
                   </p>
-                  <div className="absolute right-0 top-0 w-10 h-10 bg-[#EEF2FF] rounded-lg flex items-center justify-center">
-                    <MapPin className="w-5 h-5 text-[#4F46E5]" />
+                  <div className="absolute right-0 top-0 w-10 h-10 bg-[#FFF5ED] rounded-lg flex items-center justify-center">
+                    <MapPin className="w-5 h-5 text-[#FD7100]" />
                   </div>
                 </div>
               </div>
@@ -347,7 +347,7 @@ const OrderDetails = () => {
                 
                 <div className="flex justify-between items-center pt-0.5">
                   <h3 className="font-extrabold text-[15px] text-slate-700">Total Amount Paid</h3>
-                  <p className="font-black text-[18px] text-[#4F46E5] font-mono">₹{totalPaid.toLocaleString('en-IN')}</p>
+                  <p className="font-black text-[18px] text-[#FD7100] font-mono">₹{totalPaid.toLocaleString('en-IN')}</p>
                 </div>
                 {totalSavings > 0 && (
                   <div className="bg-emerald-50 border border-emerald-200/80 text-emerald-800 text-xs font-bold px-3 py-2 rounded-none text-center shadow-2xs mt-2">

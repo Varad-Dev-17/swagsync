@@ -6,7 +6,7 @@ import AttributeMapping from "../models/attributeMapping.js";
 // GET ALL CATEGORIES (with search, sort, filter, pagination)
 export const getCategories = async (req, res) => {
   try {
-    const { page = 1, limit = 10, search, status, department, sort } = req.query;
+    const { page = 1, limit = 10, search, status, department, departmentId, sort } = req.query;
 
     const query = {};
     if (search) {
@@ -17,7 +17,8 @@ export const getCategories = async (req, res) => {
     }
     if (status) query.status = status;
     // Filter by departmentId inside the array
-    if (department) query.departmentIds = department;
+    const deptId = department || departmentId;
+    if (deptId) query.departmentIds = deptId;
 
     let sortOptions = { createdAt: 1 };
     if (sort) {

@@ -196,7 +196,7 @@ const ProductInfo = ({ product, activeVariant, onVariantChange }) => {
               <Star size={14} className="fill-[#FFB800] text-[#FFB800]" />
             </span>
             <span className="text-gray-300">|</span>
-            <span className="text-[#535766] font-medium group-hover:text-[#4F46E5] transition-colors">
+            <span className="text-[#535766] font-medium group-hover:text-[#FD7100] transition-colors">
               {product.ratingCount ? `${product.ratingCount} ${product.ratingCount === 1 ? 'Review' : 'Reviews'}` : "Write the first review"}
             </span>
           </div>
@@ -265,10 +265,10 @@ const ProductInfo = ({ product, activeVariant, onVariantChange }) => {
                   className="flex flex-col items-center gap-1.5 focus:outline-none group"
                   title={cName}
                 >
-                  <div className={`relative w-14 h-18 rounded overflow-hidden border-2 transition-all ${isSelected ? 'border-[#4F46E5]' : 'border-transparent group-hover:border-[#d4d5d9]'}`}>
+                  <div className={`relative w-14 h-18 rounded overflow-hidden border-2 transition-all ${isSelected ? 'border-[#FD7100]' : 'border-transparent group-hover:border-[#d4d5d9]'}`}>
                     <img src={v.mainImage?.url} alt={cName} className="w-full h-full object-cover"  loading="lazy" decoding="async" />
                   </div>
-                  <span className={`text-[11px] font-semibold transition-colors ${isSelected ? 'text-[#4F46E5]' : 'text-gray-500 group-hover:text-gray-800'}`}>
+                  <span className={`text-[11px] font-semibold transition-colors ${isSelected ? 'text-[#FD7100]' : 'text-gray-500 group-hover:text-gray-800'}`}>
                     {cName}
                   </span>
                 </button>
@@ -287,7 +287,7 @@ const ProductInfo = ({ product, activeVariant, onVariantChange }) => {
               <button
                 type="button"
                 onClick={() => setIsSizeChartOpen(true)}
-                className="text-[12px] font-bold text-[#4F46E5] hover:underline transition-all cursor-pointer uppercase tracking-wide"
+                className="text-[12px] font-bold text-[#FD7100] hover:underline transition-all cursor-pointer uppercase tracking-wide"
               >
                 View Size Chart
               </button>
@@ -308,7 +308,7 @@ const ProductInfo = ({ product, activeVariant, onVariantChange }) => {
                       isOutOfStock 
                         ? 'border-red-500 text-[#282c3f] cursor-not-allowed bg-white' 
                         : size.isActive 
-                          ? 'border-[#4F46E5] text-[#4F46E5] cursor-pointer bg-white' 
+                          ? 'border-[#FD7100] text-[#FD7100] cursor-pointer bg-white' 
                           : 'border-[#bfc0c6] text-[#282c3f] hover:border-[#282c3f] cursor-pointer bg-white'
                     }
                   `}
@@ -336,7 +336,7 @@ const ProductInfo = ({ product, activeVariant, onVariantChange }) => {
         </button>
         <button 
           onClick={handleBuyNow}
-          className="flex-1 cursor-pointer bg-[#6366F1] text-white border border-[#6366F1] py-[13px] rounded font-bold text-[12px] tracking-wide flex items-center justify-center gap-2 hover:bg-white hover:text-[#6366F1] transition-colors shadow-sm"
+          className="flex-1 cursor-pointer bg-[#FD7100] text-white border border-[#FD7100] py-[13px] rounded font-bold text-[12px] tracking-wide flex items-center justify-center gap-2 hover:bg-white hover:text-[#FD7100] transition-colors shadow-sm"
         >
           <CreditCard size={15} />
           BUY NOW
@@ -350,10 +350,10 @@ const ProductInfo = ({ product, activeVariant, onVariantChange }) => {
             const IconComponent = badge.icon;
             return (
               <div key={idx} className="flex flex-col items-center text-center group cursor-default">
-                <div className="w-12 h-12 rounded-full bg-[#f8f9fa] border border-[#eaeaec] flex items-center justify-center text-[#282c3f] shadow-sm mb-2 group-hover:scale-105 group-hover:border-[#4F46E5] group-hover:text-[#4F46E5] transition-all duration-300">
+                <div className="w-12 h-12 rounded-full bg-[#f8f9fa] border border-[#eaeaec] flex items-center justify-center text-[#282c3f] shadow-sm mb-2 group-hover:scale-105 group-hover:border-[#FD7100] group-hover:text-[#FD7100] transition-all duration-300">
                   <IconComponent size={22} strokeWidth={1.8} />
                 </div>
-                <span className="text-[12px] font-medium text-[#282c3f] leading-snug max-w-[100px] group-hover:text-[#4F46E5] transition-colors">
+                <span className="text-[12px] font-medium text-[#282c3f] leading-snug max-w-[100px] group-hover:text-[#FD7100] transition-colors">
                   {badge.title}
                 </span>
               </div>

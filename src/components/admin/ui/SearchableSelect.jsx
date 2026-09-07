@@ -11,8 +11,9 @@ const SearchableSelect = ({
   loading = false,
   error = false,
   required = false,
-  size = 'md', // 'md' or 'sm'
-  className = ''
+  size = 'md',
+  className = '',
+  align = 'left'
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -156,7 +157,7 @@ const SearchableSelect = ({
   }
 
   return (
-    <div className={`relative w-full ${className}`} ref={containerRef}>
+    <div className={`relative ${className.includes('w-') ? '' : 'w-full'} ${className}`} ref={containerRef}>
       {label && (
         <label className="block text-[13px] font-medium text-[#4648d4] mb-2">
           {label} {required && <span className="text-red-500">*</span>}
@@ -177,13 +178,18 @@ const SearchableSelect = ({
           {loading && (
             <div className="w-4 h-4 border-2 border-[#4648d4] border-t-transparent rounded-full animate-spin" />
           )}
-          <ChevronDown className={`w-5 h-5 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+          <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isOpen ? 'rotate-180 text-[#4648d4]' : ''}`} />
         </div>
       </div>
 
       {/* Popover */}
       {isOpen && (
-        <div className="absolute z-50 w-full mt-2 bg-white border border-gray-100 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+        <div 
+          className={`absolute z-50 mt-2 bg-white border border-gray-200/80 rounded-xl shadow-[0_12px_35px_rgba(0,0,0,0.12)] overflow-hidden animate-in fade-in zoom-in-95 duration-100 ${
+            align === 'right' ? 'right-0' : 'left-0'
+          }`}
+          style={{ minWidth: 'max(100%, 220px)', maxWidth: '360px' }}
+        >
           
           {/* Search Input */}
           <div className="p-2 border-b border-gray-100 bg-white sticky top-0 z-10">
@@ -192,7 +198,7 @@ const SearchableSelect = ({
               <input
                 ref={searchInputRef}
                 type="text"
-                className="w-full h-10 pl-9 pr-4 text-[13px] bg-gray-50 border-none rounded-lg outline-none focus:ring-1 focus:ring-[#4648d4]/30 focus:bg-white transition-colors"
+                className="w-full h-9 pl-9 pr-4 text-[13px] bg-gray-50 border border-transparent rounded-lg outline-none focus:border-[#4648d4]/40 focus:bg-white transition-colors"
                 placeholder="Search..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -205,11 +211,11 @@ const SearchableSelect = ({
           {/* Options List */}
           <div 
             ref={listboxRef}
-            className="max-h-60 overflow-y-auto p-1 py-1"
+            className="max-h-60 overflow-y-auto p-1.5"
             role="listbox"
           >
             {filteredOptions.length === 0 ? (
-              <div className="px-4 py-8 text-center text-sm text-gray-500">
+              <div className="px-4 py-6 text-center text-[13px] text-gray-500">
                 No results found.
               </div>
             ) : (
@@ -217,10 +223,10 @@ const SearchableSelect = ({
                 const isSelected = opt.value === value;
                 const isHighlighted = index === highlightedIndex;
 
-                let optionClass = "flex items-center justify-between px-3 py-2.5 text-[13px] rounded-lg cursor-pointer transition-colors";
+                let optionClass = "flex items-center justify-between px-3 py-2 text-[13px] rounded-lg cursor-pointer transition-colors";
                 
                 if (isSelected) {
-                  optionClass += " bg-indigo-50/50 text-[#4648d4] font-medium";
+                  optionClass += " bg-indigo-50/80 text-[#4648d4] font-semibold";
                 } else if (isHighlighted) {
                   optionClass += " bg-gray-50 text-gray-900";
                 } else {
@@ -236,7 +242,7 @@ const SearchableSelect = ({
                     onClick={() => handleSelect(opt.value)}
                     onMouseEnter={() => setHighlightedIndex(index)}
                   >
-                    <span className="truncate pr-4">{opt.label}</span>
+                    <span className="truncate pr-3 whitespace-normal font-normal">{opt.label}</span>
                     {isSelected && (
                       <Check className="w-4 h-4 shrink-0 text-[#4648d4]" />
                     )}

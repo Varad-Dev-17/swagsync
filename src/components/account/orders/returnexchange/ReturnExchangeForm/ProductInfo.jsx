@@ -26,12 +26,12 @@ const ProductInfo = ({ product, variant, quantity, selectedQty, onQtyChange, pri
           {maxQty <= 1 ? (
             <span>Qty: <span className="font-medium text-slate-700">1</span></span>
           ) : (
-            <div className="flex items-center gap-2 bg-indigo-50/70 p-1.5 px-3 rounded-lg border border-indigo-100">
-              <span className="text-xs font-bold text-indigo-950">Claim Quantity:</span>
+            <div className="flex items-center gap-2 bg-orange-50/70 p-1.5 px-3 rounded-lg border border-orange-100">
+              <span className="text-xs font-bold text-orange-950">Claim Quantity:</span>
               <select
                 value={currentQty}
                 onChange={(e) => onQtyChange?.(Number(e.target.value))}
-                className="border border-indigo-200 rounded px-2 py-0.5 bg-white text-xs font-extrabold text-[#4648d4] focus:outline-none focus:ring-1 focus:ring-[#4648d4] cursor-pointer shadow-2xs"
+                className="border border-orange-200 rounded px-2 py-0.5 bg-white text-xs font-extrabold text-[#FD7100] focus:outline-none focus:ring-1 focus:ring-[#FD7100] cursor-pointer shadow-2xs"
               >
                 {Array.from({ length: maxQty }, (_, i) => i + 1).map((q) => (
                   <option key={q} value={q}>
@@ -39,7 +39,7 @@ const ProductInfo = ({ product, variant, quantity, selectedQty, onQtyChange, pri
                   </option>
                 ))}
               </select>
-              <span className="text-[11px] font-medium text-indigo-700">(of {maxQty} purchased)</span>
+              <span className="text-[11px] font-medium text-orange-700">(of {maxQty} purchased)</span>
             </div>
           )}
         </div>

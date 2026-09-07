@@ -624,14 +624,13 @@ export const addProduct = async (req, res) => {
       });
     }
 
-    // Check duplicate slug
-    const existingSlug = await Product.findOne({ slug: slug.trim().toLowerCase() });
-    if (existingSlug) {
-      return res.status(409).json({
-        success: false,
-        message: "Product with this slug already exists",
-        data: null,
-      });
+    // Auto-generate unique slug if collision occurs
+    const baseSlug = slug.trim().toLowerCase();
+    let uniqueSlug = baseSlug;
+    let counter = 1;
+    while (await Product.findOne({ slug: uniqueSlug })) {
+      uniqueSlug = `${baseSlug}-${counter}`;
+      counter++;
     }
 
     // Validate references
@@ -706,7 +705,7 @@ export const addProduct = async (req, res) => {
     const product = await Product.create({
       productId: productIdSequence,
       title: title.trim(),
-      slug: slug.trim().toLowerCase(),
+      slug: uniqueSlug,
       shortDescription: shortDescription.trim(),
       longDescription: longDescription.trim(),
       department,
@@ -767,13 +766,18 @@ export const updateProduct = async (req, res) => {
       });
     }
 
-    // Validate Slug uniqueness if changed
-    if (slug?.trim() && slug.trim().toLowerCase() !== product.slug) {
-      const existingSlug = await Product.findOne({ slug: slug.trim().toLowerCase(), _id: { $ne: id } });
-      if (existingSlug) {
-        return res.status(409).json({ success: false, message: "Product with this slug already exists" });
+    // Validate and ensure Slug uniqueness if changed
+    if (slug?.trim()) {
+      const baseSlug = slug.trim().toLowerCase();
+      if (baseSlug !== product.slug) {
+        let uniqueSlug = baseSlug;
+        let counter = 1;
+        while (await Product.findOne({ slug: uniqueSlug, _id: { $ne: id } })) {
+          uniqueSlug = `${baseSlug}-${counter}`;
+          counter++;
+        }
+        product.slug = uniqueSlug;
       }
-      product.slug = slug.trim().toLowerCase();
     }
 
     // Validations for Department, Category, Brand

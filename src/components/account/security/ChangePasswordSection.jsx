@@ -57,7 +57,7 @@ const ChangePasswordSection = () => {
               onChange={(e) => setOldPassword(e.target.value)}
               placeholder="Enter current password"
               required
-              className="w-full px-4 py-3 border border-gray-300 bg-white text-slate-700 font-medium focus:outline-none focus:border-[#4F46E5] transition-all"
+              className="w-full px-4 py-3 border border-gray-300 bg-white text-slate-700 font-medium focus:outline-none focus:border-[#FD7100] transition-all"
             />
           </div>
 
@@ -70,7 +70,7 @@ const ChangePasswordSection = () => {
               placeholder="Enter new password"
               required
               minLength={6}
-              className="w-full px-4 py-3 border border-gray-300 bg-white text-slate-700 font-medium focus:outline-none focus:border-[#4F46E5] transition-all"
+              className="w-full px-4 py-3 border border-gray-300 bg-white text-slate-700 font-medium focus:outline-none focus:border-[#FD7100] transition-all"
             />
           </div>
 
@@ -78,7 +78,7 @@ const ChangePasswordSection = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="px-8 py-3 bg-[#4F46E5] text-white font-bold uppercase tracking-wider text-xs hover:bg-[#4338ca] transition-colors flex items-center justify-center gap-2 disabled:opacity-70 cursor-pointer shadow-xs"
+              className="px-8 py-3 bg-[#FD7100] text-white font-bold uppercase tracking-wider text-xs hover:bg-[#E06400] transition-colors flex items-center justify-center gap-2 disabled:opacity-70 cursor-pointer shadow-xs"
             >
               {isLoading ? (
                 <>

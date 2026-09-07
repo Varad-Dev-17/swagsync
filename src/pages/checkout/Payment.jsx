@@ -59,31 +59,31 @@ const Payment = () => {
       id: 'upi',
       title: 'UPI / QR',
       description: 'Pay directly from your bank account using any UPI app.',
-      icon: <Smartphone size={24} className="text-[#4F46E5]" />
+      icon: <Smartphone size={24} className="text-[#FD7100]" />
     },
     {
       id: 'card',
       title: 'Credit / Debit Card',
       description: 'Pay securely with your Visa, Mastercard, or RuPay card.',
-      icon: <CreditCard size={24} className="text-[#4F46E5]" />
+      icon: <CreditCard size={24} className="text-[#FD7100]" />
     },
     {
       id: 'netbanking',
       title: 'Net Banking',
       description: 'Pay using your bank\'s internet banking portal.',
-      icon: <Building2 size={24} className="text-[#4F46E5]" />
+      icon: <Building2 size={24} className="text-[#FD7100]" />
     },
     {
       id: 'razorpay',
       title: 'Pay with Razorpay',
       description: 'Pay securely using UPI, cards, net banking, and other Razorpay payment options.',
-      icon: <ShieldCheck size={24} className="text-[#4F46E5]" />
+      icon: <ShieldCheck size={24} className="text-[#FD7100]" />
     },
     {
       id: 'cod',
       title: 'Cash on Delivery',
       description: 'Pay in cash when your order is delivered to your doorstep.',
-      icon: <Banknote size={24} className="text-[#4F46E5]" />
+      icon: <Banknote size={24} className="text-[#FD7100]" />
     }
   ];
 
@@ -156,7 +156,7 @@ const Payment = () => {
               contact: selectedAddress.phone
             },
             theme: {
-              color: "#4F46E5"
+              color: "#FD7100"
             },
             modal: {
               ondismiss: function() {
@@ -264,7 +264,7 @@ const Payment = () => {
                   onClick={handleConfirmOrder}
                   disabled={isProcessing}
                   className={`w-full text-white font-bold text-[14px] py-3.5 rounded-lg shadow-sm transition-colors flex items-center justify-center gap-2 ${
-                    isProcessing ? 'bg-[#4338ca] opacity-70 cursor-not-allowed' : 'bg-[#4F46E5] hover:bg-[#6D4AFF]'
+                    isProcessing ? 'bg-[#E06400] opacity-70 cursor-not-allowed' : 'bg-[#FD7100] hover:bg-[#E06400]'
                   }`}
                 >
                   {isProcessing ? (

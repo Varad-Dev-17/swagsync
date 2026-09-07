@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, Plus, Loader2 } from 'lucide-react';
+import { MapPin, Plus, Loader2, Pencil, Trash2 } from 'lucide-react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../../context/AuthContext';
@@ -113,33 +113,40 @@ const SavedAddressSection = () => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-8 h-8 text-[#4F46E5] animate-spin" />
+        <Loader2 className="w-8 h-8 text-[#FD7100] animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="w-full">
-      <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
-        <h2 className="text-2xl md:text-3xl font-extrabold text-slate-700 tracking-tight">Saved Addresses</h2>
+    <div className="bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden w-full">
+      <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between flex-wrap gap-4">
+        <div className="flex items-center gap-3">
+          <MapPin className="w-6 h-6 text-[#FD7100]" />
+          <div>
+            <h3 className="text-lg font-bold text-slate-800 tracking-tight">Saved Addresses</h3>
+            <p className="text-sm text-gray-500 font-medium">Manage your delivery addresses</p>
+          </div>
+        </div>
         <button 
           onClick={() => {
             setEditingAddress(null);
             setIsAddressModalOpen(true);
           }}
-          className="flex items-center gap-2 px-5 py-2.5 bg-[#4F46E5] text-white hover:bg-[#4338CA] transition-colors text-xs font-bold uppercase tracking-wider cursor-pointer shadow-2xs"
+          className="flex items-center gap-2 px-5 py-2.5 bg-[#FD7100] text-white rounded-lg hover:bg-[#E06400] transition-colors text-sm font-bold cursor-pointer"
         >
           <Plus size={16} />
           <span>Add New Address</span>
         </button>
       </div>
       
+      <div className="p-6 md:p-8">
       {addresses.length === 0 ? (
-        <div className="border border-gray-200 p-12 text-center bg-gray-50/50">
-          <div className="w-16 h-16 bg-[#EEF2FF] border border-[#4F46E5]/20 flex items-center justify-center mx-auto mb-4">
-            <MapPin size={24} className="text-[#4F46E5]" />
+        <div className="border border-dashed border-gray-300 rounded-xl p-12 text-center bg-gray-50/50">
+          <div className="w-16 h-16 bg-[#FFF5ED] rounded-full flex items-center justify-center mx-auto mb-4">
+            <MapPin size={24} className="text-[#FD7100]" />
           </div>
-          <h3 className="text-lg font-bold text-slate-700 mb-2">No addresses saved yet</h3>
+          <h3 className="text-lg font-bold text-slate-800 mb-2">No addresses saved yet</h3>
           <p className="text-gray-500 text-sm max-w-sm mx-auto">
             Add your home or work address for faster checkout on your next order.
           </p>
@@ -150,31 +157,30 @@ const SavedAddressSection = () => {
             {addresses.map((address) => (
               <div 
                 key={address._id} 
-                className={`border border-gray-200 bg-white shadow-2xs transition-all relative group ${
-                  address.isDefault ? 'border-l-[6px] border-l-[#4F46E5] bg-gradient-to-r from-[#EEF2FF]/40 to-white' : 'border-l-[6px] border-l-gray-300 hover:border-l-[#4F46E5]'
+                className={`border border-gray-100 rounded-xl overflow-hidden transition-all relative shadow-sm ${
+                  address.isDefault ? 'border-l-4 border-l-[#FD7100]' : 'border-l-4 border-l-transparent hover:border-l-gray-300'
                 }`}
               >
-                {/* Main Content Area */}
-                <div className="p-4 md:p-5">
+                <div className={`p-5 md:p-6 pb-4 ${address.isDefault ? 'bg-[#FFF5ED]/30' : 'bg-white'}`}>
                   {/* Header Row: Name & Badge */}
                   <div className="flex justify-between items-start mb-3">
                     <div className="flex items-center gap-3">
-                      <h4 className="text-[17px] font-extrabold text-slate-700 tracking-tight">
+                      <h4 className="text-base font-bold text-slate-800 tracking-tight">
                         {address.fullName}
                       </h4>
-                      <div className="px-2.5 py-0.5 bg-[#EEF2FF] text-[#4F46E5] text-[11px] font-extrabold uppercase tracking-wider border border-indigo-200">
+                      <div className="px-2.5 py-0.5 bg-[#FFF5ED] text-[#FD7100] text-[10px] font-bold rounded-md">
                         {address.label}
                       </div>
                     </div>
                     {address.isDefault && (
-                      <div className="px-2.5 py-1 bg-emerald-100 border border-emerald-300 text-emerald-800 text-[10px] font-extrabold uppercase tracking-wider shadow-2xs">
+                      <div className="px-2.5 py-1 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded-md">
                         Default Address
                       </div>
                     )}
                   </div>
 
                   {/* Address Details */}
-                  <div className="text-[14px] text-gray-600 space-y-1 mt-3">
+                  <div className="text-[14px] text-gray-500 space-y-1">
                     <p>
                       {address.addressLine1}
                       {address.addressLine2 ? `, ${address.addressLine2}` : ''}
@@ -182,28 +188,28 @@ const SavedAddressSection = () => {
                     </p>
                     <p>{address.city}, {address.state} - {address.pincode}</p>
                     <p>{address.country}</p>
-                    <p className="pt-2 font-medium">Mobile: <span className="text-slate-700">{address.phone}</span></p>
+                    <p className="pt-2 font-medium">Mobile: <span className="text-slate-800">{address.phone}</span></p>
                   </div>
                 </div>
 
                 {/* Bottom Action Bar */}
-                <div className="border-t border-gray-100 flex items-center divide-x divide-gray-100 bg-gray-50/50">
+                <div className="border-t border-gray-100 px-5 py-3 flex items-center gap-8 bg-white">
                   <button 
                     onClick={() => handleEditClick(address)}
-                    className="flex-1 py-2.5 text-[13px] font-bold text-[#4F46E5] hover:bg-gray-50 transition-colors uppercase tracking-wide"
+                    className="flex items-center gap-1.5 text-sm font-bold text-[#FD7100] hover:text-[#E06400] transition-colors"
                   >
-                    Edit
+                    <Pencil size={14} /> Edit
                   </button>
                   <button 
                     onClick={() => handleDeleteClick(address)}
-                    className="flex-1 py-2.5 text-[13px] font-bold text-[#4F46E5] hover:bg-gray-50 transition-colors uppercase tracking-wide"
+                    className="flex items-center gap-1.5 text-sm font-bold text-red-500 hover:text-red-600 transition-colors"
                   >
-                    Remove
+                    <Trash2 size={14} /> Remove
                   </button>
                   {!address.isDefault && (
                     <button 
                       onClick={() => handleSetDefault(address._id)}
-                      className="flex-1 py-2.5 text-[13px] font-bold text-[#4F46E5] hover:bg-gray-50 transition-colors uppercase tracking-wide"
+                      className="flex items-center gap-1.5 text-sm font-bold text-[#FD7100] hover:text-[#E06400] transition-colors ml-auto"
                     >
                       Set as Default
                     </button>
@@ -214,6 +220,7 @@ const SavedAddressSection = () => {
           </div>
         </div>
       )}
+      </div>
 
       {/* Address Form Modal */}
       <AddressModal

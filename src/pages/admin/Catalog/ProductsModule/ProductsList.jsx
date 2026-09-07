@@ -362,7 +362,7 @@ const ProductsList = () => {
           extraFilters={
             <div className="flex items-center gap-2">
               <SearchableSelect
-                className="w-[180px]"
+                className="w-[130px] shrink-0"
                 size="sm"
                 value={departmentFilter}
                 onChange={setDepartmentFilter}
@@ -370,7 +370,7 @@ const ProductsList = () => {
               />
               
               <SearchableSelect
-                className="w-[180px]"
+                className="w-[130px] shrink-0"
                 size="sm"
                 value={categoryFilter}
                 onChange={setCategoryFilter}
@@ -378,7 +378,7 @@ const ProductsList = () => {
               />
 
               <SearchableSelect
-                className="w-[160px]"
+                className="w-[120px] shrink-0"
                 size="sm"
                 value={brandFilter}
                 onChange={setBrandFilter}
@@ -386,8 +386,9 @@ const ProductsList = () => {
               />
 
               <SearchableSelect
-                className="w-[140px]"
+                className="w-[110px] shrink-0"
                 size="sm"
+                align="right"
                 value={statusFilter}
                 onChange={setStatusFilter}
                 options={[
@@ -401,7 +402,7 @@ const ProductsList = () => {
           actionButton={
             <button 
               onClick={() => navigate('/admin/products/add')}
-              className="bg-[#4648d4] hover:bg-[#3b3db0] text-white px-4 py-2 rounded-xl flex items-center justify-center gap-2 transition-colors font-medium text-sm whitespace-nowrap"
+              className="bg-[#4648d4] hover:bg-[#3b3db0] text-white px-4 py-2 rounded-xl flex items-center justify-center gap-2 transition-colors font-medium text-sm whitespace-nowrap shrink-0"
             >
               <Plus size={18} />
               Add Product

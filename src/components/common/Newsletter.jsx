@@ -18,8 +18,8 @@ const Newsletter = () => {
   return (
     <section className="py-12 md:py-20 relative bg-white overflow-hidden">
       {/* Decorative subtle background blobs */}
-      <div className="absolute top-0 left-0 w-64 h-64 bg-blue-100 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse"></div>
-      <div className="absolute bottom-0 right-0 w-80 h-80 bg-purple-100 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse" style={{ animationDelay: '2s' }}></div>
+      <div className="absolute top-0 left-0 w-64 h-64 bg-orange-100 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse"></div>
+      <div className="absolute bottom-0 right-0 w-80 h-80 bg-orange-100 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse" style={{ animationDelay: '2s' }}></div>
       <div className="max-w-6xl mx-auto px-4 md:px-8 relative z-10">
         <FadeIn>
           <div className="flex flex-col md:flex-row items-center justify-center gap-10 md:gap-20">
@@ -32,7 +32,7 @@ const Newsletter = () => {
               transition={{ duration: 0.7 }}
             >
               <img 
-                src="/home/newsletter_swagsync_bag.png" 
+                src="/home/Swag_Sync.png" 
                 alt="Subscribe" 
                 className="w-full max-w-[350px] object-contain mix-blend-multiply"
               />
@@ -74,14 +74,14 @@ const Newsletter = () => {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="enter your mail id"
                   required
-                  className="w-full bg-transparent border-b-2 border-gray-200 focus:border-[#4648D4] px-2 py-3 outline-none text-[#111827] placeholder-gray-400 text-sm font-medium transition-colors mb-6 text-center md:text-left"
+                  className="w-full bg-transparent border-b-2 border-gray-200 focus:border-[#FD7100] px-2 py-3 outline-none text-[#111827] placeholder-gray-400 text-sm font-medium transition-colors mb-6 text-center md:text-left"
                 />
                 
                 <motion.button
                   type="submit"
                   className="px-10 py-2.5 text-white font-semibold rounded-full text-[13px] tracking-wide"
                   style={{
-                    background: "linear-gradient(90deg, #1d4ed8 0%, #60a5fa 100%)",
+                    background: "linear-gradient(90deg, #EA580C 0%, #FD7100 100%)",
                   }}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}

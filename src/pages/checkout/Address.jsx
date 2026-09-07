@@ -83,7 +83,7 @@ const Address = () => {
               <h2 className="text-xl font-bold text-slate-700">Select Delivery Address</h2>
               <button 
                 onClick={() => setIsAddressModalOpen(true)}
-                className="text-[13px] font-bold text-[#4F46E5] border border-[#4F46E5] px-4 py-2 rounded-lg hover:bg-[#EEF2FF] transition-colors flex items-center gap-2"
+                className="text-[13px] font-bold text-[#FD7100] border border-[#FD7100] px-4 py-2 rounded-lg hover:bg-[#FFF5ED] transition-colors flex items-center gap-2"
               >
                 <Plus size={16} /> ADD NEW ADDRESS
               </button>
@@ -91,12 +91,12 @@ const Address = () => {
 
             {isLoading ? (
               <div className="bg-white rounded-xl shadow-sm p-12 flex items-center justify-center">
-                <Loader2 className="w-8 h-8 text-[#4F46E5] animate-spin" />
+                <Loader2 className="w-8 h-8 text-[#FD7100] animate-spin" />
               </div>
             ) : addresses.length === 0 ? (
               <div className="bg-white rounded-xl shadow-sm p-12 text-center border border-dashed border-gray-300">
-                <div className="w-16 h-16 bg-[#EEF2FF] rounded-full flex items-center justify-center mx-auto mb-4">
-                  <MapPin size={24} className="text-[#4F46E5]" />
+                <div className="w-16 h-16 bg-[#FFF5ED] rounded-full flex items-center justify-center mx-auto mb-4">
+                  <MapPin size={24} className="text-[#FD7100]" />
                 </div>
                 <h3 className="text-lg font-bold text-slate-700 mb-2">No addresses saved</h3>
                 <p className="text-gray-500 text-sm max-w-sm mx-auto mb-6">
@@ -104,7 +104,7 @@ const Address = () => {
                 </p>
                 <button 
                   onClick={() => setIsAddressModalOpen(true)}
-                  className="px-6 py-2.5 bg-[#4F46E5] text-white rounded-lg font-bold hover:bg-[#6D4AFF] transition-colors"
+                  className="px-6 py-2.5 bg-[#FD7100] text-white rounded-lg font-bold hover:bg-[#E06400] transition-colors"
                 >
                   ADD NEW ADDRESS
                 </button>
@@ -178,7 +178,7 @@ const Address = () => {
                   disabled={!selectedAddressId}
                   className={`w-full text-white font-bold text-[14px] py-3.5 rounded-lg shadow-sm transition-colors flex items-center justify-center ${
                     selectedAddressId 
-                      ? 'bg-[#4F46E5] hover:bg-[#6D4AFF] cursor-pointer' 
+                      ? 'bg-[#FD7100] hover:bg-[#E06400] cursor-pointer' 
                       : 'bg-gray-400 cursor-not-allowed'
                   }`}
                 >

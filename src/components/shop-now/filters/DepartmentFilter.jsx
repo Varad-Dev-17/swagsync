@@ -21,8 +21,8 @@ const DepartmentFilter = ({ departments = [], activeDepartment = "all", onChange
               onClick={() => onChange && onChange(dept.name)}
             >
               <div className="flex items-center gap-3">
-                <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-colors ${isActive ? 'border-[#6D4AFF]' : 'border-[#E5E7EB] group-hover:border-[#6D4AFF]'}`}>
-                  {isActive && <div className="w-2 h-2 rounded-full bg-[#6D4AFF]" />}
+                <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-colors ${isActive ? 'border-[#FD7100]' : 'border-[#E5E7EB] group-hover:border-[#FD7100]'}`}>
+                  {isActive && <div className="w-2 h-2 rounded-full bg-[#FD7100]" />}
                 </div>
                 <span className={`text-[15px] ${isActive ? 'text-[#111827] font-medium' : 'text-[#4B5563]'}`}>
                   {dept.name}
@@ -39,7 +39,7 @@ const DepartmentFilter = ({ departments = [], activeDepartment = "all", onChange
               e.preventDefault();
               setShowAll(!showAll);
             }}
-            className="text-[#6D4AFF] text-left text-[14px] font-semibold pt-1 pl-1 hover:underline w-fit transition-all"
+            className="text-[#FD7100] text-left text-[14px] font-semibold pt-1 pl-1 hover:underline w-fit transition-all"
           >
             {showAll ? "- show less" : `+ ${departments.length - 5} more`}
           </button>

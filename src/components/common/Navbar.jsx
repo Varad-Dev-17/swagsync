@@ -250,11 +250,11 @@ const Navbar = () => {
                   <Link
                     key={link.name}
                     to={link.path}
-                    className={`flex items-center gap-1.5 font-bold tracking-wide transition-colors hover:text-[#4F46E5]`}
+                    className={`flex items-center gap-1.5 font-bold tracking-wide transition-colors hover:text-[#FD7100]`}
                     style={{
                       fontFamily: "'Poppins', sans-serif",
                       fontSize: "14px",
-                      color: isActive(link.path) ? "#4F46E5" : (isNavSolid ? "#111827" : "white"),
+                      color: isActive(link.path) ? "#FD7100" : (isNavSolid ? "#111827" : "white"),
                     }}
                   >
                     <link.icon className="w-4 h-4" />
@@ -279,17 +279,17 @@ const Navbar = () => {
                           <Link
                             to={`/products?department=${encodeURIComponent(dept.name)}`}
                             onClick={() => setActiveHoverDept(null)}
-                            className="font-bold tracking-wide transition-colors uppercase hover:text-[#4F46E5] flex items-center gap-1"
+                            className="font-bold tracking-wide transition-colors uppercase hover:text-[#FD7100] flex items-center gap-1"
                             style={{
                               fontFamily: "'Poppins', sans-serif",
                               fontSize: "14px",
-                              color: isCurrent || isHovered ? "#4F46E5" : (isNavSolid ? "#111827" : "white"),
+                              color: isCurrent || isHovered ? "#FD7100" : (isNavSolid ? "#111827" : "white"),
                             }}
                           >
                             {dept.name}
                           </Link>
                           {(isCurrent || isHovered) && (
-                            <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#4F46E5] rounded-full transition-all duration-200" />
+                            <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#FD7100] rounded-full transition-all duration-200" />
                           )}
 
                           {/* Desktop Mega-Menu Dropdown (Anchored directly below category tab) */}
@@ -352,7 +352,7 @@ const Navbar = () => {
                                           <div key={sec.title} className={secIdx > 0 ? "border-t border-[#E5E7EB]/70 pt-5" : ""}>
                                             {/* Section Header */}
                                             <h4
-                                              className="text-[13px] font-extrabold tracking-wide uppercase text-[#4F46E5] mb-3 select-none text-center"
+                                              className="text-[13px] font-extrabold tracking-wide uppercase text-[#FD7100] mb-3 select-none text-center"
                                               style={{ fontFamily: "'Poppins', sans-serif" }}
                                             >
                                               {sec.title}
@@ -368,7 +368,7 @@ const Navbar = () => {
                                                       to={`/products?department=${encodeURIComponent(dept.name)}&category=${encodeURIComponent(cat.name)}`}
                                                       onClick={() => setActiveHoverDept(null)}
                                                       className={`text-[13px] transition-all block duration-150 py-0.5 truncate text-center ${isCatSelected
-                                                          ? "text-[#4F46E5] font-bold"
+                                                          ? "text-[#FD7100] font-bold"
                                                           : "text-[#4B5563] font-medium hover:text-[#111827] hover:font-bold scale-100 hover:scale-105"
                                                         }`}
                                                       style={{ fontFamily: "'Poppins', sans-serif" }}
@@ -399,7 +399,7 @@ const Navbar = () => {
                                   <Link
                                     to={`/products?department=${encodeURIComponent(dept.name)}`}
                                     onClick={() => setActiveHoverDept(null)}
-                                    className="text-xs font-bold text-[#4F46E5] hover:text-[#4338CA] flex items-center gap-1 group transition-colors"
+                                    className="text-xs font-bold text-[#FD7100] hover:text-[#E06400] flex items-center gap-1 group transition-colors"
                                     style={{ fontFamily: "'Poppins', sans-serif" }}
                                   >
                                     Explore All {dept.name} Products
@@ -443,7 +443,7 @@ const Navbar = () => {
                           }
                         }}
                         placeholder="Search products..."
-                        className={`w-full pl-11 pr-4 py-2 rounded-full focus:outline-none focus:ring-2 focus:ring-[#4F46E5] text-[13px] border ${searchBg} ${searchBorder} ${textColor} ${searchPlaceholder} transition-all duration-300 backdrop-blur-sm shadow-sm`}
+                        className={`w-full pl-11 pr-4 py-2 rounded-full focus:outline-none focus:ring-2 focus:ring-[#FD7100] text-[13px] border ${searchBg} ${searchBorder} ${textColor} ${searchPlaceholder} transition-all duration-300 backdrop-blur-sm shadow-sm`}
                         style={{ fontFamily: "'Poppins', sans-serif" }}
                       />
                     </div>
@@ -465,12 +465,12 @@ const Navbar = () => {
                   <>
                     <Link
                       to="/wishlist"
-                      className={`relative flex flex-col items-center justify-center gap-1 ${textColor} transition-all duration-300 px-3 py-1.5 rounded-lg ${isScrolled ? "hover:bg-gray-100 hover:text-[#4F46E5]" : "hover:text-white/80"
+                      className={`relative flex flex-col items-center justify-center gap-1 ${textColor} transition-all duration-300 px-3 py-1.5 rounded-lg ${isScrolled ? "hover:bg-gray-100 hover:text-[#FD7100]" : "hover:text-white/80"
                         }`}
                     >
                       <div className="relative">
                         <Heart size={20} strokeWidth={1.5} />
-                        <span className="absolute -top-1.5 -right-2 w-4 h-4 bg-[#4F46E5] text-white text-[9px] font-medium rounded-full flex items-center justify-center">
+                        <span className="absolute -top-1.5 -right-2 w-4 h-4 bg-[#FD7100] text-white text-[9px] font-medium rounded-full flex items-center justify-center">
                           {wishlistCount > 99 ? "99" : wishlistCount}
                         </span>
                       </div>
@@ -479,12 +479,12 @@ const Navbar = () => {
 
                     <Link
                       to="/bag"
-                      className={`relative flex flex-col items-center justify-center gap-1 ${textColor} transition-all duration-300 px-3 py-1.5 rounded-lg ${isScrolled ? "hover:bg-gray-100 hover:text-[#4F46E5]" : "hover:text-white/80"
+                      className={`relative flex flex-col items-center justify-center gap-1 ${textColor} transition-all duration-300 px-3 py-1.5 rounded-lg ${isScrolled ? "hover:bg-gray-100 hover:text-[#FD7100]" : "hover:text-white/80"
                         }`}
                     >
                       <div className="relative">
                         <ShoppingBag size={20} strokeWidth={1.5} />
-                        <span className="absolute -top-1.5 -right-2 w-4 h-4 bg-[#4F46E5] text-white text-[9px] font-medium rounded-full flex items-center justify-center">
+                        <span className="absolute -top-1.5 -right-2 w-4 h-4 bg-[#FD7100] text-white text-[9px] font-medium rounded-full flex items-center justify-center">
                           {cartCount > 99 ? "99" : cartCount}
                         </span>
                       </div>
@@ -497,7 +497,7 @@ const Navbar = () => {
                 {user ? (
                   <Link
                     to="/account"
-                    className={`flex items-center gap-2 ${textColor} transition-all duration-300 pl-2 pr-3 py-1.5 rounded-full ${isScrolled ? "hover:bg-gray-100 hover:text-[#4F46E5]" : "hover:bg-white/10 hover:text-white"
+                    className={`flex items-center gap-2 ${textColor} transition-all duration-300 pl-2 pr-3 py-1.5 rounded-full ${isScrolled ? "hover:bg-gray-100 hover:text-[#FD7100]" : "hover:bg-white/10 hover:text-white"
                       }`}
                   >
                     <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 overflow-hidden shrink-0">
@@ -528,7 +528,7 @@ const Navbar = () => {
                     {/* Mobile Login Icon */}
                     <Link
                       to="/signin"
-                      className={`md:hidden flex flex-col items-center justify-center gap-1 ${textColor} transition-all duration-300 px-2 py-1.5 rounded-lg ${isScrolled ? "hover:bg-gray-100 hover:text-[#4F46E5]" : "hover:text-white/80"
+                      className={`md:hidden flex flex-col items-center justify-center gap-1 ${textColor} transition-all duration-300 px-2 py-1.5 rounded-lg ${isScrolled ? "hover:bg-gray-100 hover:text-[#FD7100]" : "hover:text-white/80"
                         }`}
                     >
                       <User size={20} strokeWidth={1.5} />
@@ -539,7 +539,7 @@ const Navbar = () => {
                 {/* Mobile Menu Button */}
                 <button
                   onClick={() => setIsMenuOpen(!isMenuOpen)}
-                  className={`lg:hidden ${textColor} hover:text-[#4F46E5]`}
+                  className={`lg:hidden ${textColor} hover:text-[#FD7100]`}
                 >
                   {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
                 </button>
@@ -567,7 +567,7 @@ const Navbar = () => {
                     }
                   }}
                   placeholder="Search products..."
-                  className="w-full pl-10 pr-4 py-2 rounded-md focus:outline-none focus:ring-1 focus:ring-[#4F46E5] text-[13px] bg-gray-100 border-transparent text-[#111827]"
+                  className="w-full pl-10 pr-4 py-2 rounded-md focus:outline-none focus:ring-1 focus:ring-[#FD7100] text-[13px] bg-gray-100 border-transparent text-[#111827]"
                 />
               </div>
             </div>
@@ -579,7 +579,7 @@ const Navbar = () => {
                     to={link.path}
                     onClick={() => setIsMenuOpen(false)}
                     className="flex items-center gap-2 px-3 py-2 rounded-lg font-bold tracking-wide hover:bg-gray-50 text-[14px]"
-                    style={{ color: isActive(link.path) ? "#4F46E5" : "#111827" }}
+                    style={{ color: isActive(link.path) ? "#FD7100" : "#111827" }}
                   >
                     <link.icon className="w-4 h-4" />
                     {link.name}
@@ -599,7 +599,7 @@ const Navbar = () => {
                             <Link
                               to={`/products?department=${encodeURIComponent(dept.name)}`}
                               onClick={() => setIsMenuOpen(false)}
-                              className={`flex-1 font-bold tracking-wide text-[14px] transition-colors uppercase ${isDeptSelected ? "text-[#4F46E5]" : "text-[#111827] hover:text-[#4F46E5]"
+                              className={`flex-1 font-bold tracking-wide text-[14px] transition-colors uppercase ${isDeptSelected ? "text-[#FD7100]" : "text-[#111827] hover:text-[#FD7100]"
                                 }`}
                             >
                               {dept.name}
@@ -611,21 +611,21 @@ const Navbar = () => {
                                   e.stopPropagation();
                                   setMobileExpandedDept(isExpanded ? null : dept.name);
                                 }}
-                                className="p-1 text-[#4B5563] hover:text-[#4F46E5] focus:outline-none"
+                                className="p-1 text-[#4B5563] hover:text-[#FD7100] focus:outline-none"
                                 aria-label={`Toggle ${dept.name} categories`}
                               >
-                                <ChevronDown size={18} className={`transition-transform duration-200 ${isExpanded ? "rotate-180 text-[#4F46E5]" : ""}`} />
+                                <ChevronDown size={18} className={`transition-transform duration-200 ${isExpanded ? "rotate-180 text-[#FD7100]" : ""}`} />
                               </button>
                             )}
                           </div>
 
                           {/* Expandable Categories (Accordion) */}
                           {isExpanded && deptCats.length > 0 && (
-                            <div className="pl-6 pr-3 py-2 space-y-1.5 bg-gray-50/70 rounded-lg mt-1 mb-2 border-l-2 border-[#4F46E5]/30 ml-3 animate-in fade-in duration-200">
+                            <div className="pl-6 pr-3 py-2 space-y-1.5 bg-gray-50/70 rounded-lg mt-1 mb-2 border-l-2 border-[#FD7100]/30 ml-3 animate-in fade-in duration-200">
                               <Link
                                 to={`/products?department=${encodeURIComponent(dept.name)}`}
                                 onClick={() => setIsMenuOpen(false)}
-                                className="block py-1.5 px-2 text-[13px] font-semibold text-[#111827] hover:text-[#4F46E5]"
+                                className="block py-1.5 px-2 text-[13px] font-semibold text-[#111827] hover:text-[#FD7100]"
                               >
                                 View All {dept.name}
                               </Link>
@@ -636,7 +636,7 @@ const Navbar = () => {
                                     key={cat._id}
                                     to={`/products?department=${encodeURIComponent(dept.name)}&category=${encodeURIComponent(cat.name)}`}
                                     onClick={() => setIsMenuOpen(false)}
-                                    className={`block py-1.5 px-2 text-[13px] rounded transition-colors ${isCatSelected ? "text-[#4F46E5] font-bold bg-[#4F46E5]/10" : "text-[#4B5563] hover:text-[#4F46E5]"
+                                    className={`block py-1.5 px-2 text-[13px] rounded transition-colors ${isCatSelected ? "text-[#FD7100] font-bold bg-[#FD7100]/10" : "text-[#4B5563] hover:text-[#FD7100]"
                                       }`}
                                   >
                                     {cat.name}

@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import { Pencil, Trash2, Loader2, X, Check, User, Mail, Phone, Calendar, UserCheck, ShieldCheck, Lock, MapPin, UploadCloud } from 'lucide-react';
+import SavedAddressSection from '../addresses/SavedAddressSection';
 
 const ProfileSection = () => {
   const { user, updateProfilePhoto, removeProfilePhoto, updateProfileInfo, verifyEmailChange } = useAuth();
@@ -98,65 +99,30 @@ const ProfileSection = () => {
   };
 
   return (
-    <div className="w-full">
-      {/* Page Title */}
-      <div className="mb-2">
-        <h2 className="text-2xl md:text-3xl font-extrabold text-slate-700 tracking-tight">Your Profile</h2>
-      </div>
+    <div className="w-full max-w-[1200px] mr-auto space-y-6 pb-12">
       
-      {/* Slightly Left-Aligned Content Container */}
-      <div className="w-full max-w-[1200px] mr-auto">
-        {/* Profile Photo & Identity */}
-        <div className="mb-6 flex flex-col items-center justify-center text-center">
+      {/* 1. Top Banner (Identity) */}
+      <div className="relative bg-gradient-to-r from-[#FFF5ED] to-[#FFFBF8] border border-orange-100 rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-center md:items-start gap-6 overflow-hidden">
         {/* Profile Image Circle */}
-        <div 
-          className="relative w-32 h-32 rounded-full bg-[#EEF2FF] border-[3px] border-[#4F46E5] shrink-0 overflow-hidden flex items-center justify-center font-bold text-[#4F46E5] text-4xl mb-4 cursor-pointer group shadow-md"
-          onClick={() => !isUploading && fileInputRef.current?.click()}
-        >
-          {isUploading ? (
-            <Loader2 className="w-8 h-8 animate-spin text-[#4F46E5]" />
-          ) : user?.profileImage?.url ? (
-            <>
-              <img src={user.profileImage.url} alt="Profile" className="w-full h-full object-cover"  loading="lazy" decoding="async" />
-              <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <Pencil size={24} className="text-white" />
-              </div>
-            </>
-          ) : (
-            <>
-              {user?.username?.charAt(0).toUpperCase() || 'U'}
-              <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <Pencil size={24} className="text-white" />
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* Guidance Text */}
-        <div className="mb-3.5 space-y-1">
-          <h3 className="text-lg sm:text-xl font-extrabold text-slate-700 tracking-tight">Your Photo</h3>
-          <p className="text-xs sm:text-sm text-gray-500 max-w-sm mx-auto font-medium">
-            Recommended: Square PNG or JPG image under 5MB.
-          </p>
-        </div>
-
-        {/* Action Buttons (Upload & Remove Side by Side) */}
-        <div className="flex flex-wrap items-center justify-center gap-4">
+        <div className="relative shrink-0">
+          <div 
+            className="w-28 h-28 md:w-32 md:h-32 rounded-full bg-[#FFF5ED] border-[4px] border-white shadow-sm overflow-hidden flex items-center justify-center font-bold text-[#FD7100] text-4xl cursor-pointer group"
+            onClick={() => !isUploading && fileInputRef.current?.click()}
+          >
+            {isUploading ? (
+              <Loader2 className="w-8 h-8 animate-spin text-[#FD7100]" />
+            ) : user?.profileImage?.url ? (
+              <img src={user.profileImage.url} alt="Profile" className="w-full h-full object-cover" loading="lazy" decoding="async" />
+            ) : (
+              <>{user?.username?.charAt(0).toUpperCase() || 'U'}</>
+            )}
+          </div>
+          {/* Camera Badge */}
           <button 
             onClick={() => !isUploading && fileInputRef.current?.click()}
-            disabled={isUploading}
-            className="px-7 py-2.5 bg-[#4F46E5] text-white hover:bg-[#4338ca] text-[13px] font-bold uppercase tracking-wider transition-colors disabled:opacity-70 cursor-pointer shadow-2xs flex items-center gap-2"
+            className="absolute bottom-1 right-1 w-8 h-8 bg-white rounded-full border border-gray-200 shadow-sm flex items-center justify-center text-[#FD7100] hover:bg-gray-50 transition-colors z-10"
           >
             <UploadCloud className="w-4 h-4" />
-            <span>Upload Photo</span>
-          </button>
-          <button 
-            onClick={handleRemovePhoto}
-            disabled={isUploading || !user?.profileImage?.url}
-            className="px-7 py-2.5 bg-white border border-gray-300 text-gray-700 hover:text-red-600 text-[13px] font-bold uppercase tracking-wider transition-colors disabled:opacity-40 cursor-pointer shadow-2xs flex items-center gap-2"
-          >
-            <Trash2 className="w-4 h-4 text-red-500" />
-            <span>Remove</span>
           </button>
           <input 
             type="file" 
@@ -166,54 +132,105 @@ const ProfileSection = () => {
             className="hidden" 
           />
         </div>
+
+        {/* User Info & Actions */}
+        <div className="flex-1 flex flex-col items-center md:items-start text-center md:text-left z-10 relative">
+          <div className="mb-4">
+            <h2 className="text-2xl md:text-3xl font-extrabold text-slate-800 tracking-tight mb-1.5">{user?.username || 'User'}</h2>
+            <div className="flex flex-col md:flex-row items-center md:items-start gap-2 md:gap-3 text-sm text-gray-500 mb-2">
+              <span>{user?.email || '-'}</span>
+              {user?.verified !== false && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded text-xs font-bold">
+                  <ShieldCheck className="w-3 h-3" /> Verified
+                </span>
+              )}
+            </div>
+            <p className="text-sm text-gray-400">Member since {user?.createdAt ? new Date(user.createdAt).getFullYear() : '2026'}</p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => !isUploading && fileInputRef.current?.click()}
+              disabled={isUploading}
+              className="px-5 py-2 bg-[#FD7100] text-white hover:bg-[#E06400] text-sm font-bold rounded-lg transition-colors disabled:opacity-70 shadow-sm flex items-center gap-2"
+            >
+              <UploadCloud className="w-4 h-4" />
+              <span>Upload Photo</span>
+            </button>
+            <button 
+              onClick={handleRemovePhoto}
+              disabled={isUploading || !user?.profileImage?.url}
+              className="px-5 py-2 bg-white border border-gray-200 text-gray-600 hover:text-red-600 hover:border-red-200 text-sm font-bold rounded-lg transition-colors disabled:opacity-40 shadow-sm flex items-center gap-2"
+            >
+              <Trash2 className="w-4 h-4 text-red-400" />
+              <span>Remove</span>
+            </button>
+          </div>
+          <p className="text-xs text-gray-400 mt-3 font-medium">Recommended: Square PNG or JPG image under 5MB.</p>
+        </div>
       </div>
 
-      {/* 3. Top Summary Stat Tiles (Moved below avatar as requested) */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white border border-gray-200 p-4 sm:p-5 text-center transition-all hover:border-gray-300 shadow-2xs">
-          <div className="flex justify-center mb-2">
-            <ShieldCheck className="w-5 h-5 text-emerald-600" />
+    
+      {/* <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-emerald-50/50 border border-emerald-100 rounded-xl p-4 flex items-center gap-4">
+          <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
+            <ShieldCheck className="w-6 h-6 text-emerald-600" />
           </div>
-          <p className="text-base sm:text-lg font-bold text-slate-700 mb-0.5">Verified</p>
-          <p className="text-[11px] sm:text-[12px] text-gray-500 font-medium">Account Status</p>
-        </div>
-        <div className="bg-white border border-gray-200 p-4 sm:p-5 text-center transition-all hover:border-gray-300 shadow-2xs">
-          <div className="flex justify-center mb-2">
-            <Lock className="w-5 h-5 text-[#4F46E5]" />
+          <div>
+            <p className="font-extrabold text-slate-800">Verified</p>
+            <p className="text-[11px] sm:text-xs text-gray-500 font-medium">Account Status</p>
           </div>
-          <p className="text-base sm:text-lg font-bold text-slate-700 mb-0.5">Protected</p>
-          <p className="text-[11px] sm:text-[12px] text-gray-500 font-medium">Security Level</p>
         </div>
-        <div className="bg-white border border-gray-200 p-4 sm:p-5 text-center transition-all hover:border-gray-300 shadow-2xs">
-          <div className="flex justify-center mb-2">
-            <MapPin className="w-5 h-5 text-blue-600" />
+        <div className="bg-orange-50/50 border border-orange-100 rounded-xl p-4 flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-orange-100 flex items-center justify-center shrink-0">
+            <Lock className="w-6 h-6 text-[#FD7100]" />
           </div>
-          <p className="text-base sm:text-lg font-bold text-slate-700 mb-0.5">Active</p>
-          <p className="text-[11px] sm:text-[12px] text-gray-500 font-medium">Saved Addresses</p>
-        </div>
-        <div className="bg-white border border-gray-200 p-4 sm:p-5 text-center transition-all hover:border-gray-300 shadow-2xs">
-          <div className="flex justify-center mb-2">
-            <Calendar className="w-5 h-5 text-purple-600" />
+          <div>
+            <p className="font-extrabold text-slate-800">Protected</p>
+            <p className="text-[11px] sm:text-xs text-gray-500 font-medium">Security Level</p>
           </div>
-          <p className="text-base sm:text-lg font-bold text-slate-700 mb-0.5">2026</p>
-          <p className="text-[11px] sm:text-[12px] text-gray-500 font-medium">Member Since</p>
         </div>
-      </div>
+        <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-4 flex items-center gap-4">
+          <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
+            <MapPin className="w-6 h-6 text-blue-600" />
+          </div>
+          <div>
+            <p className="font-extrabold text-slate-800">Active</p>
+            <p className="text-[11px] sm:text-xs text-gray-500 font-medium">Saved Addresses</p>
+          </div>
+        </div>
+        <div className="bg-purple-50/50 border border-purple-100 rounded-xl p-4 flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center shrink-0">
+            <Calendar className="w-6 h-6 text-purple-600" />
+          </div>
+          <div>
+            <p className="font-extrabold text-slate-800">2026</p>
+            <p className="text-[11px] sm:text-xs text-gray-500 font-medium">Member Since</p>
+          </div>
+        </div>
+      </div> */}
 
-      {/* 4. Structured Column Grid Layout for Personal Info */}
-      <div>
-        <div className="flex items-center justify-between border-b border-gray-200 pb-3 mb-4">
-          <h3 className="text-base sm:text-lg font-bold text-slate-700 tracking-tight">Personal Information</h3>
+      {/* 3. Personal Information Card */}
+      <div className="bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden">
+        {/* Header */}
+        <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between flex-wrap gap-4">
+          <div className="flex items-center gap-3">
+            <User className="w-6 h-6 text-[#FD7100]" />
+            <div>
+              <h3 className="text-lg font-bold text-slate-800 tracking-tight">Personal Information</h3>
+              <p className="text-sm text-gray-500 font-medium">Manage your personal details</p>
+            </div>
+          </div>
           {!isEditing ? (
             <button 
               onClick={() => setIsEditing(true)}
-              className="flex items-center gap-1.5 px-4 py-2 border border-gray-300 text-gray-700 hover:bg-gray-50 text-xs font-bold uppercase tracking-wider transition-all cursor-pointer shadow-2xs"
+              className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50 text-sm font-bold transition-all"
             >
+              <Pencil size={14} className="text-gray-500" />
               <span>Edit Details</span>
-              <Pencil size={13} className="text-gray-500" />
             </button>
           ) : (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               <button 
                 onClick={() => {
                   setIsEditing(false);
@@ -225,29 +242,29 @@ const ProfileSection = () => {
                     gender: user?.gender || '',
                   });
                 }}
-                className="flex items-center gap-1.5 px-4 py-2 border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 text-xs font-bold transition-colors uppercase tracking-wider cursor-pointer"
+                className="flex items-center gap-1.5 px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50 text-sm font-bold transition-all"
               >
                 <span>Cancel</span>
-                <X size={13} />
+                <X size={14} />
               </button>
               <button 
                 onClick={handleSaveProfile}
                 disabled={isSaving}
-                className="flex items-center gap-1.5 px-5 py-2 bg-[#4F46E5] text-white hover:bg-[#4338ca] text-xs font-bold transition-colors disabled:opacity-70 uppercase tracking-wider cursor-pointer shadow-2xs"
+                className="flex items-center gap-1.5 px-5 py-2 bg-[#FD7100] text-white rounded-lg hover:bg-[#E06400] text-sm font-bold transition-all disabled:opacity-70"
               >
-                {isSaving ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
-                <span>Save Changes</span>
+                {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                <span>Save</span>
               </button>
             </div>
           )}
         </div>
         
-        <div className="border border-gray-200 bg-white p-6 sm:p-8">
+        <div className="p-6 md:p-8">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-8">
             {/* Username Column */}
             <div className="flex flex-col space-y-1.5">
               <span className="text-xs font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
-                <User className="w-3.5 h-3.5 text-[#4F46E5]" />
+                <User className="w-3.5 h-3.5 text-[#FD7100]" />
                 Username
               </span>
               {isEditing ? (
@@ -255,7 +272,7 @@ const ProfileSection = () => {
                   type="text" 
                   value={formData.username}
                   onChange={(e) => setFormData({...formData, username: e.target.value})}
-                  className="w-full border border-gray-300 px-3 py-2 text-sm text-slate-700 font-bold focus:outline-none focus:border-[#4F46E5]"
+                  className="w-full border border-gray-300 px-3 py-2 text-sm text-slate-700 font-bold focus:outline-none focus:border-[#FD7100]"
                 />
               ) : (
                 <span className="text-[15px] sm:text-[16px] font-bold text-slate-700">{user?.username || '-'}</span>
@@ -265,7 +282,7 @@ const ProfileSection = () => {
             {/* Email Address Column */}
             <div className="flex flex-col space-y-1.5">
               <span className="text-xs font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
-                <Mail className="w-3.5 h-3.5 text-[#4F46E5]" />
+                <Mail className="w-3.5 h-3.5 text-[#FD7100]" />
                 Email Address
               </span>
               {isEditing ? (
@@ -273,7 +290,7 @@ const ProfileSection = () => {
                   type="email" 
                   value={formData.email}
                   onChange={(e) => setFormData({...formData, email: e.target.value})}
-                  className="w-full border border-gray-300 px-3 py-2 text-sm text-slate-700 font-bold focus:outline-none focus:border-[#4F46E5]"
+                  className="w-full border border-gray-300 px-3 py-2 text-sm text-slate-700 font-bold focus:outline-none focus:border-[#FD7100]"
                 />
               ) : (
                 <div className="flex items-center flex-wrap gap-2">
@@ -300,7 +317,7 @@ const ProfileSection = () => {
             {/* Mobile Number Column */}
             <div className="flex flex-col space-y-1.5">
               <span className="text-xs font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
-                <Phone className="w-3.5 h-3.5 text-[#4F46E5]" />
+                <Phone className="w-3.5 h-3.5 text-[#FD7100]" />
                 Mobile Number
               </span>
               {isEditing ? (
@@ -308,7 +325,7 @@ const ProfileSection = () => {
                   type="tel" 
                   value={formData.mobileNo}
                   onChange={(e) => setFormData({...formData, mobileNo: e.target.value})}
-                  className="w-full border border-gray-300 px-3 py-2 text-sm text-slate-700 font-bold focus:outline-none focus:border-[#4F46E5]"
+                  className="w-full border border-gray-300 px-3 py-2 text-sm text-slate-700 font-bold focus:outline-none focus:border-[#FD7100]"
                   placeholder="e.g. +91 9922055257"
                 />
               ) : (
@@ -319,7 +336,7 @@ const ProfileSection = () => {
             {/* Date of Birth Column */}
             <div className="flex flex-col space-y-1.5">
               <span className="text-xs font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
-                <Calendar className="w-3.5 h-3.5 text-[#4F46E5]" />
+                <Calendar className="w-3.5 h-3.5 text-[#FD7100]" />
                 Date of Birth
               </span>
               {isEditing ? (
@@ -327,7 +344,7 @@ const ProfileSection = () => {
                   type="date" 
                   value={formData.dateOfBirth}
                   onChange={(e) => setFormData({...formData, dateOfBirth: e.target.value})}
-                  className="w-full border border-gray-300 px-3 py-2 text-sm text-slate-700 font-bold focus:outline-none focus:border-[#4F46E5]"
+                  className="w-full border border-gray-300 px-3 py-2 text-sm text-slate-700 font-bold focus:outline-none focus:border-[#FD7100]"
                 />
               ) : (
                 <span className="text-[15px] sm:text-[16px] font-bold text-slate-700">
@@ -339,14 +356,14 @@ const ProfileSection = () => {
             {/* Gender Column */}
             <div className="flex flex-col space-y-1.5">
               <span className="text-xs font-bold uppercase tracking-wider text-gray-400 flex items-center gap-2">
-                <UserCheck className="w-3.5 h-3.5 text-[#4F46E5]" />
+                <UserCheck className="w-3.5 h-3.5 text-[#FD7100]" />
                 Gender
               </span>
               {isEditing ? (
                 <select 
                   value={formData.gender}
                   onChange={(e) => setFormData({...formData, gender: e.target.value})}
-                  className="w-full border border-gray-300 px-3 py-2 text-sm text-slate-700 font-bold focus:outline-none focus:border-[#4F46E5]"
+                  className="w-full border border-gray-300 px-3 py-2 text-sm text-slate-700 font-bold focus:outline-none focus:border-[#FD7100]"
                 >
                   <option value="">Select Gender</option>
                   <option value="Male">Male</option>
@@ -360,9 +377,14 @@ const ProfileSection = () => {
           </div>
         </div>
       </div>
-    </div>
+      
+      {/* Saved Addresses Section */}
+      <div className="mt-6">
+        <SavedAddressSection />
+      </div>
     
-      {/* Email Verification Modal */}
+    
+      
       {showVerification && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="bg-white p-8 w-full max-w-md shadow-2xl border border-gray-200 animate-in fade-in zoom-in-95 duration-200">
@@ -379,7 +401,7 @@ const ProfileSection = () => {
                   onChange={(e) => setVerificationCode(e.target.value)}
                   placeholder="Enter 6-digit code" 
                   maxLength={6}
-                  className="w-full border border-gray-300 px-4 py-3 text-lg font-bold tracking-widest text-center uppercase focus:outline-none focus:border-[#4F46E5]"
+                  className="w-full border border-gray-300 px-4 py-3 text-lg font-bold tracking-widest text-center uppercase focus:outline-none focus:border-[#FD7100]"
                 />
               </div>
               <div className="flex justify-end gap-3 pt-2">
@@ -392,7 +414,7 @@ const ProfileSection = () => {
                 <button 
                   onClick={handleVerifyEmail}
                   disabled={isVerifying || !verificationCode}
-                  className="px-6 py-2.5 bg-[#4F46E5] hover:bg-[#4338ca] text-white font-bold text-xs uppercase tracking-wider transition-colors disabled:opacity-50 flex items-center gap-2 cursor-pointer shadow-xs"
+                  className="px-6 py-2.5 bg-[#FD7100] hover:bg-[#E06400] text-white font-bold text-xs uppercase tracking-wider transition-colors disabled:opacity-50 flex items-center gap-2 cursor-pointer shadow-xs"
                 >
                   {isVerifying ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                   <span>Verify Email</span>

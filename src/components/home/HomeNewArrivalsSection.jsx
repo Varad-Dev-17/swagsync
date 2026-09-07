@@ -64,10 +64,10 @@ const HomeArrivalCard = ({ product }) => {
 
       <div className="p-3 bg-white flex flex-col flex-grow justify-between">
         <div>
-          <h3 className="text-[12px] font-bold uppercase tracking-wider text-[#4F46E5] mb-1 line-clamp-1">
+          <h3 className="text-[12px] font-bold uppercase tracking-wider text-[#FD7100] mb-1 line-clamp-1">
             {product.brand?.name || product.brand}
           </h3>
-          <p className="text-[14px] font-semibold text-[#111827] mb-2 line-clamp-1 group-hover:text-[#4F46E5] transition-colors">
+          <p className="text-[14px] font-semibold text-[#111827] mb-2 line-clamp-1 group-hover:text-[#FD7100] transition-colors">
             {product.name || product.title}
           </p>
         </div>
@@ -145,7 +145,7 @@ const HomeNewArrivalsSection = ({ title, subtitle }) => {
   return (
     <section
       ref={sectionRef}
-      className="w-full bg-white pt-12 sm:pt-17 md:pt-20 pb-8 overflow-hidden min-h-[60vh] md:h-screen flex flex-col justify-center relative z-10"
+      className="w-full bg-white overflow-hidden relative z-10 flex flex-col justify-center h-[calc(100vh-80px)]"
     >
       <div className="max-w-[1600px] mx-auto w-full px-4 md:px-8 lg:px-12 mb-6 sm:mb-8">
         {/* Section Header */}

@@ -18,7 +18,7 @@ const FilterSidebar = ({
         <h2 className="text-[#111827] font-bold text-lg">Filters</h2>
         <button 
           onClick={onClearAll}
-          className="text-[#6D4AFF] text-[15px] font-semibold hover:underline"
+          className="text-[#FD7100] text-[15px] font-semibold hover:underline"
         >
           Clear All
         </button>

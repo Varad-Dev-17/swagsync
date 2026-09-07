@@ -17,7 +17,7 @@ const BagSummary = ({ totals }) => {
 
   return (
     <div className="bg-white rounded-[12px] shadow-[0_2px_20px_-4px_rgba(0,0,0,0.05)] sticky top-32 overflow-hidden">
-      <div className="bg-gradient-to-r from-[#4F46E5] to-[#6D4AFF] p-4 lg:p-5 flex justify-between items-center relative overflow-hidden"> 
+      <div className="bg-gradient-to-r from-[#FD7100] to-[#E06400] p-4 lg:p-5 flex justify-between items-center relative overflow-hidden"> 
         <div className="absolute right-8 top-4 text-white/20 text-4xl">✨</div>
         <div className="absolute right-24 bottom-4 text-white/10 text-6xl">✦</div>
         
@@ -27,7 +27,7 @@ const BagSummary = ({ totals }) => {
         
         <div className="w-12 h-14 bg-white/10 backdrop-blur-sm rounded-t-md border-t-2 border-x-2 border-white/30 relative z-10 flex items-center justify-center">
           <div className="w-6 h-3 border-2 border-white/50 rounded-t-full absolute -top-3"></div>
-          <span className="text-white font-bold text-lg">V</span>
+          <span className="text-white font-bold text-lg">S</span>
         </div>
       </div>
 
@@ -47,7 +47,7 @@ const BagSummary = ({ totals }) => {
 
           <div className="flex justify-between items-center text-[#282c3f]">
             <span>Coupon Discount</span>
-            <button className="text-[#4F46E5] font-bold hover:underline text-[13px] cursor-pointer">
+            <button className="text-[#FD7100] font-bold hover:underline text-[13px] cursor-pointer">
               Apply Coupon
             </button>
           </div>
@@ -65,9 +65,9 @@ const BagSummary = ({ totals }) => {
           </div>
         </div>
 
-        <div className="bg-[#4F46E5]/5 rounded-lg p-4 flex justify-between items-center mb-4">
+        <div className="bg-[#FD7100]/5 rounded-lg p-4 flex justify-between items-center mb-4">
           <span className="text-[16px] font-bold text-[#111827]">Total Amount</span>
-          <span className="text-[18px] font-bold text-[#4F46E5]">{formatPrice(totals.grandTotal)}</span>
+          <span className="text-[18px] font-bold text-[#FD7100]">{formatPrice(totals.grandTotal)}</span>
         </div>
 
         {totals.discountOnMRP > 0 && (
@@ -84,7 +84,7 @@ const BagSummary = ({ totals }) => {
           className="flex items-start gap-3 mb-6 cursor-pointer group"
           onClick={() => setIsTermsAccepted(!isTermsAccepted)}
         >
-          <div className={`relative flex items-center justify-center w-5 h-5 mt-0.5 rounded flex-shrink-0 transition-colors ${isTermsAccepted ? 'bg-[#4F46E5] border border-[#4F46E5]' : 'bg-white border-2 border-gray-300 group-hover:border-[#4F46E5]'}`}>
+          <div className={`relative flex items-center justify-center w-5 h-5 mt-0.5 rounded flex-shrink-0 transition-colors ${isTermsAccepted ? 'bg-[#FD7100] border border-[#FD7100]' : 'bg-white border-2 border-gray-300 group-hover:border-[#FD7100]'}`}>
             {isTermsAccepted && (
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="20 6 9 17 4 12"></polyline>
@@ -93,9 +93,9 @@ const BagSummary = ({ totals }) => {
           </div>
           <p className="text-[12px] text-[#535766] leading-relaxed select-none">
             By placing the order, you agree to SwagSync's{" "}
-            <a href="#" onClick={(e) => e.stopPropagation()} className="text-[#4F46E5] font-semibold hover:underline">Terms of Use</a>{" "}
+            <a href="#" onClick={(e) => e.stopPropagation()} className="text-[#FD7100] font-semibold hover:underline">Terms of Use</a>{" "}
             and{" "}
-            <a href="#" onClick={(e) => e.stopPropagation()} className="text-[#4F46E5] font-semibold hover:underline">Privacy Policy</a>
+            <a href="#" onClick={(e) => e.stopPropagation()} className="text-[#FD7100] font-semibold hover:underline">Privacy Policy</a>
           </p>
         </label>
 
@@ -105,7 +105,7 @@ const BagSummary = ({ totals }) => {
             disabled={!isTermsAccepted}
             className={`w-full text-white font-bold text-[14px] py-3.5 rounded-lg shadow-sm transition-colors flex items-center justify-center gap-2 ${
               isTermsAccepted 
-                ? 'bg-[#4F46E5] hover:bg-[#6D4AFF] cursor-pointer' 
+                ? 'bg-[#FD7100] hover:bg-[#E06400] cursor-pointer' 
                 : 'bg-gray-400 cursor-not-allowed'
             }`}
           >
@@ -118,7 +118,7 @@ const BagSummary = ({ totals }) => {
           
           <button 
             onClick={() => navigate("/products")}
-            className="w-full bg-white text-[#4F46E5] font-bold text-[14px] py-3.5 rounded-lg border border-[#eaeaec] hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full bg-white text-[#FD7100] font-bold text-[14px] py-3.5 rounded-lg border border-[#eaeaec] hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 cursor-pointer"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="15 18 9 12 15 6"></polyline>

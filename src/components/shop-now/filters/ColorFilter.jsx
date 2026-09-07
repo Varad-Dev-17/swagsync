@@ -68,7 +68,7 @@ const ColorFilter = ({ colors = [], activeColors = [], onChange }) => {
                     key={color._id || colorName}
                     title={colorName}
                     onClick={toggleColor}
-                    className={`w-6 h-6 rounded-full border border-[#E5E7EB] shadow-sm hover:scale-110 transition-all flex items-center justify-center ${isActive ? 'ring-2 ring-offset-1 ring-[#6D4AFF]' : ''}`}
+                    className={`w-6 h-6 rounded-full border border-[#E5E7EB] shadow-sm hover:scale-110 transition-all flex items-center justify-center ${isActive ? 'ring-2 ring-offset-1 ring-[#FD7100]' : ''}`}
                     style={{ backgroundColor: bgColor }}
                   >
                     {isActive && <Check size={12} className={bgColor === 'white' || bgColor === '#ffffff' ? 'text-slate-700' : 'text-white'} />}
@@ -84,7 +84,7 @@ const ColorFilter = ({ colors = [], activeColors = [], onChange }) => {
                   e.preventDefault();
                   setShowAll(!showAll);
                 }}
-                className="text-[#6D4AFF] text-left text-[14px] font-semibold pt-1 pl-1 hover:underline w-fit transition-all"
+                className="text-[#FD7100] text-left text-[14px] font-semibold pt-1 pl-1 hover:underline w-fit transition-all"
               >
                 {showAll ? "- show less" : `+ ${colors.length - 12} more`}
               </button>

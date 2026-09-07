@@ -40,7 +40,7 @@ const HeroSlider = () => {
               hidden: { opacity: 0, y: 15 },
               visible: { opacity: 1, y: 0, transition: { duration: 0.6 } },
             }}
-            className="inline-block text-[15px] font-bold tracking-[0.15em] uppercase text-[#E72744] mb-4 md:mb-6 "
+            className="inline-block text-[15px] font-bold tracking-[0.15em] uppercase text-[#FD7100] mb-4 md:mb-6 "
           >
             NEW SEASON 2026
           </motion.span>
@@ -53,7 +53,7 @@ const HeroSlider = () => {
             className="text-3xl sm:text-4xl md:text-6xl lg:text-[72px] font-bold text-white leading-[1.05] tracking-tight mb-4 md:mb-6 whitespace-pre-line"
             style={{ fontFamily: "'Poppins', sans-serif" }}
           >
-            Welcome to SwagSync
+            Welcome to Swag<span className="text-[#FD7100]">Sync</span>
           </motion.h1>
 
           <motion.p
@@ -75,7 +75,7 @@ const HeroSlider = () => {
           >
             <Link
               to="/products"
-              className="w-full sm:w-auto px-10 py-4 bg-[#4F46E5] text-white font-medium  text-[15px] hover:bg-[#4338ca] transition-colors duration-250 rounded-[4px] text-center"
+              className="w-full sm:w-auto px-10 py-4 bg-[#FD7100] text-white font-medium  text-[15px] hover:bg-[#E06400] transition-colors duration-250 rounded-[4px] text-center"
             >
               Explore Collection
             </Link>

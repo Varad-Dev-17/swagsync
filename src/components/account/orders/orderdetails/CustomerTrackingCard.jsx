@@ -38,7 +38,7 @@ const CustomerTrackingCard = ({ order = null }) => {
     <div className="bg-white rounded-2xl border border-gray-200/80 p-6 shadow-xs space-y-6">
       <div className="flex items-center justify-between border-b border-gray-100 pb-3">
         <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-indigo-50 text-[#4F46E5] flex items-center justify-center font-bold">
+          <div className="w-9 h-9 rounded-xl bg-orange-50 text-[#FD7100] flex items-center justify-center font-bold">
             <Package size={20} className="stroke-[2.25]" />
           </div>
           <div>
@@ -46,7 +46,7 @@ const CustomerTrackingCard = ({ order = null }) => {
             <p className="text-xs text-gray-500 font-medium">Real-time fulfillment progress for your order</p>
           </div>
         </div>
-        <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${status === "delivered" ? "bg-green-50 text-green-700 border border-green-200" : isCancelled ? "bg-red-50 text-red-700 border border-red-200" : "bg-indigo-50 text-[#4F46E5] border border-indigo-200"
+        <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${status === "delivered" ? "bg-green-50 text-green-700 border border-green-200" : isCancelled ? "bg-red-50 text-red-700 border border-red-200" : "bg-orange-50 text-[#FD7100] border border-orange-200"
           }`}>
           {status === "pending" ? "Order Confirmed" : status === "processing" ? "Packed" : status === "on_the_way" ? "On The Way" : status.replace(/_/g, " ")}
         </span>
@@ -67,11 +67,11 @@ const CustomerTrackingCard = ({ order = null }) => {
 
             return (
               <div key={i} className="flex flex-col items-center text-center p-3 rounded-xl bg-slate-50/70 border border-gray-100 relative">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 transition-transform ${isCompleted ? "bg-emerald-600 text-white shadow-xs" : isCurrent ? "bg-[#4F46E5] text-white ring-4 ring-[#4F46E5]/20 animate-pulse" : "bg-gray-200 text-gray-400"
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 transition-transform ${isCompleted ? "bg-emerald-600 text-white shadow-xs" : isCurrent ? "bg-[#FD7100] text-white ring-4 ring-[#FD7100]/20 animate-pulse" : "bg-gray-200 text-gray-400"
                   }`}>
                   <Icon size={18} className="stroke-[2.25]" />
                 </div>
-                <span className={`text-xs font-extrabold ${isCompleted ? "text-slate-700" : isCurrent ? "text-[#4F46E5]" : "text-gray-400"}`}>
+                <span className={`text-xs font-extrabold ${isCompleted ? "text-slate-700" : isCurrent ? "text-[#FD7100]" : "text-gray-400"}`}>
                   {s.label}
                 </span>
                 <span className="text-[11px] text-gray-500 font-medium mt-0.5 max-w-[120px] leading-tight">
@@ -117,7 +117,7 @@ const CustomerTrackingCard = ({ order = null }) => {
             <div>
               <h3 className="text-base font-bold text-slate-700 tracking-tight flex items-center gap-1.5 flex-wrap">
                 <span>{type === "exchange" ? "Exchange Request Tracking" : "Return Request Tracking"}</span>
-                {itemTitle && <span className="text-[#4648d4] font-extrabold text-sm border-l-2 border-slate-200 pl-2">({itemTitle})</span>}
+                {itemTitle && <span className="text-[#FD7100] font-extrabold text-sm border-l-2 border-slate-200 pl-2">({itemTitle})</span>}
               </h3>
               <p className="text-xs text-gray-500 font-medium">
                 {type === "exchange" ? "Tracking your replacement variant fulfillment & doorstep swap" : "Tracking your product return and item collection"}
@@ -152,7 +152,7 @@ const CustomerTrackingCard = ({ order = null }) => {
 
               return (
                 <div key={i} className="flex flex-col items-center text-center p-3 rounded-xl bg-slate-50/70 border border-gray-100">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-extrabold mb-1.5 ${isComp ? "bg-[#4F46E5] text-white" : isCurr ? "bg-amber-500 text-white animate-pulse" : "bg-gray-200 text-gray-500"
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-extrabold mb-1.5 ${isComp ? "bg-[#FD7100] text-white" : isCurr ? "bg-amber-500 text-white animate-pulse" : "bg-gray-200 text-gray-500"
                     }`}>
                     {isComp ? <Check size={14} className="stroke-[3]" /> : i + 1}
                   </div>
@@ -363,7 +363,7 @@ const CustomerTrackingCard = ({ order = null }) => {
     return (
       <div className="bg-white rounded-2xl border border-gray-200/80 p-6 shadow-xs space-y-4">
         <h3 className="text-base font-bold text-slate-700 tracking-tight flex items-center gap-2 border-b border-gray-100 pb-3">
-          <Clock size={18} className="text-[#4F46E5] stroke-[2.25]" />
+          <Clock size={18} className="text-[#FD7100] stroke-[2.25]" />
           <span>Complete Journey & Timeline History</span>
         </h3>
 
@@ -389,17 +389,17 @@ const CustomerTrackingCard = ({ order = null }) => {
     if (customerVisibleNotes.length === 0) return null;
 
     return (
-      <div className="bg-gradient-to-br from-indigo-50/70 via-white to-slate-50/90 rounded-2xl border border-indigo-100 p-6 shadow-xs space-y-4">
-        <div className="flex items-center gap-2 text-indigo-950 font-bold text-base border-b border-indigo-100 pb-3">
-          <MessageSquare size={18} className="text-[#4F46E5] stroke-[2.25]" />
+      <div className="bg-gradient-to-br from-orange-50/70 via-white to-slate-50/90 rounded-2xl border border-orange-100 p-6 shadow-xs space-y-4">
+        <div className="flex items-center gap-2 text-orange-950 font-bold text-base border-b border-orange-100 pb-3">
+          <MessageSquare size={18} className="text-[#FD7100] stroke-[2.25]" />
           <span>Customer Case Updates & Notifications</span>
         </div>
 
         <div className="space-y-3 max-h-[250px] overflow-y-auto pr-1">
           {customerVisibleNotes.map((noteItem, index) => (
-            <div key={index} className="p-4 bg-white rounded-xl border border-indigo-200/70 shadow-2xs space-y-1.5">
+            <div key={index} className="p-4 bg-white rounded-xl border border-orange-200/70 shadow-2xs space-y-1.5">
               <div className="flex items-center justify-between text-[11px] text-gray-400 font-bold">
-                <span className="uppercase text-[#4F46E5] tracking-wider">SwagSync Support Notification</span>
+                <span className="uppercase text-[#FD7100] tracking-wider">SwagSync Support Notification</span>
                 <span>{formatDate(noteItem.createdAt)}</span>
               </div>
               <p className="text-sm font-semibold text-slate-700 leading-snug">
@@ -417,7 +417,7 @@ const CustomerTrackingCard = ({ order = null }) => {
     <div id="customer-order-tracking" className="space-y-6 pt-2 pb-4">
       {renderOrderTracker()}
       {returnRequests.map((req, idx) => (
-        <div key={req._id || idx} className="space-y-6 pt-2 border-t-2 border-indigo-50/60">
+        <div key={req._id || idx} className="space-y-6 pt-2 border-t-2 border-orange-50/60">
           {renderReturnExchangeTracker(req)}
           {renderQcTracking(req)}
           {renderRefundTracking(req)}

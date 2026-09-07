@@ -5,7 +5,7 @@ import Product from "../models/product.js";
 // GET All Brands (with pagination, search, filter)
 export const getBrands = async (req, res) => {
   try {
-    const { page = 1, limit = 10, search, status, department, sort } = req.query;
+    const { page = 1, limit = 10, search, status, department, departmentId, sort } = req.query;
 
     const query = {};
     if (search) {
@@ -15,7 +15,8 @@ export const getBrands = async (req, res) => {
       ];
     }
     if (status) query.status = status;
-    if (department) query.departmentIds = department;
+    const deptId = department || departmentId;
+    if (deptId) query.departmentIds = deptId;
 
     let sortOptions = { createdAt: 1 };
     if (sort) {

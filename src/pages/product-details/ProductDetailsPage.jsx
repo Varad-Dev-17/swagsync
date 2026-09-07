@@ -29,43 +29,43 @@ const ProductDetailsPage = () => {
   const [activeVariant, setActiveVariant] = useState(null);
 
   useEffect(() => {
-    fetchProduct();
-  }, [slug]);
-
-  async function fetchProduct() {
-    try {
-      setLoading(true);
-      setError(null);
-      const res = await api.get(`/products/slug/${slug}`);
-      if (res.data.success) {
-        const payload = res.data.data;
-        const prodData = payload.product ? payload.product : payload; 
-        
-        setProduct(prodData);
-        if (prodData.variants && prodData.variants.length > 0) {
-          if (variantQuery) {
-            const matchedVariant = prodData.variants.find(v => v._id === variantQuery);
-            setActiveVariant(matchedVariant || prodData.variants[0]);
-          } else if (colorQuery) {
-            const matchedVariant = prodData.variants.find(v => {
-              const colorAttr = v.attributes?.find(attr => attr.attribute?.name?.toLowerCase() === 'color');
-              return colorAttr?.option?.displayName?.toLowerCase() === colorQuery.toLowerCase();
-            });
-            setActiveVariant(matchedVariant || prodData.variants[0]);
-          } else {
-            setActiveVariant(prodData.variants[0]);
+    const fetchProduct = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const res = await api.get(`/products/slug/${slug}`);
+        if (res.data.success) {
+          const payload = res.data.data;
+          const prodData = payload.product ? payload.product : payload; 
+          
+          setProduct(prodData);
+          if (prodData.variants && prodData.variants.length > 0) {
+            if (variantQuery) {
+              const matchedVariant = prodData.variants.find(v => v._id === variantQuery);
+              setActiveVariant(matchedVariant || prodData.variants[0]);
+            } else if (colorQuery) {
+              const matchedVariant = prodData.variants.find(v => {
+                const colorAttr = v.attributes?.find(attr => attr.attribute?.name?.toLowerCase() === 'color');
+                return colorAttr?.option?.displayName?.toLowerCase() === colorQuery.toLowerCase();
+              });
+              setActiveVariant(matchedVariant || prodData.variants[0]);
+            } else {
+              setActiveVariant(prodData.variants[0]);
+            }
           }
+        } else {
+          setError("Product not found");
         }
-      } else {
-        setError("Product not found");
+      } catch (err) {
+        console.error("Error fetching product:", err);
+        setError("Failed to load product details");
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error("Error fetching product:", err);
-      setError("Failed to load product details");
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+
+    fetchProduct();
+  }, [slug, variantQuery, colorQuery]);
 
   const handleVariantChange = (variantId) => {
     const variant = product.variants.find((v) => v._id === variantId);
@@ -77,7 +77,7 @@ const ProductDetailsPage = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white pt-20">
-        <div className="w-10 h-10 border-4 border-[#4F46E5] border-t-transparent rounded-full animate-spin" />
+        <div className="w-10 h-10 border-4 border-[#FD7100] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }

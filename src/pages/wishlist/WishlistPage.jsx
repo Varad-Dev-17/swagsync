@@ -19,7 +19,7 @@ const WishlistPage = () => {
         </p>
         <button
           onClick={() => navigate("/signin")}
-          className="border border-[#4F46E5] text-[#4F46E5] px-10 py-3 rounded-md font-bold hover:bg-[#4F46E5] hover:text-white transition-colors"
+          className="border border-[#FD7100] text-[#FD7100] px-10 py-3 rounded-md font-bold hover:bg-[#FD7100] hover:text-white transition-colors"
         >
           LOGIN
         </button>
@@ -30,7 +30,7 @@ const WishlistPage = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen pt-[100px] flex items-center justify-center bg-white">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#4F46E5]"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FD7100]"></div>
       </div>
     );
   }
@@ -47,7 +47,7 @@ const WishlistPage = () => {
         </p>
         <Link
           to="/products"
-          className="border border-[#4F46E5] text-[#4F46E5] px-10 py-3 rounded-md font-bold hover:bg-[#4F46E5] hover:text-white transition-colors"
+          className="border border-[#FD7100] text-[#FD7100] px-10 py-3 rounded-md font-bold hover:bg-[#FD7100] hover:text-white transition-colors"
         >
           CONTINUE SHOPPING
         </Link>
@@ -59,7 +59,7 @@ const WishlistPage = () => {
     <div className="min-h-screen pt-[100px] pb-20 bg-white">
       <div className="w-full px-4 sm:px-8 lg:px-12">
         <div className="text-[14px] text-[#535766] mb-6">
-          <Link to="/" className="hover:text-[#4F46E5] transition-colors">Home</Link> / <span className="text-[#282c3f] font-bold">Wishlist</span>
+          <Link to="/" className="hover:text-[#FD7100] transition-colors">Home</Link> / <span className="text-[#282c3f] font-bold">Wishlist</span>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-6">

@@ -17,7 +17,7 @@ const ReasonDropdown = ({ reason, setReason }) => {
         <select
           value={reason}
           onChange={(e) => setReason(e.target.value)}
-          className="w-full appearance-none border border-gray-300 rounded-lg px-4 py-2.5 text-[14px] text-slate-700 focus:outline-none focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5] bg-white transition-colors cursor-pointer"
+          className="w-full appearance-none border border-gray-300 rounded-lg px-4 py-2.5 text-[14px] text-slate-700 focus:outline-none focus:border-[#FD7100] focus:ring-1 focus:ring-[#FD7100] bg-white transition-colors cursor-pointer"
         >
           <option value="" disabled>Select a reason</option>
           {reasons.map((r, i) => (

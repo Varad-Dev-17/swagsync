@@ -90,7 +90,7 @@ const Bag = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#f9f9fb] flex items-center justify-center pt-20">
-        <div className="w-10 h-10 border-4 border-[#4F46E5] border-t-transparent rounded-full animate-spin" />
+        <div className="w-10 h-10 border-4 border-[#FD7100] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -101,7 +101,7 @@ const Bag = () => {
     return (
       <div className="min-h-screen bg-[#f9f9fb] pt-[120px] pb-20 flex flex-col items-center justify-center">
         <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center shadow-sm mb-6">
-          <ShoppingBag size={48} className="text-[#4F46E5]" />
+          <ShoppingBag size={48} className="text-[#FD7100]" />
         </div>
         <h2 className="text-2xl font-bold text-[#111827] mb-2">
           Your cart is empty
@@ -111,7 +111,7 @@ const Bag = () => {
         </p>
         <Link
           to="/products"
-          className="px-8 py-3 bg-[#4F46E5] text-white rounded-lg font-bold hover:bg-[#6D4AFF] transition-colors"
+          className="px-8 py-3 bg-[#FD7100] text-white rounded-lg font-bold hover:bg-[#E06400] transition-colors"
         >
           START SHOPPING
         </Link>
@@ -137,7 +137,7 @@ const Bag = () => {
                 <div className="flex items-center gap-3 sm:gap-4">
                   <button 
                     onClick={toggleSelectAll}
-                    className={`w-5 h-5 flex-shrink-0 flex items-center justify-center rounded-[4px] border ${allSelected ? 'bg-[#4F46E5] border-[#4F46E5]' : 'border-gray-300 hover:border-gray-400 bg-white'}`}
+                    className={`w-5 h-5 flex-shrink-0 flex items-center justify-center rounded-[4px] border ${allSelected ? 'bg-[#FD7100] border-[#FD7100]' : 'border-gray-300 hover:border-gray-400 bg-white'}`}
                   >
                     {allSelected && (
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
@@ -148,7 +148,7 @@ const Bag = () => {
                   <h1 className="text-[26px] font-bold text-[#111827]">
                     Your Bag
                   </h1>
-                  <span className="bg-[#4F46E5]/10 text-[#4F46E5] text-[12px] font-bold px-3 py-1 rounded-full">
+                  <span className="bg-[#FD7100]/10 text-[#FD7100] text-[12px] font-bold px-3 py-1 rounded-full">
                     {cartItems.length} {cartItems.length === 1 ? 'Item' : 'Items'}
                   </span>
                 </div>
@@ -173,7 +173,7 @@ const Bag = () => {
             {/* Trust Badges */}
             <div className="bg-white rounded-xl shadow-[0_2px_20px_-4px_rgba(0,0,0,0.05)] p-6 mt-6 flex justify-between items-center flex-wrap gap-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-[#4F46E5]/10 flex items-center justify-center text-[#4F46E5]">
+                <div className="w-10 h-10 rounded-full bg-[#FD7100]/10 flex items-center justify-center text-[#FD7100]">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><polyline points="9 12 11 14 15 10"></polyline></svg>
                 </div>
                 <div>
@@ -193,7 +193,7 @@ const Bag = () => {
               </div>
 
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-[#4F46E5]/10 flex items-center justify-center text-[#4F46E5]">
+                <div className="w-10 h-10 rounded-full bg-[#FD7100]/10 flex items-center justify-center text-[#FD7100]">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
                 </div>
                 <div>
