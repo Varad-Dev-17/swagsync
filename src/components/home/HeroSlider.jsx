@@ -7,22 +7,16 @@ const HeroSlider = () => {
     <section className="relative w-full h-screen overflow-hidden">
       {/* BACKGROUND VIDEO */}
       <video
-        src="/videos/hero.mp4"
+        src="https://res.cloudinary.com/dbjw0t8lz/video/upload/f_auto,q_auto,w_1920,c_limit,ac_none/swagsync/hero.mp4"
         autoPlay
         loop
         muted
         playsInline
-        preload="auto"
+        preload="metadata"
         className="absolute inset-0 w-full h-full object-cover z-0"
       />
 
-      {/* GRADIENT OVERLAY */}
-      <div
-        className="absolute inset-0 z-10 pointer-events-none"
-        style={{
-          background: "linear-gradient(25deg, rgba(15,23,42,0.65) 0%, rgba(15,23,42,0.35) 35%, rgba(15,23,42,0.15) 60%, rgba(15,23,42,0) 100%)"
-        }}
-      />
+   
 
       {/* TEXT CONTENT: Bottom-Left Overlay */}
       <div className="absolute left-[5%] md:left-[8%] bottom-[12%] md:bottom-[16%] z-20 w-[90%] md:w-[60%] lg:w-[45%] pointer-events-none">

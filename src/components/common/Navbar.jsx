@@ -24,13 +24,20 @@ const getCategorySection = (catName, deptName = "") => {
   const dept = (deptName || "").toLowerCase();
 
   if (dept.includes("electronic") || dept.includes("gadget") || dept.includes("tech") || dept.includes("appliance")) {
-    if (/laptop|phone|tablet|mobile|computer|desktop|ipad|iphone|mac/.test(name)) return "Computers & Mobiles";
+    if (/laptop|computer|desktop|mac|pc|notebook/.test(name)) return "Computers";
+    if (/phone|mobile|smartphone|tablet|ipad|iphone/.test(name)) return "Mobiles";
     if (/tv|camera|speaker|headphone|earbud|monitor|console|gaming/.test(name)) return "Home Entertainment & Gaming";
     if (/wire|cable|charger|battery|adapter|case|cover|stand/.test(name)) return "Accessories & Peripherals";
     return "Gadgets & Tech";
   }
 
-  if (/laptop|desktop|phone|tablet|mobile|camera|speaker|headphone|earbud|gadget|monitor|keyboard|mouse|electronic|tv|console|cable|charger/.test(name)) {
+  if (/laptop|computer|desktop|mac|pc|notebook/.test(name)) {
+    return "Computers";
+  }
+  if (/phone|tablet|mobile|ipad|iphone|smartphone/.test(name)) {
+    return "Mobiles";
+  }
+  if (/camera|speaker|headphone|earbud|gadget|monitor|keyboard|mouse|electronic|tv|console|cable|charger/.test(name)) {
     return "Gadgets & Tech";
   }
   if (/shirt|t-shirt|tshirt|\btops?\b|sweater|jacket|blazer|suit|hoodie|coat|kurta|sherwani|dress|gown|pullover|cardigan|polo|sweatshirt|rain/.test(name)) {
@@ -46,13 +53,13 @@ const getCategorySection = (catName, deptName = "") => {
     return "Innerwear & Sleepwear";
   }
   if (/kurti|saree|lehenga|salwar|dupatta|nehru|ethnic|festive|traditional|dhoti/.test(name)) {
-    return "Indian & Festive Wear";
+    return "Festive Wear";
   }
   if (/sport|active|gym|fitness|tracksuit|swim|running|jersey|athletic/.test(name)) {
     return "Sports & Active Wear";
   }
   if (/watch|belt|wallet|perfume|deodorant|sunglass|frame|cap|hat|scarf|muffler|glove|tie|cufflink|bag|backpack|luggage|trolley|jewelry|ring|bracelet|chain|necklace|earring|pendant|accessory|helmet|case/.test(name)) {
-    return "Fashion Accessories";
+    return "Accessories";
   }
   if (/makeup|skin|hair|grooming|beauty|lotion|cream|trimmer|shaver|fragrance|mist|lipstick|cosmetic/.test(name)) {
     return "Beauty & Grooming";
@@ -63,15 +70,15 @@ const getCategorySection = (catName, deptName = "") => {
 
   if (dept.includes("home") || dept.includes("kitchen")) return "Home Essentials";
   if (dept.includes("beauty") || dept.includes("care")) return "Personal Care";
+  if (dept.includes("sport")) return "Collection";
   if (dept.includes("men") || dept.includes("women") || dept.includes("kid") || dept.includes("fashion")) return "Trending Fashion";
-  return "Trending Collections";
+  return "Collection";
 };
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
   const [departments, setDepartments] = useState([]);
@@ -85,6 +92,15 @@ const Navbar = () => {
   const [searchParams] = useSearchParams();
 
   const currentDeptParam = searchParams.get("department");
+
+  useEffect(() => {
+    const q = searchParams.get("search");
+    if (q) {
+      setSearchQuery(q);
+    } else if (location.pathname !== "/products") {
+      setSearchQuery("");
+    }
+  }, [searchParams, location.pathname]);
 
   const { user, logout } = useAuth();
   const { cartCount } = useCart();
@@ -215,20 +231,20 @@ const Navbar = () => {
   const navBg = isNavSolid ? "bg-white" : "bg-transparent";
   const navBorder = isNavSolid ? "border-b border-[#E5E7EB]" : "border-transparent";
   const textColor = isNavSolid ? "text-[#111827]" : "text-white";
-  const searchBg = isNavSolid ? "bg-gray-100/80" : "bg-white/10";
-  const searchBorder = isNavSolid ? "border-transparent" : "border-white/20";
-  const searchPlaceholder = isNavSolid ? "placeholder:text-gray-500" : "placeholder:text-gray-200";
-  const searchIconColor = isNavSolid ? "text-gray-500" : "text-white";
+  const searchBg = isNavSolid ? "bg-white" : "bg-white/10";
+  const searchBorder = isNavSolid ? "border-[#D1D5DB]" : "border-white/20";
+  const searchPlaceholder = isNavSolid ? "placeholder:text-gray-400" : "placeholder:text-gray-200";
+  const searchIconColor = isNavSolid ? "text-gray-400" : "text-white";
 
   return (
     <div className="fixed top-0 left-0 right-0 z-50" style={{ fontFamily: "'Poppins', sans-serif" }} onMouseLeave={() => setActiveHoverDept(null)}>
       {/* Navbar */}
       <nav className={`${navBg} ${navBorder} transition-all duration-300`}>
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-[80px]">
+          <div className="flex justify-between items-center h-[70px]">
 
             {/* Left: Logo */}
-            <div className="flex-shrink-0 flex items-center" onMouseEnter={() => setActiveHoverDept(null)}>
+            <div className="flex-shrink-0 flex items-center h-full" onMouseEnter={() => setActiveHoverDept(null)}>
               <Link
                 to={isAdmin ? "/admin/dashboard" : "/home"}
                 className="flex items-center"
@@ -237,20 +253,20 @@ const Navbar = () => {
                   src="/Logo/logo.png"
                   alt="SwagSync Logo"
                   fetchPriority="high"
-                  className="h-14 sm:h-15 lg:h-18 w-auto transition-all duration-300 pt-2"
+                  className="h-10 sm:h-11 lg:h-14 w-auto transition-all duration-300 object-contain"
                   style={{ filter: isScrolled ? "none" : "drop-shadow(0px 0px 4px rgba(255,255,255,1)) drop-shadow(0px 0px 10px rgba(255,255,255,0.8))" }}
                 />
               </Link>
             </div>
 
             {/* Nav Links */}
-            <div className="hidden lg:flex flex-1 justify-center items-center gap-8 xl:gap-10">
+            <div className="hidden lg:flex flex-1 justify-center items-center gap-8 xl:gap-10 h-full">
               {isAdmin
                 ? adminNavLinks.map((link) => (
                   <Link
                     key={link.name}
                     to={link.path}
-                    className={`flex items-center gap-1.5 font-bold tracking-wide transition-colors hover:text-[#FD7100]`}
+                    className={`relative py-1 flex items-center gap-1.5 font-bold tracking-wide transition-colors hover:text-[#FD7100]`}
                     style={{
                       fontFamily: "'Poppins', sans-serif",
                       fontSize: "14px",
@@ -259,6 +275,9 @@ const Navbar = () => {
                   >
                     <link.icon className="w-4 h-4" />
                     {link.name}
+                    {isActive(link.path) && (
+                      <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#FD7100] rounded-full transition-all duration-200" />
+                    )}
                   </Link>
                 ))
                 : (
@@ -272,14 +291,14 @@ const Navbar = () => {
                       return (
                         <div
                           key={dept._id}
-                          className="relative flex items-center h-[76px]"
+                          className="relative flex items-center h-full"
                           onMouseEnter={() => setActiveHoverDept(dept.name)}
                           onMouseLeave={() => setActiveHoverDept(null)}
                         >
                           <Link
                             to={`/products?department=${encodeURIComponent(dept.name)}`}
                             onClick={() => setActiveHoverDept(null)}
-                            className="font-bold tracking-wide transition-colors uppercase hover:text-[#FD7100] flex items-center gap-1"
+                            className="relative py-1 font-bold tracking-wide transition-colors uppercase hover:text-[#FD7100] flex items-center gap-1"
                             style={{
                               fontFamily: "'Poppins', sans-serif",
                               fontSize: "14px",
@@ -287,10 +306,10 @@ const Navbar = () => {
                             }}
                           >
                             {dept.name}
+                            {(isCurrent || isHovered) && (
+                              <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#FD7100] rounded-full transition-all duration-200" />
+                            )}
                           </Link>
-                          {(isCurrent || isHovered) && (
-                            <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#FD7100] rounded-full transition-all duration-200" />
-                          )}
 
                           {/* Desktop Mega-Menu Dropdown (Anchored directly below category tab) */}
                           {!isAdmin && isHovered && (() => {
@@ -317,13 +336,13 @@ const Navbar = () => {
                               });
                             }
 
-                            // Dynamic width styling based on column count
+                            // Dynamic width styling based on column count - snug and compact to minimize excess whitespace
                             const getWidthClass = (cols) => {
-                              if (cols === 1) return "w-[360px]";
-                              if (cols === 2) return "w-[640px]";
-                              if (cols === 3) return "w-[880px]";
-                              if (cols === 4) return "w-[1050px]";
-                              return "w-[1200px]";
+                              if (cols === 1) return "w-[220px]";
+                              if (cols === 2) return "w-[420px]";
+                              if (cols === 3) return "w-[580px]";
+                              if (cols === 4) return "w-[760px]";
+                              return "w-[920px]";
                             };
 
                             // Center the dropdown horizontally right beneath its corresponding parent department tab
@@ -341,46 +360,48 @@ const Navbar = () => {
 
                             return (
                               <div
-                                className={`hidden lg:block fixed top-[75px] ${getPositionClass(numCols)} ${getWidthClass(numCols)} max-w-[95vw] bg-white rounded-none border border-[#E5E7EB] shadow-[0_25px_50px_-12px_rgba(17,24,39,0.18)] transition-all duration-200 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150`}
+                                className={`hidden lg:block absolute top-full ${getPositionClass(numCols)} ${getWidthClass(numCols)} max-w-[95vw] bg-white rounded-none border border-[#E5E7EB] shadow-[0_25px_50px_-12px_rgba(17,24,39,0.18)] transition-all duration-200 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150`}
                               >
                                 {/* Dynamic Height Grid with Vertical Column Dividers */}
                                 <div className={`grid ${getGridColsClass(numCols)} divide-x divide-[#E5E7EB] h-auto max-h-[75vh] overflow-y-auto`}>
                                   {deptCategories.length > 0 ? (
                                     columns.map((colSections, colIdx) => (
-                                      <div key={colIdx} className="p-6 flex flex-col gap-6">
-                                        {colSections.map((sec, secIdx) => (
-                                          <div key={sec.title} className={secIdx > 0 ? "border-t border-[#E5E7EB]/70 pt-5" : ""}>
-                                            {/* Section Header */}
-                                            <h4
-                                              className="text-[13px] font-extrabold tracking-wide uppercase text-[#FD7100] mb-3 select-none text-center"
-                                              style={{ fontFamily: "'Poppins', sans-serif" }}
-                                            >
-                                              {sec.title}
-                                            </h4>
+                                      <div key={colIdx} className="py-5 px-4 flex flex-col items-center">
+                                        <div className="w-fit flex flex-col items-start gap-4 text-left">
+                                          {colSections.map((sec, secIdx) => (
+                                            <div key={sec.title} className={`flex flex-col items-start text-left ${secIdx > 0 ? "border-t border-[#E5E7EB]/70 pt-4 w-full" : ""}`}>
+                                              {/* Section Header */}
+                                              <h4
+                                                className="text-[12px] font-extrabold tracking-wider uppercase text-[#FD7100] mb-2.5 select-none text-left whitespace-nowrap"
+                                                style={{ fontFamily: "'Poppins', sans-serif" }}
+                                              >
+                                                {sec.title}
+                                              </h4>
 
-                                            {/* Category Links List */}
-                                            <ul className="space-y-2">
-                                              {sec.items.map((cat) => {
-                                                const isCatSelected = location.pathname === "/products" && currentDeptParam === dept.name && searchParams.get("category") === cat.name;
-                                                return (
-                                                  <li key={cat._id}>
-                                                    <Link
-                                                      to={`/products?department=${encodeURIComponent(dept.name)}&category=${encodeURIComponent(cat.name)}`}
-                                                      onClick={() => setActiveHoverDept(null)}
-                                                      className={`text-[13px] transition-all block duration-150 py-0.5 truncate text-center ${isCatSelected
+                                              {/* Category Links List */}
+                                              <ul className="space-y-1.5 flex flex-col items-start text-left w-full">
+                                                {sec.items.map((cat) => {
+                                                  const isCatSelected = location.pathname === "/products" && currentDeptParam === dept.name && searchParams.get("category") === cat.name;
+                                                  return (
+                                                    <li key={cat._id} className="w-full text-left">
+                                                      <Link
+                                                        to={`/products?department=${encodeURIComponent(dept.name)}&category=${encodeURIComponent(cat.name)}`}
+                                                        onClick={() => setActiveHoverDept(null)}
+                                                        className={`text-[13px] transition-all block duration-150 py-0.5 truncate text-left ${isCatSelected
                                                           ? "text-[#FD7100] font-bold"
-                                                          : "text-[#4B5563] font-medium hover:text-[#111827] hover:font-bold scale-100 hover:scale-105"
-                                                        }`}
-                                                      style={{ fontFamily: "'Poppins', sans-serif" }}
-                                                    >
-                                                      {cat.name}
-                                                    </Link>
-                                                  </li>
-                                                );
-                                              })}
-                                            </ul>
-                                          </div>
-                                        ))}
+                                                          : "text-[#4B5563] font-medium hover:text-[#111827] hover:font-semibold hover:translate-x-0.5"
+                                                          }`}
+                                                        style={{ fontFamily: "'Poppins', sans-serif" }}
+                                                      >
+                                                        {cat.name}
+                                                      </Link>
+                                                    </li>
+                                                  );
+                                                })}
+                                              </ul>
+                                            </div>
+                                          ))}
+                                        </div>
                                       </div>
                                     ))
                                   ) : (
@@ -389,22 +410,6 @@ const Navbar = () => {
                                       <p className="text-xs text-gray-400 mt-1">Check back soon for upcoming arrivals!</p>
                                     </div>
                                   )}
-                                </div>
-
-                                {/* Bottom Exploration Footer Strip */}
-                                <div className="bg-[#F9FAFB] border-t border-[#E5E7EB] px-6 py-3 flex items-center justify-between shrink-0">
-                                  <span className="text-xs text-[#6B7280] font-medium">
-                                    Browsing collection for <strong className="text-[#111827]">{dept.name}</strong>
-                                  </span>
-                                  <Link
-                                    to={`/products?department=${encodeURIComponent(dept.name)}`}
-                                    onClick={() => setActiveHoverDept(null)}
-                                    className="text-xs font-bold text-[#FD7100] hover:text-[#E06400] flex items-center gap-1 group transition-colors"
-                                    style={{ fontFamily: "'Poppins', sans-serif" }}
-                                  >
-                                    Explore All {dept.name} Products
-                                    <span className="group-hover:translate-x-1 transition-transform inline-block ml-1">→</span>
-                                  </Link>
                                 </div>
                               </div>
                             );
@@ -417,60 +422,52 @@ const Navbar = () => {
             </div>
 
             {/* Right: Search Bar & Icons */}
-            <div className="flex items-center justify-end gap-4 sm:gap-6 flex-shrink-0" onMouseEnter={() => setActiveHoverDept(null)}>
+            <div className="flex items-center justify-end gap-4 sm:gap-6 flex-shrink-0 h-full" onMouseEnter={() => setActiveHoverDept(null)}>
               {/* Search Bar (Desktop) */}
               {!isAdmin && (
-                <div className="hidden lg:flex relative items-center justify-end h-[40px]">
-                  {isSearchOpen ? (
-                    <div className="relative w-[280px] animate-in fade-in slide-in-from-right-4 duration-300">
-                      <Search
-                        className={`absolute z-10 left-4 top-1/2 -translate-y-1/2 w-4 h-4 ${searchIconColor} transition-colors`}
-                      />
-                      <input
-                        type="text"
-                        autoFocus
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && searchQuery.trim()) {
-                            navigate(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
-                            setIsSearchOpen(false);
-                          }
-                        }}
-                        onBlur={() => {
-                          if (!searchQuery.trim()) {
-                            setIsSearchOpen(false);
-                          }
-                        }}
-                        placeholder="Search products..."
-                        className={`w-full pl-11 pr-4 py-2 rounded-full focus:outline-none focus:ring-2 focus:ring-[#FD7100] text-[13px] border ${searchBg} ${searchBorder} ${textColor} ${searchPlaceholder} transition-all duration-300 backdrop-blur-sm shadow-sm`}
-                        style={{ fontFamily: "'Poppins', sans-serif" }}
-                      />
-                    </div>
-                  ) : (
+                <div className="hidden lg:flex relative items-center w-[220px] xl:w-[280px] h-[38px]">
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && searchQuery.trim()) {
+                        navigate(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
+                      }
+                    }}
+                    placeholder="Search products..."
+                    className={`w-full h-[38px] pl-10 pr-8 py-0 rounded-none focus:outline-none focus:border-[#FD7100] focus:ring-1 focus:ring-[#FD7100] text-[13px] border ${searchBg} ${searchBorder} ${textColor} ${searchPlaceholder} transition-all duration-300 backdrop-blur-sm`}
+                    style={{ fontFamily: "'Poppins', sans-serif" }}
+                  />
+                  <Search
+                    size={16}
+                    className={`absolute z-10 left-3.5 top-1/2 -translate-y-1/2 ${searchIconColor} transition-colors pointer-events-none`}
+                  />
+                  {searchQuery && (
                     <button
-                      onClick={() => setIsSearchOpen(true)}
-                      className={`p-2 rounded-full transition-all duration-300 ${isScrolled ? "hover:bg-gray-100" : "hover:bg-white/10"}`}
-                      aria-label="Search"
+                      type="button"
+                      onClick={() => setSearchQuery("")}
+                      className={`absolute z-10 right-3 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-gray-200/50 ${textColor} opacity-60 hover:opacity-100 transition-opacity`}
+                      aria-label="Clear search"
                     >
-                      <Search className={`w-5 h-5 ${searchIconColor} transition-colors`} />
+                      <X size={14} />
                     </button>
                   )}
                 </div>
               )}
 
               {/* Icons */}
-              <div className="flex items-center gap-3 sm:gap-6">
+              <div className="flex items-center gap-3 sm:gap-5">
                 {!isAdmin && (
-                  <>
+                  <div className="flex items-center gap-1 sm:gap-1.5">
                     <Link
                       to="/wishlist"
-                      className={`relative flex flex-col items-center justify-center gap-1 ${textColor} transition-all duration-300 px-3 py-1.5 rounded-lg ${isScrolled ? "hover:bg-gray-100 hover:text-[#FD7100]" : "hover:text-white/80"
+                      className={`relative flex flex-col items-center justify-center gap-1 ${textColor} transition-all duration-300 px-2 py-1 rounded-lg ${isScrolled ? "hover:bg-gray-100 hover:text-[#FD7100]" : "hover:text-white/80"
                         }`}
                     >
                       <div className="relative">
-                        <Heart size={20} strokeWidth={1.5} />
-                        <span className="absolute -top-1.5 -right-2 w-4 h-4 bg-[#FD7100] text-white text-[9px] font-medium rounded-full flex items-center justify-center">
+                        <Heart size={18} strokeWidth={1.5} />
+                        <span className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 bg-[#FD7100] text-white text-[8px] font-semibold rounded-full flex items-center justify-center leading-none">
                           {wishlistCount > 99 ? "99" : wishlistCount}
                         </span>
                       </div>
@@ -479,18 +476,18 @@ const Navbar = () => {
 
                     <Link
                       to="/bag"
-                      className={`relative flex flex-col items-center justify-center gap-1 ${textColor} transition-all duration-300 px-3 py-1.5 rounded-lg ${isScrolled ? "hover:bg-gray-100 hover:text-[#FD7100]" : "hover:text-white/80"
+                      className={`relative flex flex-col items-center justify-center gap-1 ${textColor} transition-all duration-300 px-2 py-1 rounded-lg ${isScrolled ? "hover:bg-gray-100 hover:text-[#FD7100]" : "hover:text-white/80"
                         }`}
                     >
                       <div className="relative">
-                        <ShoppingBag size={20} strokeWidth={1.5} />
-                        <span className="absolute -top-1.5 -right-2 w-4 h-4 bg-[#FD7100] text-white text-[9px] font-medium rounded-full flex items-center justify-center">
+                        <ShoppingBag size={18} strokeWidth={1.5} />
+                        <span className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 bg-[#FD7100] text-white text-[8px] font-semibold rounded-full flex items-center justify-center leading-none">
                           {cartCount > 99 ? "99" : cartCount}
                         </span>
                       </div>
                       <span className="text-xs font-semibold hidden md:block">Bag</span>
                     </Link>
-                  </>
+                  </div>
                 )}
 
                 {/* Profile / Auth Section */}
@@ -502,7 +499,7 @@ const Navbar = () => {
                   >
                     <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 overflow-hidden shrink-0">
                       {user?.profileImage?.url ? (
-                        <img src={user.profileImage.url} alt="Profile" className="w-full h-full object-cover"  loading="lazy" decoding="async" />
+                        <img src={user.profileImage.url} alt="Profile" className="w-full h-full object-cover" loading="lazy" decoding="async" />
                       ) : (
                         <span className="text-[14px] font-bold">{user?.username?.charAt(0).toUpperCase() || 'U'}</span>
                       )}
@@ -520,7 +517,7 @@ const Navbar = () => {
                         ? "border-[#111827] text-[#111827] hover:bg-[#111827] hover:text-white"
                         : "border-white text-white hover:text-white/80"
                         }`}
-                      style={{ fontSize: "15px", height: "40px" }}
+                      style={{ fontSize: "14px", height: "38px" }}
                     >
                       Login
                     </Link>
@@ -531,7 +528,7 @@ const Navbar = () => {
                       className={`md:hidden flex flex-col items-center justify-center gap-1 ${textColor} transition-all duration-300 px-2 py-1.5 rounded-lg ${isScrolled ? "hover:bg-gray-100 hover:text-[#FD7100]" : "hover:text-white/80"
                         }`}
                     >
-                      <User size={20} strokeWidth={1.5} />
+                      <User size={18} strokeWidth={1.5} />
                     </Link>
                   </>
                 )}
@@ -552,7 +549,7 @@ const Navbar = () => {
 
         {/* Mobile Menu */}
         {isMenuOpen && (
-          <div className="lg:hidden border-t border-border bg-white shadow-lg text-[#111827] max-h-[calc(100vh-76px)] overflow-y-auto">
+          <div className="lg:hidden border-t border-border bg-white shadow-lg text-[#111827] max-h-[calc(100vh-70px)] overflow-y-auto">
             <div className="px-4 py-3 border-b border-[#E5E7EB]">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -567,7 +564,7 @@ const Navbar = () => {
                     }
                   }}
                   placeholder="Search products..."
-                  className="w-full pl-10 pr-4 py-2 rounded-md focus:outline-none focus:ring-1 focus:ring-[#FD7100] text-[13px] bg-gray-100 border-transparent text-[#111827]"
+                  className="w-full pl-10 pr-4 py-2 rounded-none focus:outline-none focus:border-[#FD7100] focus:ring-1 focus:ring-[#FD7100] text-[13px] bg-white border border-[#D1D5DB] text-[#111827]"
                 />
               </div>
             </div>
