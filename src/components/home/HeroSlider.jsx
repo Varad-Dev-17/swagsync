@@ -16,7 +16,7 @@ const HeroSlider = () => {
         className="absolute inset-0 w-full h-full object-cover z-0"
       />
 
-   
+
 
       {/* TEXT CONTENT: Bottom-Left Overlay */}
       <div className="absolute left-[5%] md:left-[8%] bottom-[8%] sm:bottom-[12%] md:bottom-[16%] z-20 w-[90%] md:w-[60%] lg:w-[45%] pointer-events-none">
@@ -34,7 +34,7 @@ const HeroSlider = () => {
               hidden: { opacity: 0, y: 15 },
               visible: { opacity: 1, y: 0, transition: { duration: 0.6 } },
             }}
-            className="inline-block text-[13px] sm:text-[15px] font-bold tracking-[0.15em] uppercase text-[#FD7100] mb-3 sm:mb-4 md:mb-6"
+            className="inline-block text-[13px] sm:text-[15px] font-bold tracking-[0.15em] uppercase text-[#FD7100] mb-3 sm:mb-4 md:mb-6 hero-mobile-text-shadow"
           >
             NEW SEASON 2026
           </motion.span>
@@ -44,7 +44,7 @@ const HeroSlider = () => {
               hidden: { opacity: 0, y: 20 },
               visible: { opacity: 1, y: 0, transition: { duration: 0.8 } },
             }}
-            className="text-2xl sm:text-4xl md:text-6xl lg:text-[72px] font-bold text-white leading-[1.05] tracking-tight mb-3 sm:mb-4 md:mb-6 whitespace-pre-line"
+            className="text-2xl sm:text-4xl md:text-6xl lg:text-[72px] font-bold text-white leading-[1.05] tracking-tight mb-3 sm:mb-4 md:mb-6 whitespace-pre-line hero-mobile-text-shadow"
             style={{ fontFamily: "'Poppins', sans-serif" }}
           >
             Welcome to Swag<span className="text-[#FD7100]">Sync</span>
@@ -55,7 +55,7 @@ const HeroSlider = () => {
               hidden: { opacity: 0, y: 20 },
               visible: { opacity: 1, y: 0, transition: { duration: 0.8 } },
             }}
-            className="text-[14px] md:text-[17px] text-gray-200 max-w-[400px] mb-6 sm:mb-8 md:mb-10 leading-relaxed whitespace-pre-line"
+            className="text-[14px] md:text-[17px] text-gray-200 max-w-[400px] mb-6 sm:mb-8 md:mb-10 leading-relaxed whitespace-pre-line hero-mobile-text-shadow"
           >
             Where timeless fashion meets modern living.{"\n"}Curated collections for every style, every season.
           </motion.p>
@@ -65,17 +65,17 @@ const HeroSlider = () => {
               hidden: { opacity: 0, y: 20 },
               visible: { opacity: 1, y: 0, transition: { duration: 0.8 } },
             }}
-            className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 mb-4 sm:mb-6"
+            className="flex flex-row items-center gap-2.5 sm:gap-4 mb-4 sm:mb-6 max-w-[420px] sm:max-w-none"
           >
             <Link
               to="/products"
-              className="w-full sm:w-auto px-6 sm:px-10 py-3.5 sm:py-4 bg-[#FD7100] text-white font-medium text-[14px] sm:text-[15px] hover:bg-[#E06400] transition-colors duration-250 rounded-[4px] text-center shadow-md active:scale-95"
+              className="flex-1 sm:flex-initial sm:w-auto px-3 sm:px-10 py-3 sm:py-4 bg-[#FD7100] text-white font-medium text-[13px] sm:text-[15px] hover:bg-[#E06400] transition-colors duration-250 rounded-[4px] text-center hero-mobile-btn-shadow sm:shadow-none active:scale-95 whitespace-nowrap"
             >
               Explore Collection
             </Link>
             <Link
               to="/new-in"
-              className="w-full sm:w-auto px-6 sm:px-10 py-3.5 sm:py-4 bg-transparent border border-white text-white font-medium text-[14px] sm:text-[15px] hover:bg-white hover:text-[#111827] transition-all duration-300 rounded-[4px] text-center active:scale-95"
+              className="flex-1 sm:flex-initial sm:w-auto px-3 sm:px-10 py-3 sm:py-4 bg-transparent border border-white text-white font-medium text-[13px] sm:text-[15px] hover:bg-white hover:text-[#111827] transition-all duration-300 rounded-[4px] text-center hero-mobile-btn-shadow sm:shadow-none active:scale-95 whitespace-nowrap"
             >
               Shop New Arrivals
             </Link>

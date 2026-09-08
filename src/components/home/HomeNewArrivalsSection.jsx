@@ -117,6 +117,7 @@ const HomeNewArrivalsSection = ({ title, subtitle }) => {
 
     mm.add("all", () => {
       const track = trackRef.current;
+      if (!track) return;
       const container = track.parentElement;
       const getScrollAmount = () => {
         const style = window.getComputedStyle(container);
@@ -129,7 +130,11 @@ const HomeNewArrivalsSection = ({ title, subtitle }) => {
         ease: "none",
         scrollTrigger: {
           trigger: sectionRef.current,
-          start: "top 80px",
+          start: () => {
+            if (window.innerWidth < 640) return "top 62px";
+            if (window.innerWidth < 1024) return "top 68px";
+            return "top 70px";
+          },
           end: () => `+=${Math.abs(getScrollAmount())}`,
           pin: true,
           scrub: true,
@@ -145,25 +150,25 @@ const HomeNewArrivalsSection = ({ title, subtitle }) => {
   return (
     <section
       ref={sectionRef}
-      className="w-full bg-white overflow-hidden relative z-10 flex flex-col justify-center h-[calc(100vh-80px)]"
+      className="w-full bg-white overflow-hidden relative z-10 flex flex-col justify-center h-[calc(100dvh-62px)] sm:h-[calc(100dvh-68px)] lg:h-[calc(100vh-70px)] py-4 sm:py-0"
     >
-      <div className="max-w-[1600px] mx-auto w-full px-4 md:px-8 lg:px-12 mb-6 sm:mb-8">
+      <div className="max-w-[1600px] mx-auto w-full px-4 md:px-8 lg:px-12 mb-4 sm:mb-8">
         {/* Section Header */}
-        <div className="flex flex-col items-center text-center mb-4">
-          <h2 className="text-3xl sm:text-[40px] md:text-[56px] lg:text-[68px] font-bold text-[#111827] leading-[1.1] tracking-[-0.02em]">
+        <div className="flex flex-col items-center text-center mb-2 sm:mb-4">
+          <h2 className="text-3xl xs:text-[34px] sm:text-[40px] md:text-[56px] lg:text-[68px] font-bold text-[#111827] leading-[1.1] tracking-[-0.02em]">
             {title}
           </h2>
           {subtitle && (
-            <p className="text-[15px] md:text-[16px] font-normal text-[#6B7280] leading-[1.6] mt-2">
+            <p className="text-[15px] sm:text-[15px] md:text-[16px] font-normal text-[#6B7280] leading-[1.5] mt-1.5 sm:mt-2">
               {subtitle}
             </p>
           )}
         </div>
       </div>
 
-      {/* Pinned Horizontal Runway Track */}
+      {/* Horizontal Runway Track */}
       <div 
-        className="w-full overflow-hidden px-4 md:px-8 lg:px-12 pb-6" 
+        className="w-full overflow-hidden px-4 md:px-8 lg:px-12 pb-3 sm:pb-6"
       >
         <div
           ref={trackRef}
@@ -172,7 +177,7 @@ const HomeNewArrivalsSection = ({ title, subtitle }) => {
           {products.map((product) => (
             <div
               key={product._id}
-              className="w-[160px] sm:w-[180px] md:w-[200px] lg:w-[220px] shrink-0"
+              className="w-[210px] xs:w-[225px] sm:w-[190px] md:w-[205px] lg:w-[220px] shrink-0 snap-start"
             >
               <HomeArrivalCard product={product} />
             </div>
