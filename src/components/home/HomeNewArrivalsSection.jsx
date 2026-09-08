@@ -155,7 +155,7 @@ const HomeNewArrivalsSection = ({ title, subtitle }) => {
       <div className="max-w-[1600px] mx-auto w-full px-4 md:px-8 lg:px-12 mb-4 sm:mb-8">
         {/* Section Header */}
         <div className="flex flex-col items-center text-center mb-2 sm:mb-4">
-          <h2 className="text-3xl xs:text-[34px] sm:text-[40px] md:text-[56px] lg:text-[68px] font-bold text-[#111827] leading-[1.1] tracking-[-0.02em]">
+          <h2 className="text-4xl xs:text-[40px] sm:text-[40px] md:text-[56px] lg:text-[68px] font-bold text-[#111827] leading-[1.1] tracking-[-0.02em]">
             {title}
           </h2>
           {subtitle && (
