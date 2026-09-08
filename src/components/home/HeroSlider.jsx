@@ -4,7 +4,7 @@ import { MousePointer2, ChevronDown } from "lucide-react";
 
 const HeroSlider = () => {
   return (
-    <section className="relative w-full h-screen overflow-hidden">
+    <section className="relative w-full h-screen min-h-[100dvh] h-[100dvh] overflow-hidden">
       {/* BACKGROUND VIDEO */}
       <video
         src="https://res.cloudinary.com/dbjw0t8lz/video/upload/f_auto,q_auto,w_1920,c_limit,ac_none/swagsync/hero.mp4"
@@ -19,7 +19,7 @@ const HeroSlider = () => {
    
 
       {/* TEXT CONTENT: Bottom-Left Overlay */}
-      <div className="absolute left-[5%] md:left-[8%] bottom-[12%] md:bottom-[16%] z-20 w-[90%] md:w-[60%] lg:w-[45%] pointer-events-none">
+      <div className="absolute left-[5%] md:left-[8%] bottom-[8%] sm:bottom-[12%] md:bottom-[16%] z-20 w-[90%] md:w-[60%] lg:w-[45%] pointer-events-none">
         <motion.div
           initial="hidden"
           animate="visible"
@@ -34,7 +34,7 @@ const HeroSlider = () => {
               hidden: { opacity: 0, y: 15 },
               visible: { opacity: 1, y: 0, transition: { duration: 0.6 } },
             }}
-            className="inline-block text-[15px] font-bold tracking-[0.15em] uppercase text-[#FD7100] mb-4 md:mb-6 "
+            className="inline-block text-[13px] sm:text-[15px] font-bold tracking-[0.15em] uppercase text-[#FD7100] mb-3 sm:mb-4 md:mb-6"
           >
             NEW SEASON 2026
           </motion.span>
@@ -44,7 +44,7 @@ const HeroSlider = () => {
               hidden: { opacity: 0, y: 20 },
               visible: { opacity: 1, y: 0, transition: { duration: 0.8 } },
             }}
-            className="text-3xl sm:text-4xl md:text-6xl lg:text-[72px] font-bold text-white leading-[1.05] tracking-tight mb-4 md:mb-6 whitespace-pre-line"
+            className="text-2xl sm:text-4xl md:text-6xl lg:text-[72px] font-bold text-white leading-[1.05] tracking-tight mb-3 sm:mb-4 md:mb-6 whitespace-pre-line"
             style={{ fontFamily: "'Poppins', sans-serif" }}
           >
             Welcome to Swag<span className="text-[#FD7100]">Sync</span>
@@ -55,7 +55,7 @@ const HeroSlider = () => {
               hidden: { opacity: 0, y: 20 },
               visible: { opacity: 1, y: 0, transition: { duration: 0.8 } },
             }}
-            className="text-[15px] md:text-[17px] text-gray-200  max-w-[400px] mb-8 md:mb-10 leading-relaxed whitespace-pre-line"
+            className="text-[14px] md:text-[17px] text-gray-200 max-w-[400px] mb-6 sm:mb-8 md:mb-10 leading-relaxed whitespace-pre-line"
           >
             Where timeless fashion meets modern living.{"\n"}Curated collections for every style, every season.
           </motion.p>
@@ -65,17 +65,17 @@ const HeroSlider = () => {
               hidden: { opacity: 0, y: 20 },
               visible: { opacity: 1, y: 0, transition: { duration: 0.8 } },
             }}
-            className="flex flex-col sm:flex-row items-center gap-4 mb-6"
+            className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 mb-4 sm:mb-6"
           >
             <Link
               to="/products"
-              className="w-full sm:w-auto px-10 py-4 bg-[#FD7100] text-white font-medium  text-[15px] hover:bg-[#E06400] transition-colors duration-250 rounded-[4px] text-center"
+              className="w-full sm:w-auto px-6 sm:px-10 py-3.5 sm:py-4 bg-[#FD7100] text-white font-medium text-[14px] sm:text-[15px] hover:bg-[#E06400] transition-colors duration-250 rounded-[4px] text-center shadow-md active:scale-95"
             >
               Explore Collection
             </Link>
             <Link
               to="/new-in"
-              className="w-full sm:w-auto px-10 py-4 bg-transparent border border-white text-white font-medium  text-[15px] hover:bg-white hover:text-[#111827] transition-all duration-300 rounded-[4px] text-center"
+              className="w-full sm:w-auto px-6 sm:px-10 py-3.5 sm:py-4 bg-transparent border border-white text-white font-medium text-[14px] sm:text-[15px] hover:bg-white hover:text-[#111827] transition-all duration-300 rounded-[4px] text-center active:scale-95"
             >
               Shop New Arrivals
             </Link>

@@ -148,6 +148,17 @@ const Navbar = () => {
     setIsMenuOpen(false);
   }, [location.pathname, location.search]);
 
+  // Lock body scroll when mobile menu is open on iPhone/Android
+  useEffect(() => {
+    if (isMenuOpen) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [isMenuOpen]);
+
   useEffect(() => {
     const fetchNavData = async () => {
       try {
@@ -226,8 +237,8 @@ const Navbar = () => {
 
   const isActive = (path) => location.pathname.startsWith(path);
 
-  // Determine styles based on scroll, hover state, and page
-  const isNavSolid = isScrolled || Boolean(activeHoverDept);
+  // Determine styles based on scroll, hover state, mobile menu, and page
+  const isNavSolid = isScrolled || Boolean(activeHoverDept) || isMenuOpen;
   const navBg = isNavSolid ? "bg-white" : "bg-transparent";
   const navBorder = isNavSolid ? "border-b border-[#E5E7EB]" : "border-transparent";
   const textColor = isNavSolid ? "text-[#111827]" : "text-white";
@@ -240,8 +251,8 @@ const Navbar = () => {
     <div className="fixed top-0 left-0 right-0 z-50" style={{ fontFamily: "'Poppins', sans-serif" }} onMouseLeave={() => setActiveHoverDept(null)}>
       {/* Navbar */}
       <nav className={`${navBg} ${navBorder} transition-all duration-300`}>
-        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-[70px]">
+        <div className="max-w-[1600px] mx-auto px-3 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-[62px] sm:h-[68px] lg:h-[70px]">
 
             {/* Left: Logo */}
             <div className="flex-shrink-0 flex items-center h-full" onMouseEnter={() => setActiveHoverDept(null)}>
@@ -253,8 +264,8 @@ const Navbar = () => {
                   src="/Logo/logo.png"
                   alt="SwagSync Logo"
                   fetchPriority="high"
-                  className="h-10 sm:h-11 lg:h-14 w-auto transition-all duration-300 object-contain"
-                  style={{ filter: isScrolled ? "none" : "drop-shadow(0px 0px 4px rgba(255,255,255,1)) drop-shadow(0px 0px 10px rgba(255,255,255,0.8))" }}
+                  className="h-9 sm:h-11 lg:h-14 w-auto transition-all duration-300 object-contain"
+                  style={{ filter: isNavSolid ? "none" : "drop-shadow(0px 0px 4px rgba(255,255,255,1)) drop-shadow(0px 0px 10px rgba(255,255,255,0.8))" }}
                 />
               </Link>
             </div>
@@ -457,16 +468,17 @@ const Navbar = () => {
               )}
 
               {/* Icons */}
-              <div className="flex items-center gap-3 sm:gap-5">
+              <div className="flex items-center gap-1.5 sm:gap-4 lg:gap-5">
                 {!isAdmin && (
-                  <div className="flex items-center gap-1 sm:gap-1.5">
+                  <div className="flex items-center gap-0.5 sm:gap-1.5">
                     <Link
                       to="/wishlist"
-                      className={`relative flex flex-col items-center justify-center gap-1 ${textColor} transition-all duration-300 px-2 py-1 rounded-lg ${isScrolled ? "hover:bg-gray-100 hover:text-[#FD7100]" : "hover:text-white/80"
+                      className={`relative flex flex-col items-center justify-center gap-1 ${textColor} transition-all duration-300 p-2 sm:px-2.5 sm:py-1 rounded-lg ${isScrolled ? "hover:bg-gray-100 hover:text-[#FD7100]" : "hover:text-white/80"
                         }`}
+                      aria-label="Wishlist"
                     >
                       <div className="relative">
-                        <Heart size={18} strokeWidth={1.5} />
+                        <Heart size={20} strokeWidth={1.5} />
                         <span className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 bg-[#FD7100] text-white text-[8px] font-semibold rounded-full flex items-center justify-center leading-none">
                           {wishlistCount > 99 ? "99" : wishlistCount}
                         </span>
@@ -476,11 +488,12 @@ const Navbar = () => {
 
                     <Link
                       to="/bag"
-                      className={`relative flex flex-col items-center justify-center gap-1 ${textColor} transition-all duration-300 px-2 py-1 rounded-lg ${isScrolled ? "hover:bg-gray-100 hover:text-[#FD7100]" : "hover:text-white/80"
+                      className={`relative flex flex-col items-center justify-center gap-1 ${textColor} transition-all duration-300 p-2 sm:px-2.5 sm:py-1 rounded-lg ${isScrolled ? "hover:bg-gray-100 hover:text-[#FD7100]" : "hover:text-white/80"
                         }`}
+                      aria-label="Shopping Bag"
                     >
                       <div className="relative">
-                        <ShoppingBag size={18} strokeWidth={1.5} />
+                        <ShoppingBag size={20} strokeWidth={1.5} />
                         <span className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 bg-[#FD7100] text-white text-[8px] font-semibold rounded-full flex items-center justify-center leading-none">
                           {cartCount > 99 ? "99" : cartCount}
                         </span>
@@ -494,14 +507,15 @@ const Navbar = () => {
                 {user ? (
                   <Link
                     to="/account"
-                    className={`flex items-center gap-2 ${textColor} transition-all duration-300 pl-2 pr-3 py-1.5 rounded-full ${isScrolled ? "hover:bg-gray-100 hover:text-[#FD7100]" : "hover:bg-white/10 hover:text-white"
+                    className={`flex items-center gap-2 ${textColor} transition-all duration-300 p-1 sm:pl-2 sm:pr-3 sm:py-1.5 rounded-full ${isScrolled ? "hover:bg-gray-100 hover:text-[#FD7100]" : "hover:bg-white/10 hover:text-white"
                       }`}
+                    aria-label="My Account"
                   >
-                    <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 overflow-hidden shrink-0">
+                    <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 overflow-hidden shrink-0 border border-gray-300/60">
                       {user?.profileImage?.url ? (
                         <img src={user.profileImage.url} alt="Profile" className="w-full h-full object-cover" loading="lazy" decoding="async" />
                       ) : (
-                        <span className="text-[14px] font-bold">{user?.username?.charAt(0).toUpperCase() || 'U'}</span>
+                        <span className="text-[13px] sm:text-[14px] font-bold text-gray-700">{user?.username?.charAt(0).toUpperCase() || 'U'}</span>
                       )}
                     </div>
                     <span className="text-sm font-semibold hidden md:block">
@@ -525,10 +539,11 @@ const Navbar = () => {
                     {/* Mobile Login Icon */}
                     <Link
                       to="/signin"
-                      className={`md:hidden flex flex-col items-center justify-center gap-1 ${textColor} transition-all duration-300 px-2 py-1.5 rounded-lg ${isScrolled ? "hover:bg-gray-100 hover:text-[#FD7100]" : "hover:text-white/80"
+                      className={`md:hidden flex items-center justify-center p-2 rounded-lg ${textColor} transition-all duration-300 ${isScrolled ? "hover:bg-gray-100 hover:text-[#FD7100]" : "hover:text-white/80"
                         }`}
+                      aria-label="Sign In"
                     >
-                      <User size={18} strokeWidth={1.5} />
+                      <User size={20} strokeWidth={1.5} />
                     </Link>
                   </>
                 )}
@@ -536,7 +551,8 @@ const Navbar = () => {
                 {/* Mobile Menu Button */}
                 <button
                   onClick={() => setIsMenuOpen(!isMenuOpen)}
-                  className={`lg:hidden ${textColor} hover:text-[#FD7100]`}
+                  className={`lg:hidden p-2 rounded-lg ${textColor} hover:text-[#FD7100] active:bg-black/5 transition-colors focus:outline-none`}
+                  aria-label={isMenuOpen ? "Close menu" : "Open menu"}
                 >
                   {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
                 </button>
@@ -545,62 +561,95 @@ const Navbar = () => {
           </div>
         </div>
 
-
-
-        {/* Mobile Menu */}
+        {/* Mobile Menu Drawer & Backdrop for iPhone and Android */}
         {isMenuOpen && (
-          <div className="lg:hidden border-t border-border bg-white shadow-lg text-[#111827] max-h-[calc(100vh-70px)] overflow-y-auto">
-            <div className="px-4 py-3 border-b border-[#E5E7EB]">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && searchQuery.trim()) {
-                      navigate(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
-                      setIsMenuOpen(false);
-                    }
-                  }}
-                  placeholder="Search products..."
-                  className="w-full pl-10 pr-4 py-2 rounded-none focus:outline-none focus:border-[#FD7100] focus:ring-1 focus:ring-[#FD7100] text-[13px] bg-white border border-[#D1D5DB] text-[#111827]"
-                />
-              </div>
-            </div>
-            <div className="px-4 py-3 space-y-1">
-              {isAdmin
-                ? adminNavLinks.map((link) => (
-                  <Link
-                    key={link.name}
-                    to={link.path}
-                    onClick={() => setIsMenuOpen(false)}
-                    className="flex items-center gap-2 px-3 py-2 rounded-lg font-bold tracking-wide hover:bg-gray-50 text-[14px]"
-                    style={{ color: isActive(link.path) ? "#FD7100" : "#111827" }}
-                  >
-                    <link.icon className="w-4 h-4" />
-                    {link.name}
-                  </Link>
-                ))
-                : (
-                  <div className="flex flex-col space-y-1">
+          <div className="lg:hidden">
+            {/* Backdrop overlay */}
+            <div
+              className="fixed inset-0 top-[62px] sm:top-[68px] bg-black/50 backdrop-blur-sm z-40 transition-opacity"
+              onClick={() => setIsMenuOpen(false)}
+            />
 
+            {/* Slide-down Drawer Panel */}
+            <div className="fixed top-[62px] sm:top-[68px] left-0 right-0 bottom-0 h-[calc(100dvh-62px)] sm:h-[calc(100dvh-68px)] max-h-[calc(100dvh-62px)] sm:max-h-[calc(100dvh-68px)] bg-white z-50 text-[#111827] flex flex-col overflow-hidden shadow-2xl border-t border-[#E5E7EB]">
+              {/* Search Bar (Mobile - 16px text prevents iOS Safari viewport auto-zoom) */}
+              <div className="px-4 py-3 border-b border-[#E5E7EB] bg-gray-50/50 shrink-0">
+                <div className="relative">
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && searchQuery.trim()) {
+                        navigate(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
+                        setIsMenuOpen(false);
+                      }
+                    }}
+                    placeholder="Search products..."
+                    className="w-full pl-10 pr-9 py-2.5 rounded-none focus:outline-none focus:border-[#FD7100] focus:ring-1 focus:ring-[#FD7100] text-[16px] md:text-[13px] bg-white border border-[#D1D5DB] text-[#111827] shadow-sm"
+                  />
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery("")}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600"
+                      aria-label="Clear search"
+                    >
+                      <X size={16} />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Scrollable Navigation Area */}
+              <div className="flex-1 overflow-y-auto px-4 py-3 space-y-1 overscroll-contain">
+                {isAdmin ? (
+                  adminNavLinks.map((link) => (
+                    <Link
+                      key={link.name}
+                      to={link.path}
+                      onClick={() => setIsMenuOpen(false)}
+                      className="flex items-center gap-3 px-3.5 py-3 rounded-lg font-bold tracking-wide hover:bg-gray-50 text-[15px] transition-colors"
+                      style={{ color: isActive(link.path) ? "#FD7100" : "#111827" }}
+                    >
+                      <link.icon className="w-5 h-5 text-[#FD7100]" />
+                      {link.name}
+                    </Link>
+                  ))
+                ) : (
+                  <div className="flex flex-col space-y-1">
                     {departments.map((dept) => {
                       const isDeptSelected = location.pathname === "/products" && currentDeptParam === dept.name;
                       const isExpanded = mobileExpandedDept === dept.name;
                       const deptCats = categoriesByDept[dept.name] || [];
 
                       return (
-                        <div key={dept._id} className="flex flex-col border-b border-[#E5E7EB]/50 last:border-0 py-1">
-                          <div className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors">
+                        <div key={dept._id} className="flex flex-col border-b border-[#E5E7EB]/60 last:border-0 py-1">
+                          <div
+                            onClick={() => {
+                              if (deptCats.length > 0) {
+                                setMobileExpandedDept(isExpanded ? null : dept.name);
+                              } else {
+                                navigate(`/products?department=${encodeURIComponent(dept.name)}`);
+                                setIsMenuOpen(false);
+                              }
+                            }}
+                            className="flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-gray-50 active:bg-gray-100 transition-colors cursor-pointer select-none"
+                          >
                             <Link
                               to={`/products?department=${encodeURIComponent(dept.name)}`}
-                              onClick={() => setIsMenuOpen(false)}
-                              className={`flex-1 font-bold tracking-wide text-[14px] transition-colors uppercase ${isDeptSelected ? "text-[#FD7100]" : "text-[#111827] hover:text-[#FD7100]"
-                                }`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setIsMenuOpen(false);
+                              }}
+                              className={`font-bold tracking-wide text-[15px] uppercase transition-colors ${
+                                isDeptSelected ? "text-[#FD7100]" : "text-[#111827] hover:text-[#FD7100]"
+                              }`}
                             >
                               {dept.name}
                             </Link>
+
                             {deptCats.length > 0 && (
                               <button
                                 type="button"
@@ -608,45 +657,109 @@ const Navbar = () => {
                                   e.stopPropagation();
                                   setMobileExpandedDept(isExpanded ? null : dept.name);
                                 }}
-                                className="p-1 text-[#4B5563] hover:text-[#FD7100] focus:outline-none"
+                                className="p-1.5 -mr-1 text-[#4B5563] hover:text-[#FD7100] focus:outline-none"
                                 aria-label={`Toggle ${dept.name} categories`}
                               >
-                                <ChevronDown size={18} className={`transition-transform duration-200 ${isExpanded ? "rotate-180 text-[#FD7100]" : ""}`} />
+                                <ChevronDown
+                                  size={18}
+                                  className={`transition-transform duration-200 ${isExpanded ? "rotate-180 text-[#FD7100]" : ""}`}
+                                />
                               </button>
                             )}
                           </div>
 
-                          {/* Expandable Categories (Accordion) */}
-                          {isExpanded && deptCats.length > 0 && (
-                            <div className="pl-6 pr-3 py-2 space-y-1.5 bg-gray-50/70 rounded-lg mt-1 mb-2 border-l-2 border-[#FD7100]/30 ml-3 animate-in fade-in duration-200">
-                              <Link
-                                to={`/products?department=${encodeURIComponent(dept.name)}`}
-                                onClick={() => setIsMenuOpen(false)}
-                                className="block py-1.5 px-2 text-[13px] font-semibold text-[#111827] hover:text-[#FD7100]"
-                              >
-                                View All {dept.name}
-                              </Link>
-                              {deptCats.map((cat) => {
-                                const isCatSelected = isDeptSelected && searchParams.get("category") === cat.name;
-                                return (
-                                  <Link
-                                    key={cat._id}
-                                    to={`/products?department=${encodeURIComponent(dept.name)}&category=${encodeURIComponent(cat.name)}`}
-                                    onClick={() => setIsMenuOpen(false)}
-                                    className={`block py-1.5 px-2 text-[13px] rounded transition-colors ${isCatSelected ? "text-[#FD7100] font-bold bg-[#FD7100]/10" : "text-[#4B5563] hover:text-[#FD7100]"
-                                      }`}
-                                  >
-                                    {cat.name}
-                                  </Link>
-                                );
-                              })}
-                            </div>
-                          )}
+                          {/* Expandable Categories Accordion Grouped by Section */}
+                          {isExpanded && deptCats.length > 0 && (() => {
+                            const sectionGroups = {};
+                            deptCats.forEach((cat) => {
+                              const section = getCategorySection(cat.name, dept.name);
+                              if (!sectionGroups[section]) sectionGroups[section] = [];
+                              sectionGroups[section].push(cat);
+                            });
+
+                            return (
+                              <div className="pl-3 pr-2 py-3 space-y-3 bg-gray-50/70 rounded-xl my-1.5 border-l-2 border-[#FD7100] ml-2 animate-in fade-in duration-200">
+                                <Link
+                                  to={`/products?department=${encodeURIComponent(dept.name)}`}
+                                  onClick={() => setIsMenuOpen(false)}
+                                  className="inline-flex items-center gap-1.5 text-xs font-bold text-[#FD7100] hover:text-[#E06400] px-2 py-1 uppercase tracking-wider"
+                                >
+                                  <span>Explore All {dept.name}</span>
+                                  <span>→</span>
+                                </Link>
+
+                                {Object.entries(sectionGroups).map(([sectionTitle, items]) => (
+                                  <div key={sectionTitle} className="space-y-1.5 pt-1">
+                                    <span className="block text-[11px] font-extrabold uppercase tracking-wider text-gray-400 px-2 select-none">
+                                      {sectionTitle}
+                                    </span>
+                                    <div className="grid grid-cols-2 gap-1 px-1">
+                                      {items.map((cat) => {
+                                        const isCatSelected = isDeptSelected && searchParams.get("category") === cat.name;
+                                        return (
+                                          <Link
+                                            key={cat._id}
+                                            to={`/products?department=${encodeURIComponent(dept.name)}&category=${encodeURIComponent(cat.name)}`}
+                                            onClick={() => setIsMenuOpen(false)}
+                                            className={`py-2 px-2.5 text-[13px] rounded-lg transition-colors truncate ${
+                                              isCatSelected
+                                                ? "text-[#FD7100] font-bold bg-[#FD7100]/10"
+                                                : "text-gray-700 hover:text-[#FD7100] hover:bg-white active:bg-gray-100 font-medium"
+                                            }`}
+                                          >
+                                            {cat.name}
+                                          </Link>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            );
+                          })()}
                         </div>
                       );
                     })}
                   </div>
                 )}
+              </div>
+
+              {/* Bottom Quick User Footer for Mobile */}
+              <div className="border-t border-[#E5E7EB] bg-gray-50 px-4 py-3 pb-[max(1rem,env(safe-area-inset-bottom))] shrink-0">
+                {user ? (
+                  <div className="flex items-center justify-between">
+                    <Link
+                      to="/account"
+                      onClick={() => setIsMenuOpen(false)}
+                      className="flex items-center gap-2.5 min-w-0"
+                    >
+                      <div className="w-8 h-8 rounded-full bg-[#FD7100]/10 border border-[#FD7100]/30 flex items-center justify-center text-[#FD7100] font-bold text-sm shrink-0">
+                        {user?.username?.charAt(0).toUpperCase() || 'U'}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[13px] font-bold text-[#111827] truncate">{user.username}</p>
+                        <p className="text-[11px] text-gray-500 truncate">View Account</p>
+                      </div>
+                    </Link>
+                    <button
+                      onClick={handleLogout}
+                      className="text-xs font-semibold text-red-600 hover:text-red-700 px-3 py-1.5 rounded-md hover:bg-red-50 transition-colors"
+                    >
+                      Logout
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3">
+                    <Link
+                      to="/signin"
+                      onClick={() => setIsMenuOpen(false)}
+                      className="flex-1 py-2.5 text-center text-sm font-semibold bg-[#FD7100] text-white rounded-lg shadow-sm hover:bg-[#E06400] transition-colors"
+                    >
+                      Sign In / Register
+                    </Link>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}

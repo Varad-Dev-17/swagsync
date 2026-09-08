@@ -48,7 +48,7 @@ const Home = () => {
   return (
     <div className="bg-white" style={{ fontFamily: "'Poppins', sans-serif" }}>
       {/* PINNED APPLE-STYLE HERO CONTAINER */}
-      <div ref={heroSectionRef} className="relative w-full h-screen z-0">
+      <div ref={heroSectionRef} className="relative w-full h-screen min-h-[100dvh] h-[100dvh] z-0">
         <div 
           ref={heroCardRef} 
           className="w-full h-full overflow-hidden will-change-transform bg-[#0F172A]"
