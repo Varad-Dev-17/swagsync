@@ -53,6 +53,7 @@ const ProductsPage = () => {
   const [priceRange, setPriceRange] = useState({ min: "", max: "" });
   
   const [sort, setSort] = useState("newest");
+  const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const searchQuery = searchParams.get("search") || "";
   
   const { updateCartCount } = useCart();
@@ -253,6 +254,8 @@ const ProductsPage = () => {
 
   return (
     <ShopLayout
+      isMobileFilterOpen={isMobileFilterOpen}
+      setIsMobileFilterOpen={setIsMobileFilterOpen}
       sidebar={
         <div className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-none shadow-[0_2px_10px_rgba(0,0,0,0.02)] p-5 sm:p-6 transition-all duration-300 max-h-[calc(100vh-96px)] overflow-y-auto">
           <FilterSidebar 
@@ -280,13 +283,12 @@ const ProductsPage = () => {
         </div>
       }
     >
-      <div className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-none shadow-[0_2px_10px_rgba(0,0,0,0.02)] min-h-[300px] lg:min-h-[600px] py-6 px-3 lg:py-8 lg:px-5 transition-all duration-300 flex flex-col">
+      <div className="bg-[#FFFFFF] border-0 lg:border border-[#E5E7EB] rounded-none shadow-none lg:shadow-[0_2px_10px_rgba(0,0,0,0.02)] min-h-[300px] lg:min-h-[600px] pt-3 pb-6 px-3 sm:px-4 lg:py-8 lg:px-5 transition-all duration-300 flex flex-col">
         {!loading && !error && products.length > 0 && (
           <ShopToolbar 
-            totalProducts={totalProducts} 
-            showingCount={products.length} 
             sort={sort}
             onSortChange={(e) => setSort(e.target.value)}
+            onOpenMobileFilter={() => setIsMobileFilterOpen(true)}
           />
         )}
 

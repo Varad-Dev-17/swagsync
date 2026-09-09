@@ -13,6 +13,7 @@ const bentoItems = [
     objectPosition: "object-bottom",
     textColor: "text-white",
     subtitleColor: "text-white/90",
+    buttonSize: "px-4 sm:px-6 py-2 sm:py-2.5 text-xs sm:text-[14px]",
     buttonStyle: "rounded-full bg-white text-[#111827] group-hover:bg-[#111827] group-hover:text-white",
     overlayDefault: "linear-gradient(to top, rgba(15,23,42,0.60) 0%, rgba(15,23,42,0.18) 45%, transparent 80%)",
     overlayHover: "linear-gradient(to top, rgba(15,23,42,0.80) 0%, rgba(15,23,42,0.28) 50%, transparent 100%)"
@@ -23,15 +24,15 @@ const bentoItems = [
     subtitle: "",
     image: "/kurti_set_promo.png",
     link: "/products?department=Women&category=Kurti Set",
-    className: "col-span-1 md:col-span-6 md:row-span-1 aspect-[16/9] md:aspect-auto md:h-full",
-    objectPosition: "object-[center_40%]",
+    className: "col-span-1 md:col-span-6 md:row-span-1 aspect-[3/2] sm:aspect-[16/9] md:aspect-auto md:h-full",
+    objectPosition: "object-center",
     blockAlign: "center",
     textAlign: "center",
     verticalPosition: "center",
-    innerClasses: "mt-[120px] md:mt-[150px]",
+    innerClasses: "mt-[64px] min-[390px]:mt-[72px] sm:mt-20 md:mt-[150px] translate-x-[10px] min-[390px]:translate-x-[12px] sm:translate-x-0",
     textColor: "text-[#111827]",
     subtitleColor: "text-[#374151]",
-    buttonSize: "px-5 py-1.5 text-[13px]",
+    buttonSize: "px-3.5 min-[390px]:px-4 sm:px-5 py-1 sm:py-1.5 text-[11px] min-[390px]:text-[12px] sm:text-[13px]",
     buttonStyle: "rounded-full bg-[#111827] text-white group-hover:bg-[#db2777] group-hover:text-white",
     overlayDefault: "linear-gradient(to top, rgba(255,255,255,0.10) 0%, transparent 80%)",
     overlayHover: "linear-gradient(to top, rgba(255,255,255,0.20) 0%, transparent 100%)"
@@ -42,19 +43,19 @@ const bentoItems = [
     subtitle: "",
     image: "/season_sale.png",
     link: "/products?category=Shirts,T-Shirts,Jeans,Shoes",
-    className: "col-span-1 md:col-span-6 md:row-span-1 aspect-[16/9] md:aspect-auto md:h-full",
-    objectPosition: "object-[right_60%]",
+    className: "col-span-1 md:col-span-6 md:row-span-1 aspect-[2/1] sm:aspect-[16/9] md:aspect-auto md:h-full",
+    objectPosition: "object-center md:object-[right_60%]",
     blockAlign: "left",
     textAlign: "left",
-    buttonStyle: "rounded-[4px] bg-[#1a202c] text-white uppercase tracking-wider text-[12px] group-hover:bg-black",
-    buttonSize: "px-4 py-1.5 text-[11px]",
+    buttonStyle: "rounded-[3px] sm:rounded-[4px] bg-[#1a202c] text-white uppercase tracking-wider font-semibold text-[9px] min-[390px]:text-[10px] sm:text-[12px] group-hover:bg-black",
+    buttonSize: "px-2.5 min-[390px]:px-3 sm:px-4 py-1 sm:py-1.5 text-[9px] min-[390px]:text-[10px] sm:text-[11px]",
     buttonText: "SHOP NOW",
     hideButtonIcon: true,
     overlayDefault: "linear-gradient(to bottom, rgba(255,255,255,0.10) 0%, transparent 80%)",
     overlayHover: "linear-gradient(to bottom, rgba(255,255,255,0.20) 0%, transparent 100%)",
     textWidth: "w-full",
     verticalPosition: "bottom",
-    innerClasses: "mb-2 md:mb-4 lg:mb-5 ml-[6%] sm:ml-[8%] md:ml-[10%] lg:ml-[12%]"
+    innerClasses: "mb-0.5 sm:mb-2 md:mb-4 lg:mb-5 ml-[8%] sm:ml-[10%] md:ml-[12%]"
   }
 ];
 
@@ -116,7 +117,7 @@ const CuratedCollections = () => {
                 />
 
                 {/* Content Overlay */}
-                <div className={`absolute left-0 w-full px-6 md:px-8 z-20 flex flex-col ${item.verticalPosition === 'top' ? 'top-6 md:top-10 justify-start' : (item.verticalPosition === 'center' ? 'top-1/2 -translate-y-1/2 justify-center' : 'bottom-6 md:bottom-8 justify-end')} ${item.blockAlign === 'center' ? 'items-center' : (item.blockAlign === 'right' ? 'items-end' : 'items-start')}`}>
+                <div className={`absolute left-0 w-full px-4 sm:px-6 md:px-8 z-20 flex flex-col ${item.verticalPosition === 'top' ? 'top-4 sm:top-6 md:top-10 justify-start' : (item.verticalPosition === 'center' ? 'top-1/2 -translate-y-1/2 justify-center' : 'bottom-3.5 min-[390px]:bottom-4 sm:bottom-5 md:bottom-8 justify-end')} ${item.blockAlign === 'center' ? 'items-center' : (item.blockAlign === 'right' ? 'items-end' : 'items-start')}`}>
                   <div className={`flex flex-col ${item.textAlign === 'center' ? 'items-center text-center' : (item.textAlign === 'left' ? 'items-start text-left' : (item.blockAlign === 'right' ? 'items-end text-right' : 'items-start text-left'))} ${item.textWidth || (item.blockAlign === 'right' ? 'w-auto' : 'w-full')} ${item.innerClasses || ''}`}>
                     {item.title && (
                       <h3 className={`text-[18px] sm:text-[20px] md:text-[30px] font-bold mb-2 leading-tight ${item.textColor || 'text-white'}`}>
@@ -129,12 +130,11 @@ const CuratedCollections = () => {
                       </p>
                     )}
 
-                    <div className={`inline-flex items-center justify-center ${item.buttonSize || 'px-6 py-2.5 text-[14px]'} font-bold w-max shadow-md transition-colors duration-300 ${item.buttonStyle || 'rounded-full bg-white text-[#111827] group-hover:bg-[#111827] group-hover:text-white'}`}>
+                    <div className={`inline-flex items-center justify-center ${item.buttonSize || 'px-4 sm:px-6 py-2 sm:py-2.5 text-xs sm:text-[14px]'} font-bold w-max shadow-sm sm:shadow-md transition-colors duration-300 ${item.buttonStyle || 'rounded-full bg-white text-[#111827] group-hover:bg-[#111827] group-hover:text-white'}`}>
                       {item.buttonText || "Explore"}
                       {!item.hideButtonIcon && (
                         <ArrowRight
-                          size={16}
-                          className="ml-2 transition-transform duration-300 group-hover:translate-x-1"
+                          className="w-3 h-3 sm:w-4 sm:h-4 ml-1.5 sm:ml-2 transition-transform duration-300 group-hover:translate-x-1"
                         />
                       )}
                     </div>

@@ -102,15 +102,15 @@ const ProfileSection = () => {
     <div className="w-full max-w-[1200px] mr-auto space-y-6 pb-12">
       
       {/* 1. Top Banner (Identity) */}
-      <div className="relative bg-gradient-to-r from-[#FFF5ED] to-[#FFFBF8] border border-orange-100 rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-center md:items-start gap-6 overflow-hidden">
+      <div className="relative bg-gradient-to-r from-[#FFF5ED] to-[#FFFBF8] border border-orange-100 rounded-2xl p-4 sm:p-6 md:p-8 flex flex-col md:flex-row items-center md:items-start gap-4 sm:gap-6 overflow-hidden">
         {/* Profile Image Circle */}
         <div className="relative shrink-0">
           <div 
-            className="w-28 h-28 md:w-32 md:h-32 rounded-full bg-[#FFF5ED] border-[4px] border-white shadow-sm overflow-hidden flex items-center justify-center font-bold text-[#FD7100] text-4xl cursor-pointer group"
+            className="w-20 h-20 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-full bg-[#FFF5ED] border-[3px] sm:border-[4px] border-white shadow-sm overflow-hidden flex items-center justify-center font-bold text-[#FD7100] text-3xl sm:text-4xl cursor-pointer group"
             onClick={() => !isUploading && fileInputRef.current?.click()}
           >
             {isUploading ? (
-              <Loader2 className="w-8 h-8 animate-spin text-[#FD7100]" />
+              <Loader2 className="w-6 h-6 sm:w-8 sm:h-8 animate-spin text-[#FD7100]" />
             ) : user?.profileImage?.url ? (
               <img src={user.profileImage.url} alt="Profile" className="w-full h-full object-cover" loading="lazy" decoding="async" />
             ) : (
@@ -120,9 +120,9 @@ const ProfileSection = () => {
           {/* Camera Badge */}
           <button 
             onClick={() => !isUploading && fileInputRef.current?.click()}
-            className="absolute bottom-1 right-1 w-8 h-8 bg-white rounded-full border border-gray-200 shadow-sm flex items-center justify-center text-[#FD7100] hover:bg-gray-50 transition-colors z-10"
+            className="absolute bottom-0 right-0 sm:bottom-1 sm:right-1 w-7 h-7 sm:w-8 sm:h-8 bg-white rounded-full border border-gray-200 shadow-sm flex items-center justify-center text-[#FD7100] hover:bg-gray-50 transition-colors z-10"
           >
-            <UploadCloud className="w-4 h-4" />
+            <UploadCloud className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </button>
           <input 
             type="file" 
@@ -134,25 +134,25 @@ const ProfileSection = () => {
         </div>
 
         {/* User Info & Actions */}
-        <div className="flex-1 flex flex-col items-center md:items-start text-center md:text-left z-10 relative">
-          <div className="mb-4">
-            <h2 className="text-2xl md:text-3xl font-extrabold text-slate-800 tracking-tight mb-1.5">{user?.username || 'User'}</h2>
-            <div className="flex flex-col md:flex-row items-center md:items-start gap-2 md:gap-3 text-sm text-gray-500 mb-2">
-              <span>{user?.email || '-'}</span>
+        <div className="flex-1 flex flex-col items-center md:items-start text-center md:text-left z-10 relative w-full">
+          <div className="mb-3 sm:mb-4">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-slate-800 tracking-tight mb-1">{user?.username || 'User'}</h2>
+            <div className="flex flex-col md:flex-row items-center md:items-start gap-1.5 sm:gap-2 md:gap-3 text-xs sm:text-sm text-gray-500 mb-2">
+              <span className="break-all">{user?.email || '-'}</span>
               {user?.verified !== false && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded text-xs font-bold">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded text-[11px] sm:text-xs font-bold">
                   <ShieldCheck className="w-3 h-3" /> Verified
                 </span>
               )}
             </div>
-            <p className="text-sm text-gray-400">Member since {user?.createdAt ? new Date(user.createdAt).getFullYear() : '2026'}</p>
+            <p className="text-xs sm:text-sm text-gray-400">Member since {user?.createdAt ? new Date(user.createdAt).getFullYear() : '2026'}</p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
             <button 
               onClick={() => !isUploading && fileInputRef.current?.click()}
               disabled={isUploading}
-              className="px-5 py-2 bg-[#FD7100] text-white hover:bg-[#E06400] text-sm font-bold rounded-lg transition-colors disabled:opacity-70 shadow-sm flex items-center gap-2"
+              className="px-3 sm:px-5 py-2 bg-[#FD7100] text-white hover:bg-[#E06400] text-xs sm:text-sm font-bold rounded-lg transition-colors disabled:opacity-70 shadow-sm flex items-center justify-center gap-1.5 sm:gap-2"
             >
               <UploadCloud className="w-4 h-4" />
               <span>Upload Photo</span>
@@ -160,13 +160,13 @@ const ProfileSection = () => {
             <button 
               onClick={handleRemovePhoto}
               disabled={isUploading || !user?.profileImage?.url}
-              className="px-5 py-2 bg-white border border-gray-200 text-gray-600 hover:text-red-600 hover:border-red-200 text-sm font-bold rounded-lg transition-colors disabled:opacity-40 shadow-sm flex items-center gap-2"
+              className="px-3 sm:px-5 py-2 bg-white border border-gray-200 text-gray-600 hover:text-red-600 hover:border-red-200 text-xs sm:text-sm font-bold rounded-lg transition-colors disabled:opacity-40 shadow-sm flex items-center justify-center gap-1.5 sm:gap-2"
             >
               <Trash2 className="w-4 h-4 text-red-400" />
               <span>Remove</span>
             </button>
           </div>
-          <p className="text-xs text-gray-400 mt-3 font-medium">Recommended: Square PNG or JPG image under 5MB.</p>
+          <p className="text-[11px] sm:text-xs text-gray-400 mt-2.5 sm:mt-3 font-medium">Recommended: Square PNG or JPG image under 5MB.</p>
         </div>
       </div>
 

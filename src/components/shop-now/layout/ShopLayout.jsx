@@ -1,25 +1,15 @@
 import { useState } from "react";
-import { Filter, X } from "lucide-react";
+import { X } from "lucide-react";
 
-const ShopLayout = ({ sidebar, children }) => {
-  const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
+const ShopLayout = ({ sidebar, children, isMobileFilterOpen: externalOpen, setIsMobileFilterOpen: externalSetOpen }) => {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isMobileFilterOpen = externalOpen !== undefined ? externalOpen : internalOpen;
+  const setIsMobileFilterOpen = externalSetOpen || setInternalOpen;
 
   return (
-    <div className="min-h-screen bg-[#FAFAFB] pt-[84px] relative">
-      <div className="max-w-[1600px] mx-auto px-3 sm:px-4 lg:px-4">
-        
-        {/* Mobile Filter Toggle Button */}
-        <div className="lg:hidden mb-4 flex justify-end">
-          <button 
-            onClick={() => setIsMobileFilterOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-white border border-[#E5E7EB] rounded shadow-sm text-sm font-semibold"
-          >
-            <Filter size={16} />
-            Filters
-          </button>
-        </div>
-
-        <div className="flex flex-col lg:flex-row gap-3.5 lg:gap-4 items-start">
+    <div className="min-h-screen bg-white lg:bg-[#FAFAFB] pt-[62px] sm:pt-[68px] lg:pt-[84px] relative">
+      <div className="max-w-[1600px] mx-auto px-0 lg:px-4">
+        <div className="flex flex-col lg:flex-row gap-0 lg:gap-4 items-start">
           
           {/* Filter Sidebar (Desktop Sticky / Mobile Modal) */}
           <aside className={`

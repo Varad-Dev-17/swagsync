@@ -31,36 +31,36 @@ const PopularCategories = () => {
       </div>
 
       <div className="relative">
-        <div className="flex justify-start lg:justify-between gap-5 sm:gap-6 lg:gap-0 w-full overflow-x-auto pb-4 scrollbar-hide snap-x" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-          {isLoading ? (
-            <div className="flex justify-center items-center w-full py-6">
-               <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-            </div>
-          ) : categories.map((cat, index) => (
-            <Link 
-              key={cat._id || index} 
-              to={`/products?category=${encodeURIComponent(cat.name)}`}
-              className="flex flex-col items-center gap-2.5 min-w-[80px] md:min-w-[110px] group snap-start"
-            >
-              <div className="w-[80px] h-[80px] md:w-[110px] md:h-[110px] rounded-full overflow-hidden bg-white flex items-center justify-center shadow-sm group-hover:shadow-md transition-all duration-300 border border-gray-100">
-                {cat.image?.url ? (
-                  <img 
-                    src={cat.image.url} 
-                    alt={cat.name} 
-                    className="w-full h-full object-contain p-0 mix-blend-multiply group-hover:scale-110 transition-transform duration-300"
-                    loading="lazy" decoding="async" />
-                ) : (
-                  <ImageIcon className="w-8 h-8 text-gray-300 group-hover:scale-110 transition-transform duration-300" />
-                )}
-              </div>
-              <span className="text-xs md:text-sm font-semibold text-[#111827] text-center">
-                {cat.name}
-              </span>
-            </Link>
-          ))}
-
-
-        </div>
+        {isLoading ? (
+          <div className="flex justify-center items-center w-full py-6">
+             <div className="w-8 h-8 border-2 border-[#FD7100] border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-4 lg:grid-cols-8 gap-x-2 xs:gap-x-3 sm:gap-x-4 lg:gap-x-6 gap-y-4 xs:gap-y-5 sm:gap-y-6 lg:gap-y-0 w-full">
+            {categories.map((cat, index) => (
+              <Link 
+                key={cat._id || index} 
+                to={`/products?category=${encodeURIComponent(cat.name)}`}
+                className="flex flex-col items-center gap-1.5 sm:gap-2.5 group"
+              >
+                <div className="w-[66px] h-[66px] xs:w-[74px] xs:h-[74px] sm:w-[90px] sm:h-[90px] md:w-[100px] md:h-[100px] lg:w-[105px] lg:h-[105px] rounded-full overflow-hidden bg-white flex items-center justify-center shadow-sm group-hover:shadow-md transition-all duration-300 border border-gray-100">
+                  {cat.image?.url ? (
+                    <img 
+                      src={cat.image.url} 
+                      alt={cat.name} 
+                      className="w-full h-full object-contain p-0 mix-blend-multiply group-hover:scale-110 transition-transform duration-300"
+                      loading="lazy" decoding="async" />
+                  ) : (
+                    <ImageIcon className="w-6 h-6 sm:w-8 sm:h-8 text-gray-300 group-hover:scale-110 transition-transform duration-300" />
+                  )}
+                </div>
+                <span className="text-[11px] xs:text-xs md:text-sm font-semibold text-[#111827] text-center line-clamp-1 max-w-full px-0.5">
+                  {cat.name}
+                </span>
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );

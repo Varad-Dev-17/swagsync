@@ -34,7 +34,7 @@ const HeroSlider = () => {
               hidden: { opacity: 0, y: 15 },
               visible: { opacity: 1, y: 0, transition: { duration: 0.6 } },
             }}
-            className="inline-block text-[13px] sm:text-[15px] font-bold tracking-[0.15em] uppercase text-[#FD7100] mb-3 sm:mb-4 md:mb-6 hero-mobile-text-shadow"
+            className="inline-block text-[14px] sm:text-[15px] font-bold tracking-[0.15em] uppercase text-[#FD7100] mb-3 sm:mb-4 md:mb-6 hero-mobile-text-shadow"
           >
             NEW SEASON 2026
           </motion.span>
@@ -44,7 +44,7 @@ const HeroSlider = () => {
               hidden: { opacity: 0, y: 20 },
               visible: { opacity: 1, y: 0, transition: { duration: 0.8 } },
             }}
-            className="text-2xl sm:text-4xl md:text-6xl lg:text-[72px] font-bold text-white leading-[1.05] tracking-tight mb-3 sm:mb-4 md:mb-6 whitespace-pre-line hero-mobile-text-shadow"
+            className="text-[30px] min-[390px]:text-[34px] sm:text-4xl md:text-6xl lg:text-[72px] font-bold text-white leading-[1.1] sm:leading-[1.05] tracking-tight mb-3 sm:mb-4 md:mb-6 whitespace-pre-line hero-mobile-text-shadow"
             style={{ fontFamily: "'Poppins', sans-serif" }}
           >
             Welcome to Swag<span className="text-[#FD7100]">Sync</span>
@@ -55,7 +55,7 @@ const HeroSlider = () => {
               hidden: { opacity: 0, y: 20 },
               visible: { opacity: 1, y: 0, transition: { duration: 0.8 } },
             }}
-            className="text-[14px] md:text-[17px] text-gray-200 max-w-[400px] mb-6 sm:mb-8 md:mb-10 leading-relaxed whitespace-pre-line hero-mobile-text-shadow"
+            className="text-[15px] min-[390px]:text-[16px] md:text-[17px] text-gray-200 max-w-[400px] mb-6 sm:mb-8 md:mb-10 leading-relaxed whitespace-pre-line hero-mobile-text-shadow"
           >
             Where timeless fashion meets modern living.{"\n"}Curated collections for every style, every season.
           </motion.p>
@@ -69,13 +69,13 @@ const HeroSlider = () => {
           >
             <Link
               to="/products"
-              className="flex-1 sm:flex-initial sm:w-auto px-3 sm:px-10 py-3 sm:py-4 bg-[#FD7100] text-white font-medium text-[13px] sm:text-[15px] hover:bg-[#E06400] transition-colors duration-250 rounded-[4px] text-center hero-mobile-btn-shadow sm:shadow-none active:scale-95 whitespace-nowrap"
+              className="flex-1 sm:flex-initial sm:w-auto px-3 sm:px-10 py-3 sm:py-4 bg-[#FD7100] text-white font-medium text-[14px] sm:text-[15px] hover:bg-[#E06400] transition-colors duration-250 rounded-[4px] text-center hero-mobile-btn-shadow sm:shadow-none active:scale-95 whitespace-nowrap"
             >
               Explore Collection
             </Link>
             <Link
               to="/new-in"
-              className="flex-1 sm:flex-initial sm:w-auto px-3 sm:px-10 py-3 sm:py-4 bg-transparent border border-white text-white font-medium text-[13px] sm:text-[15px] hover:bg-white hover:text-[#111827] transition-all duration-300 rounded-[4px] text-center hero-mobile-btn-shadow sm:shadow-none active:scale-95 whitespace-nowrap"
+              className="flex-1 sm:flex-initial sm:w-auto px-3 sm:px-10 py-3 sm:py-4 bg-transparent border border-white text-white font-medium text-[14px] sm:text-[15px] hover:bg-white hover:text-[#111827] transition-all duration-300 rounded-[4px] text-center hero-mobile-btn-shadow sm:shadow-none active:scale-95 whitespace-nowrap"
             >
               Shop New Arrivals
             </Link>
