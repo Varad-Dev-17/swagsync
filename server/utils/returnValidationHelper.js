@@ -1,35 +1,14 @@
 /**
- * Reusable validation helper for QC, Refund, and Return Status transitions.
+ * Reusable validation helper for Refund and Return/Exchange Status transitions.
  * Enforces business logic rules and prevents illegal lifecycle state changes.
+ * QC requirement removed per user specification.
  */
 
 /**
  * Validate Quality Check (QC) status transitions.
- * @param {String} currentStatus - Return request status (e.g. "pending", "received")
- * @param {String} targetStatus - Proposed return request status
- * @param {String} newQcStatus - Proposed QC status ("pending", "passed", "failed")
- * @returns {Object} { isValid: Boolean, message: String }
+ * Kept as non-blocking stub for backward compatibility.
  */
-export const validateQcTransition = (currentStatus, targetStatus, newQcStatus) => {
-  const statusToEvaluate = targetStatus || currentStatus;
-
-  if (newQcStatus && ["passed", "failed"].includes(newQcStatus)) {
-    if (currentStatus === "rejected" || statusToEvaluate === "rejected") {
-      return {
-        isValid: false,
-        message: "Quality Check (QC) cannot be performed on a rejected return request."
-      };
-    }
-
-    const receivedOrLater = ["received", "refunded", "exchanged", "picked_up"];
-    if (!receivedOrLater.includes(statusToEvaluate)) {
-      return {
-        isValid: false,
-        message: "Quality Check (QC) cannot become passed or failed before item has been picked up or received at warehouse."
-      };
-    }
-  }
-
+export const validateQcTransition = () => {
   return { isValid: true };
 };
 
@@ -37,11 +16,9 @@ export const validateQcTransition = (currentStatus, targetStatus, newQcStatus) =
  * Validate Refund status transitions.
  * @param {String} currentRefundStatus - Existing refund status
  * @param {String} targetRefundStatus - Proposed refund status ("not_required", "initiated", "processing", "completed", "failed")
- * @param {String} effectiveQcStatus - Effective QC status ("pending", "passed", "failed")
- * @param {String} requestType - "return" or "exchange"
  * @returns {Object} { isValid: Boolean, message: String }
  */
-export const validateRefundTransition = (currentRefundStatus, targetRefundStatus, effectiveQcStatus, requestType) => {
+export const validateRefundTransition = (currentRefundStatus, targetRefundStatus) => {
   if (!targetRefundStatus || targetRefundStatus === currentRefundStatus) {
     return { isValid: true };
   }
@@ -61,24 +38,17 @@ export const validateRefundTransition = (currentRefundStatus, targetRefundStatus
     }
   }
 
-  // Rule: No refund can be completed until QC passes
-  if (targetRefundStatus === "completed") {
-    if (effectiveQcStatus !== "passed") {
-      return {
-        isValid: false,
-        message: "Refund cannot be completed before Quality Check (QC) status is marked as 'passed'."
-      };
-    }
-  }
-
   return { isValid: true };
 };
 
 /**
- * Validate overall Return Request status transitions.
+ * Validate overall Return / Exchange Request status transitions.
+ * Simplified Flows:
+ * Return: 1. Requested (pending) -> 2. Approved/Rejected -> 3. Pickup -> 4. Return completed (completed/refunded)
+ * Exchange: 1. Requested (pending) -> 2. Approved/Rejected -> 3. Pickup & Replace -> 4. Exchange completed (completed/exchanged)
  * @param {String} currentStatus - Existing return request status
  * @param {String} targetStatus - Proposed return request status
- * @param {String} effectiveQcStatus - Effective QC status
+ * @param {String} effectiveQcStatus - Effective QC status (ignored)
  * @param {String} requestType - "return" or "exchange"
  * @returns {Object} { isValid: Boolean, message: String }
  */
@@ -87,32 +57,28 @@ export const validateReturnStatusTransition = (currentStatus, targetStatus, effe
     return { isValid: true };
   }
 
-  const validStatuses = ["pending", "approved", "packed", "shipped", "rejected", "pickup_scheduled", "picked_up", "received", "refunded", "exchanged"];
+  const validStatuses = [
+    "pending",
+    "approved",
+    "rejected",
+    "pickup",
+    "pickup_replace",
+    "completed",
+    "pickup_scheduled",
+    "picked_up",
+    "received",
+    "refunded",
+    "exchanged",
+    "packed",
+    "shipped"
+  ];
+
   if (!validStatuses.includes(targetStatus)) {
     return { isValid: false, message: `Invalid return request status: ${targetStatus}` };
   }
 
-  // Rule: Exchange cannot complete until QC passes
-  if (targetStatus === "exchanged") {
-    if (requestType !== "exchange") {
-      return { isValid: false, message: "Cannot mark a return request as 'exchanged'." };
-    }
-    if (effectiveQcStatus !== "passed") {
-      return {
-        isValid: false,
-        message: "Exchange cannot be marked as completed until Quality Check (QC) passes."
-      };
-    }
-  }
-
-  // Rule: Refunded status cannot complete until QC passes
-  if (targetStatus === "refunded") {
-    if (effectiveQcStatus !== "passed") {
-      return {
-        isValid: false,
-        message: "Return cannot be marked as refunded until Quality Check (QC) passes."
-      };
-    }
+  if (currentStatus === "rejected") {
+    return { isValid: false, message: "Cannot change status of a rejected request." };
   }
 
   return { isValid: true };

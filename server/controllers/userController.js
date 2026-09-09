@@ -2,6 +2,7 @@ import User from "../models/user.js";
 import { hmacProcess } from "../utils/hash.js";
 import { verificationEmailTemplate } from "../utils/verificationEmailTemplate.js";
 import transport from "../middlewares/sendMail.js";
+import { createNotification } from "../utils/notificationHelper.js";
 
 export const getAllUsers = async (req, res) => {
   try {
@@ -180,6 +181,17 @@ export const updateProfilePhoto = async (req, res) => {
     };
     await user.save();
 
+    createNotification({
+      userId,
+      type: "account",
+      title: "Profile Photo Updated",
+      message: "Your profile photo has been successfully updated.",
+      link: "/account/profile",
+      linkText: "View Profile",
+      iconType: "account",
+      color: "blue",
+    });
+
     res.status(200).json({
       success: true,
       message: "Profile photo updated successfully",
@@ -204,6 +216,17 @@ export const removeProfilePhoto = async (req, res) => {
       await cloudinary.uploader.destroy(user.profileImage.publicId);
       user.profileImage = undefined;
       await user.save();
+
+      createNotification({
+        userId,
+        type: "account",
+        title: "Profile Photo Removed",
+        message: "Your profile photo has been removed.",
+        link: "/account/profile",
+        linkText: "View Profile",
+        iconType: "account",
+        color: "slate",
+      });
     }
 
     res.status(200).json({
@@ -284,6 +307,19 @@ export const updateProfileInfo = async (req, res) => {
     if (gender !== undefined) user.gender = gender;
 
     await user.save();
+
+    createNotification({
+      userId,
+      type: "account",
+      title: "Profile Information Updated",
+      message: emailChanged
+        ? "Your profile was updated. A verification email was sent to your new address."
+        : "Your profile details have been successfully updated.",
+      link: "/account/profile",
+      linkText: "View Profile",
+      iconType: "account",
+      color: "blue",
+    });
 
     const token = jwt.sign(
       {

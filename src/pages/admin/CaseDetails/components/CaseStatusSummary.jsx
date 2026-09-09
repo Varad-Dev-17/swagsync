@@ -44,20 +44,11 @@ const CaseStatusSummary = ({ order = null, returnRequest = null }) => {
             <StatusBadge 
               status={returnRequest.status || "pending"} 
               labelOverride={
-                returnRequest.type === "exchange" ? (
-                  returnRequest.status === "pickup_scheduled" ? "Out for Exchange" :
-                  returnRequest.status === "picked_up" ? "Quality Check" :
-                  returnRequest.status === "exchanged" ? "Exchanged" : null
-                ) : null
+                returnRequest.status === "completed" 
+                  ? (returnRequest.type === "exchange" ? "Exchange Completed" : "Return Completed")
+                  : null
               }
             />
-          </div>
-        )}
-
-        {returnRequest && (
-          <div className="flex items-center gap-2 whitespace-nowrap">
-            <span className="font-semibold text-slate-600">QC Status :</span>
-            <StatusBadge status={returnRequest.qcStatus || "pending"} />
           </div>
         )}
 

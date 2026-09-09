@@ -35,10 +35,14 @@ import reviewRoutes from "./routers/reviewRoutes.js";
 import reviewAdminRoutes from "./routers/reviewAdminRoutes.js";
 import wishlistRoutes from "./routers/wishlistRoutes.js";
 import couponRoutes from "./routers/couponRoutes.js";
+import couponPublicRoutes from "./routers/couponPublicRoutes.js";
 import returnRequestRoutes from "./routers/returnRequestRoutes.js";
 import uploadRoutes from "./routers/uploadRoutes.js";
 import cartRoutes from "./routers/cartRoutes.js";
 import dashboardRoutes from "./routers/dashboardRoutes.js";
+import ticketRoutes from "./routers/ticketRoutes.js";
+import ticketAdminRoutes from "./routers/ticketAdminRoutes.js";
+import notificationRoutes from "./routers/notificationRoutes.js";
 
 import path from "path";
 import { fileURLToPath } from "url";
@@ -84,6 +88,7 @@ app.use("/admin/coupons", couponRoutes);
 app.use("/admin/reviews", reviewAdminRoutes);
 app.use("/admin/dashboard", dashboardRoutes);
 app.use("/admin/upload", uploadRoutes);
+app.use("/admin/tickets", ticketAdminRoutes);
 
 // Public / User routes
 app.use("/auth", authRoutes);
@@ -98,7 +103,10 @@ app.use("/wishlist", wishlistRoutes);
 app.use("/reviews", reviewRoutes);
 app.use("/orders", orderPublicRoutes);
 app.use("/addresses", addressRoutes);
+app.use("/coupons", couponPublicRoutes);
 app.use("/return-requests", returnRequestRoutes);
+app.use("/tickets", ticketRoutes);
+app.use("/notifications", notificationRoutes);
 
 // Static Files
 const distPath = path.join(__dirname, "../dist");

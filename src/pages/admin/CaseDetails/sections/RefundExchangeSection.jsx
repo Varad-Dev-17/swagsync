@@ -16,13 +16,12 @@ const RefundExchangeSection = ({ returnRequest = null, order = {}, onUpdateRefun
 
   const type = returnRequest.type || "return";
   const status = (returnRequest.status || "pending").toLowerCase();
-  const qcStatus = (returnRequest.qcStatus || "pending").toLowerCase();
   const refundStatus = (returnRequest.refundStatus || "not_required").toLowerCase();
 
   // For Return cases & Refund difference exchanges
   const refundAmount = returnRequest.refundAmount || returnRequest.originalPrice || (type === "exchange" && returnRequest.priceDifference < 0 ? Math.abs(returnRequest.priceDifference) : returnRequest.product?.price || returnRequest.product?.sellingPrice || order.totalAmount || 0);
   const refundMethod = returnRequest.refundMethod || order.paymentMethod?.toUpperCase() || "Original Payment Mode";
-  const isRefunded = status === "refunded" || refundStatus === "completed";
+  const isRefunded = status === "refunded" || status === "completed" || refundStatus === "completed";
   const isExchanged = status === "exchanged";
 
   // For Exchange cases
@@ -128,9 +127,6 @@ const RefundExchangeSection = ({ returnRequest = null, order = {}, onUpdateRefun
       setActiveAction(null);
     }
   };
-
-  // Validation Check: Can Refund be completed?
-  const isQcPassed = qcStatus === "passed";
 
   return (
     <SectionCard

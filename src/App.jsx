@@ -5,7 +5,8 @@ import {
   Navigate,
   useLocation,
 } from "react-router-dom";
-import { Toaster } from "react-hot-toast";
+import { Toaster, ToastBar, toast, resolveValue } from "react-hot-toast";
+import { CheckCircle2, AlertCircle, Info, Loader2, X } from "lucide-react";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import Navbar from "./components/common/Navbar";
 import Footer from "./components/common/Footer";
@@ -76,6 +77,7 @@ const Users = lazy(() => import("./pages/admin/Users/Users"));
 const Coupons = lazy(() => import("./pages/admin/Coupons/Coupons"));
 const Reviews = lazy(() => import("./pages/admin/Reviews/Reviews"));
 const Returns = lazy(() => import("./pages/admin/Returns/Returns"));
+const AdminTickets = lazy(() => import("./pages/admin/Tickets/Tickets"));
 const AdminCaseDetailsPage = lazy(() => import("./pages/admin/CaseDetails/AdminCaseDetailsPage"));
 
 const ProtectedRoute = ({ children, adminOnly = false }) => {
@@ -323,6 +325,7 @@ const AppRoutes = () => {
           <Route index element={<Returns />} />
           <Route path=":id" element={<AdminCaseDetailsPage />} />
         </Route>
+        <Route path="tickets" element={<AdminTickets />} />
         <Route path="users" element={<Users />} />
         <Route path="coupons" element={<Coupons />} />
         <Route path="reviews" element={<Reviews />} />
@@ -341,39 +344,128 @@ function App() {
       <CartProvider>
         <Toaster
           position="top-right"
+          containerStyle={{
+            top: 76,
+            right: 20,
+            zIndex: 99999,
+          }}
+          gutter={12}
           toastOptions={{
-            duration: 3000,
-            style: {
-              fontFamily: "'Be Vietnam Pro', sans-serif",
-              fontSize: "14px",
-              borderRadius: "12px",
-            },
+            duration: 4000,
             success: {
-              icon: null,
-              style: {
-                background: "#ecfdf5",
-                color: "#059669",
-                border: "1px solid #a7f3d0",
-              },
-              iconTheme: {
-                primary: "#059669",
-                secondary: "#ecfdf5",
-              },
+              duration: 4000,
             },
             error: {
-              icon: null,
-              style: {
-                background: "#fef2f2",
-                color: "#dc2626",
-                border: "1px solid #fecaca",
-              },
-              iconTheme: {
-                primary: "#dc2626",
-                secondary: "#fef2f2",
-              },
+              duration: 5000,
             },
           }}
-        />
+        >
+          {(t) => {
+            const isError = t.type === "error";
+            const isSuccess = t.type === "success";
+            const isLoading = t.type === "loading";
+
+            const toastDuration = t.duration || (isError ? 5000 : 4000);
+
+            const accentColor = isError
+              ? "#ef4444"
+              : isSuccess
+              ? "#10b981"
+              : isLoading
+              ? "#3b82f6"
+              : "#FD7100";
+
+            const iconBg = isError
+              ? "bg-red-100 text-red-600"
+              : isSuccess
+              ? "bg-emerald-100 text-emerald-600"
+              : isLoading
+              ? "bg-blue-100 text-blue-600"
+              : "bg-orange-100 text-[#FD7100]";
+
+            const borderColor = isError
+              ? "#fecaca"
+              : isSuccess
+              ? "#a7f3d0"
+              : isLoading
+              ? "#bfdbfe"
+              : "#fed7aa";
+
+            return (
+              <ToastBar
+                toast={t}
+                position={t.position || "top-right"}
+                style={{
+                  position: "relative",
+                  overflow: "hidden",
+                  padding: "13px 15px",
+                  borderRadius: "14px",
+                  background: "#ffffff",
+                  color: "#0f172a",
+                  fontFamily: "'Be Vietnam Pro', sans-serif",
+                  boxShadow:
+                    "0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05)",
+                  border: `1px solid ${borderColor}`,
+                  borderLeft: `5px solid ${accentColor}`,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
+                  maxWidth: "420px",
+                  minWidth: "290px",
+                }}
+              >
+                {() => (
+                  <div className="flex flex-col w-full">
+                    <div className="flex items-center gap-3 w-full">
+                      <div className="flex-shrink-0">
+                        <div
+                          className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${iconBg} shadow-xs`}
+                        >
+                          {isError ? (
+                            <AlertCircle size={18} strokeWidth={2.5} />
+                          ) : isSuccess ? (
+                            <CheckCircle2 size={18} strokeWidth={2.5} />
+                          ) : isLoading ? (
+                            <Loader2 size={18} className="animate-spin" />
+                          ) : (
+                            <Info size={18} strokeWidth={2.5} />
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex-1 text-[13.5px] font-semibold text-slate-800 leading-snug">
+                        {resolveValue(t.message, t)}
+                      </div>
+                      {!isLoading && (
+                        <button
+                          type="button"
+                          onClick={() => toast.dismiss(t.id)}
+                          className="flex-shrink-0 text-slate-400 hover:text-slate-700 p-1 rounded-md hover:bg-slate-100 transition-colors ml-1 cursor-pointer"
+                          aria-label="Close notification"
+                        >
+                          <X size={15} strokeWidth={2.2} />
+                        </button>
+                      )}
+                    </div>
+                    {!isLoading && (
+                      <div
+                        className="absolute bottom-0 left-0 right-0 h-[3px] bg-slate-100/90 overflow-hidden"
+                        style={{ borderRadius: "0 0 14px 14px" }}
+                      >
+                        <div
+                          className="h-full"
+                          style={{
+                            backgroundColor: accentColor,
+                            animation: `toast-progress ${toastDuration}ms linear forwards`,
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+              </ToastBar>
+            );
+          }}
+        </Toaster>
         <WishlistProvider>
           <Router>
             <ScrollToTop />

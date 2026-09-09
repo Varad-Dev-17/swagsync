@@ -304,7 +304,7 @@ const OrdersSection = () => {
                       </div>
                     ) : effStatus === 'on_the_way' ? (
                       <div className="flex items-center gap-1.5 text-orange-700 font-bold">
-                        <span>On The Way (Out for Delivery)</span>
+                        <span>Out for delivery</span>
                         <Truck className="w-4 h-4 shrink-0" />
                       </div>
                     ) : effStatus === 'shipped' ? (
@@ -369,7 +369,7 @@ const OrdersSection = () => {
                           </span>
                         ) : effStatus === 'on_the_way' ? (
                           <span className="inline-flex items-center px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider bg-orange-50 text-orange-700 border border-orange-300">
-                            On The Way
+                            Out for delivery
                           </span>
                         ) : effStatus === 'shipped' ? (
                           <span className="inline-flex items-center px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider bg-purple-50 text-purple-700 border border-purple-300">

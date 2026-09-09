@@ -15,6 +15,8 @@ const StatusBadge = ({ status = "", labelOverride = null }) => {
     cancelled: "bg-rose-50 text-rose-700 border-rose-200",
     approved: "bg-emerald-50 text-emerald-700 border-emerald-200",
     rejected: "bg-rose-50 text-rose-700 border-rose-200",
+    pickup: "bg-indigo-50 text-indigo-700 border-indigo-200",
+    pickup_replace: "bg-indigo-50 text-indigo-700 border-indigo-200",
     pickup_scheduled: "bg-amber-50 text-amber-700 border-amber-200",
     picked_up: "bg-indigo-50 text-indigo-700 border-indigo-200",
     received: "bg-blue-50 text-blue-700 border-blue-200",
@@ -35,11 +37,14 @@ const StatusBadge = ({ status = "", labelOverride = null }) => {
   const style = styles[s] || (s === "active" ? styles.active : "bg-gray-100 text-gray-700 border-gray-200");
 
   const customLabels = {
-    pickup_scheduled: "Pickup Scheduled",
-    picked_up: "Picked Up",
-    on_the_way: "On The Way",
+    pickup: "Pickup",
+    pickup_replace: "Pickup & Replace",
+    pickup_scheduled: "Pickup",
+    picked_up: "Pickup",
+    on_the_way: "Out for delivery",
     packed: "Packed",
     processing: "Packed",
+    completed: "Completed",
     not_required: "Not Required",
     passed: "QC Passed",
     failed: "QC Failed",

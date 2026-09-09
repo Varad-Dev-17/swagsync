@@ -35,7 +35,7 @@ const ProductsPage = () => {
   const [limit, setLimit] = useState(12);
 
   const [departmentsList, setDepartmentsList] = useState([]);
-  const [categoriesList, setCategoriesList] = useState([]); 
+  const [categoriesList, setCategoriesList] = useState([]);
   const [brandsList, setBrandsList] = useState([]);
   const [colorsList, setColorsList] = useState([]);
 
@@ -51,11 +51,11 @@ const ProductsPage = () => {
   const [activeBrands, setActiveBrands] = useState([]);
   const [activeColors, setActiveColors] = useState([]);
   const [priceRange, setPriceRange] = useState({ min: "", max: "" });
-  
+
   const [sort, setSort] = useState("newest");
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const searchQuery = searchParams.get("search") || "";
-  
+
   const { updateCartCount } = useCart();
 
   useEffect(() => {
@@ -132,8 +132,8 @@ const ProductsPage = () => {
       const res = await api.get("/attribute-options");
       if (res.data.success) {
         const allOptions = res.data.options || [];
-        const colorOpts = allOptions.filter(opt => 
-          opt.attribute?.name?.toLowerCase() === "color" || 
+        const colorOpts = allOptions.filter(opt =>
+          opt.attribute?.name?.toLowerCase() === "color" ||
           opt.hex !== undefined
         );
         setColorsList(colorOpts);
@@ -152,7 +152,7 @@ const ProductsPage = () => {
       params.append("page", currentPage);
       params.append("limit", limit);
       params.append("sort", sort);
-      
+
       if (activeDepartment !== "all") {
         params.append("departments", activeDepartment);
       }
@@ -179,7 +179,7 @@ const ProductsPage = () => {
       if (res.data.success) {
         const data = res.data.data;
         setProducts(data.products || []);
-        
+
         if (data.pagination) {
           setTotalPages(data.pagination.pages || 1);
           setTotalProducts(data.pagination.total || 0);
@@ -257,35 +257,35 @@ const ProductsPage = () => {
       isMobileFilterOpen={isMobileFilterOpen}
       setIsMobileFilterOpen={setIsMobileFilterOpen}
       sidebar={
-        <div className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-none shadow-[0_2px_10px_rgba(0,0,0,0.02)] p-5 sm:p-6 transition-all duration-300 max-h-[calc(100vh-96px)] overflow-y-auto">
-          <FilterSidebar 
+        <div className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-none shadow-[0_2px_10px_rgba(0,0,0,0.02)] p-4 sm:p-5 transition-all duration-300 max-h-[calc(100vh-80px)] overflow-y-auto">
+          <FilterSidebar
             departments={departmentsList}
             activeDepartment={activeDepartment}
             onDepartmentChange={handleDepartmentChange}
-            
+
             categories={categoriesList}
             activeCategory={activeCategory}
             onCategoryChange={handleCategoryChange}
-            
+
             brands={brandsList}
             activeBrands={activeBrands}
             onBrandChange={handleBrandChange}
-            
+
             priceRange={priceRange}
             onPriceChange={handlePriceChange}
-            
+
             colors={colorsList}
             activeColors={activeColors}
             onColorChange={handleColorChange}
-            
+
             onClearAll={handleClearAll}
           />
         </div>
       }
     >
-      <div className="bg-[#FFFFFF] border-0 lg:border border-[#E5E7EB] rounded-none shadow-none lg:shadow-[0_2px_10px_rgba(0,0,0,0.02)] min-h-[300px] lg:min-h-[600px] pt-3 pb-6 px-3 sm:px-4 lg:py-8 lg:px-5 transition-all duration-300 flex flex-col">
+      <div className="bg-[#FFFFFF] border-0 lg:border border-[#E5E7EB] rounded-none shadow-none lg:shadow-[0_2px_10px_rgba(0,0,0,0.02)] min-h-[300px] lg:min-h-[600px] pt-1.5 pb-4 px-2 sm:px-3 lg:pt-2 lg:pb-5 lg:px-4 transition-all duration-300 flex flex-col">
         {!loading && !error && products.length > 0 && (
-          <ShopToolbar 
+          <ShopToolbar
             sort={sort}
             onSortChange={(e) => setSort(e.target.value)}
             onOpenMobileFilter={() => setIsMobileFilterOpen(true)}
@@ -301,13 +301,13 @@ const ProductsPage = () => {
             <EmptyState />
           ) : (
             <>
-              <ProductGrid 
-                paginatedProducts={products} 
+              <ProductGrid
+                paginatedProducts={products}
                 activeColors={activeColors}
                 priceRange={priceRange}
                 sort={sort}
               />
-              <Pagination 
+              <Pagination
                 currentPage={currentPage}
                 totalPages={totalPages}
                 setCurrentPage={setCurrentPage}

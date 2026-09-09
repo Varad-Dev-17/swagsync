@@ -34,13 +34,9 @@ const ReturnExchangeSection = ({ returnRequest = null, onUpdateRequestStatus = n
 
   const isPending = status === "pending";
   const isRejected = status === "rejected";
-  const isApprovedOrLater = ["approved", "packed", "shipped", "pickup_scheduled", "picked_up", "received", "refunded", "exchanged"].includes(status);
-  const isPackedOrLater = ["packed", "shipped", "pickup_scheduled", "picked_up", "received", "refunded", "exchanged"].includes(status);
-  const isShippedOrLater = ["shipped", "pickup_scheduled", "picked_up", "received", "refunded", "exchanged"].includes(status);
-  const isPickupScheduledOrLater = ["pickup_scheduled", "picked_up", "received", "refunded", "exchanged"].includes(status);
-  const isPickedUpOrLater = ["picked_up", "received", "refunded", "exchanged"].includes(status);
-  const isReceivedOrLater = ["received", "refunded", "exchanged"].includes(status);
-  const isCompleted = ["refunded", "exchanged"].includes(status);
+  const isApprovedOrLater = ["approved", "pickup", "pickup_replace", "packed", "shipped", "pickup_scheduled", "picked_up", "received", "completed", "refunded", "exchanged"].includes(status);
+  const isPickupOrLater = ["pickup", "pickup_replace", "packed", "shipped", "pickup_scheduled", "picked_up", "received", "completed", "refunded", "exchanged"].includes(status);
+  const isCompleted = ["completed", "refunded", "exchanged"].includes(status);
 
   const formatDate = (dateVal) => {
     if (!dateVal) return "";
@@ -57,99 +53,64 @@ const ReturnExchangeSection = ({ returnRequest = null, onUpdateRequestStatus = n
     }
   };
 
-  // Build granular Request processing timeline
+  // Build simplified 4-step Request processing timeline
   const steps = type === "exchange" ? [
     {
-      title: "Exchange Requested",
+      title: "Requested",
       date: formatDate(returnRequest.createdAt),
       subtitle: `Reason: ${reason}`,
       isCompleted: true,
     },
     {
-      title: "Approved",
+      title: isRejected ? "Rejected" : "Approved",
       date: formatDate(returnRequest.updatedAt || returnRequest.createdAt),
-      subtitle: isRejected ? "Request reviewed and declined." : isApprovedOrLater ? "Verified and replacement item reserved." : "Pending inspection of customer photos.",
+      subtitle: isRejected ? "Exchange request was reviewed and declined." : isApprovedOrLater ? "Request approved by admin." : "Pending admin review.",
       isCompleted: isApprovedOrLater,
       isCurrent: isPending,
       isError: isRejected,
     },
     {
-      title: "Packed",
-      date: isPackedOrLater ? formatDate(returnRequest.updatedAt) : "",
-      subtitle: "Replacement product packed and verified at facility.",
-      isCompleted: isPackedOrLater,
-      isCurrent: status === "approved",
+      title: "Pickup & Replace",
+      date: isPickupOrLater ? formatDate(returnRequest.updatedAt) : "",
+      subtitle: "Courier assigned to pick up item and deliver replacement.",
+      isCompleted: isPickupOrLater,
+      isCurrent: status === "approved" || status === "pickup_replace" || status === "pickup_scheduled",
     },
     {
-      title: "Shipped",
-      date: isShippedOrLater ? formatDate(returnRequest.updatedAt) : "",
-      subtitle: "Replacement product dispatched via logistics carrier.",
-      isCompleted: isShippedOrLater,
-      isCurrent: status === "packed",
-    },
-    {
-      title: "Out for Exchange",
-      date: isPickupScheduledOrLater ? formatDate(returnRequest.updatedAt) : "",
-      subtitle: "Courier en route with replacement product for swap.",
-      isCompleted: isPickupScheduledOrLater,
-      isCurrent: status === "shipped" || status === "approved",
-    },
-    {
-      title: "Quality Check",
-      date: isPickedUpOrLater ? formatDate(returnRequest.updatedAt) : "",
-      subtitle: "Courier verifying product condition and brand tags at doorstep.",
-      isCompleted: isPickedUpOrLater,
-      isCurrent: status === "pickup_scheduled",
-    },
-    {
-      title: "Exchanged",
+      title: "Exchange Completed",
       date: isCompleted ? formatDate(returnRequest.updatedAt) : "",
-      subtitle: "Doorstep Quality Check passed and replacement item handed over.",
+      subtitle: "Item pickup & replacement completed successfully.",
       isCompleted: isCompleted,
-      isCurrent: status === "picked_up" || status === "received",
+      isCurrent: isPickupOrLater && !isCompleted,
     }
   ] : [
     {
-      title: "Return Requested",
+      title: "Requested",
       date: formatDate(returnRequest.createdAt),
       subtitle: `Reason: ${reason}`,
       isCompleted: true,
     },
     {
-      title: "Under Admin Review",
+      title: isRejected ? "Rejected" : "Approved",
       date: formatDate(returnRequest.updatedAt || returnRequest.createdAt),
-      subtitle: isRejected ? "Request was reviewed and declined." : isApprovedOrLater ? "Verified and approved by admin." : "Pending inspection of customer photos.",
+      subtitle: isRejected ? "Return request was reviewed and declined." : isApprovedOrLater ? "Request approved by admin." : "Pending admin review.",
       isCompleted: isApprovedOrLater,
       isCurrent: isPending,
       isError: isRejected,
     },
     {
-      title: "Pickup Scheduled",
-      date: isPickupScheduledOrLater ? formatDate(returnRequest.updatedAt) : "",
-      subtitle: "Courier assigned for item collection.",
-      isCompleted: isPickupScheduledOrLater,
-      isCurrent: status === "approved",
+      title: "Pickup",
+      date: isPickupOrLater ? formatDate(returnRequest.updatedAt) : "",
+      subtitle: "Courier assigned for pickup of item.",
+      isCompleted: isPickupOrLater,
+      isCurrent: status === "approved" || status === "pickup" || status === "pickup_scheduled",
     },
     {
-      title: "Picked Up by Courier",
-      date: isPickedUpOrLater ? formatDate(returnRequest.updatedAt) : "",
-      subtitle: "Item collected from customer address.",
-      isCompleted: isPickedUpOrLater,
-      isCurrent: status === "pickup_scheduled",
-    },
-    {
-      title: "Received at Warehouse",
-      date: isReceivedOrLater ? formatDate(returnRequest.updatedAt) : "",
-      subtitle: "Item arrived at warehouse for Quality Check (QC).",
-      isCompleted: isReceivedOrLater,
-      isCurrent: status === "picked_up",
-    },
-    {
-      title: "Refund Completed",
+      title: "Return Completed",
       date: isCompleted ? formatDate(returnRequest.updatedAt) : "",
-      subtitle: "Refund settled to customer account.",
+      subtitle: "Item returned and case settled.",
       isCompleted: isCompleted,
-      isCurrent: status === "received",
+      isCurrent: isPickupOrLater && !isCompleted,
     },
   ];
 

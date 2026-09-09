@@ -4,6 +4,7 @@ import { verificationEmailTemplate } from "../utils/verificationEmailTemplate.js
 import { forgotPasswordEmailTemplate } from "../utils/forgotPasswordEmailTemplate.js";
 import jwt from "jsonwebtoken";
 import { getNextSequence } from "../utils/counterHelper.js";
+import { createNotification } from "../utils/notificationHelper.js";
 
 import {
   signupSchema,
@@ -333,6 +334,17 @@ export const changePassword = async (req, res) => {
     existingUser.password = hashedPassword;
 
     await existingUser.save();
+
+    createNotification({
+      userId,
+      type: "account",
+      title: "Password Changed Successfully",
+      message: "Your account password was updated. If you did not perform this change, please contact support or reset your password immediately.",
+      link: "/account/profile",
+      linkText: "Account Security",
+      iconType: "security",
+      color: "rose",
+    });
 
     return res
       .status(200)

@@ -19,7 +19,7 @@ const HeroSlider = () => {
 
 
       {/* TEXT CONTENT: Bottom-Left Overlay */}
-      <div className="absolute left-[5%] md:left-[8%] bottom-[8%] sm:bottom-[12%] md:bottom-[16%] z-20 w-[90%] md:w-[60%] lg:w-[45%] pointer-events-none">
+      <div className="absolute left-[5%] md:left-[8%] bottom-[12%] min-[406px]:bottom-[8%] sm:bottom-[12%] md:bottom-[16%] z-20 w-[90%] md:w-[60%] lg:w-[45%] pointer-events-none">
         <motion.div
           initial="hidden"
           animate="visible"

@@ -48,7 +48,7 @@ const CustomerTrackingCard = ({ order = null }) => {
         </div>
         <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${status === "delivered" ? "bg-green-50 text-green-700 border border-green-200" : isCancelled ? "bg-red-50 text-red-700 border border-red-200" : "bg-orange-50 text-[#FD7100] border border-orange-200"
           }`}>
-          {status === "pending" ? "Order Confirmed" : status === "processing" ? "Packed" : status === "on_the_way" ? "On The Way" : status.replace(/_/g, " ")}
+          {status === "pending" ? "Order Confirmed" : status === "processing" ? "Packed" : status === "on_the_way" ? "Out for delivery" : status.replace(/_/g, " ")}
         </span>
       </div>
 
@@ -58,7 +58,7 @@ const CustomerTrackingCard = ({ order = null }) => {
             { label: "Order Confirmed", desc: "Verified & Approved", icon: Clock, idx: 0 },
             { label: "Packed", desc: "Packed & Verified", icon: Package, idx: 1 },
             { label: "Shipped", desc: order.trackingNumber ? `AWB: ${order.trackingNumber}` : "Dispatched", icon: Truck, idx: 2 },
-            { label: "On The Way", desc: "Out for Delivery", icon: Truck, idx: 3 },
+            { label: "Out for delivery", desc: "Out for Delivery", icon: Truck, idx: 3 },
             { label: "Delivered", desc: "Package Received", icon: CheckCircle2, idx: 4 }
           ].map((s, i) => {
             const Icon = s.icon;
@@ -93,7 +93,7 @@ const CustomerTrackingCard = ({ order = null }) => {
     </div>
   );
 
-  // Return & Exchange Dedicated Tracker
+  // Return & Exchange Dedicated Tracker (Simplified 4-step flows)
   const renderReturnExchangeTracker = (req) => {
     const type = req.type || "return";
     const reqStatus = (req.status || "pending").toLowerCase();
@@ -102,10 +102,38 @@ const CustomerTrackingCard = ({ order = null }) => {
     const matchingItem = order?.items?.find(item => (item.product?._id || item.product) === (req.product?._id || req.product));
     const itemTitle = matchingItem?.product?.title || matchingItem?.product?.name || "";
 
-    const stepsList = type === "exchange" 
-      ? ["pending", "approved", "packed", "shipped", "pickup_scheduled", "picked_up", "exchanged"]
-      : ["pending", "approved", "pickup_scheduled", "picked_up", "received"];
-    const currentIdx = stepsList.indexOf(reqStatus);
+    // 4-step simplified flows:
+    // Return: 1. Requested -> 2. Approved/Rejected -> 3. Pickup -> 4. Return completed
+    // Exchange: 1. Requested -> 2. Approved/Rejected -> 3. Pickup & Replace -> 4. Exchange completed
+    const isExchange = type === "exchange";
+    let currentIdx = 0;
+    if (["completed", "refunded", "exchanged"].includes(reqStatus)) {
+      currentIdx = 3;
+    } else if (["pickup", "pickup_replace", "pickup_scheduled", "picked_up", "received", "packed", "shipped"].includes(reqStatus)) {
+      currentIdx = 2;
+    } else if (["approved"].includes(reqStatus)) {
+      currentIdx = 1;
+    } else {
+      currentIdx = 0;
+    }
+
+    const steps = isExchange ? [
+      { label: "Requested", desc: "Exchange Submitted", idx: 0 },
+      { label: "Approved", desc: "Reviewed & Approved", idx: 1 },
+      { label: "Pickup & Replace", desc: "Doorstep Swap", idx: 2 },
+      { label: "Exchange Completed", desc: "Item Replaced & Closed", idx: 3 }
+    ] : [
+      { label: "Requested", desc: "Return Submitted", idx: 0 },
+      { label: "Approved", desc: "Reviewed & Approved", idx: 1 },
+      { label: "Pickup", desc: "Item Collection", idx: 2 },
+      { label: "Return Completed", desc: "Processed & Closed", idx: 3 }
+    ];
+
+    const displayStatusText = reqStatus === "pickup_replace" 
+      ? "Pickup & Replace" 
+      : reqStatus === "completed" 
+        ? (isExchange ? "Exchange Completed" : "Return Completed") 
+        : reqStatus.replace("_", " ");
 
     return (
       <div className="bg-white rounded-2xl border border-gray-200/80 p-6 shadow-xs space-y-6">
@@ -116,45 +144,31 @@ const CustomerTrackingCard = ({ order = null }) => {
             </div>
             <div>
               <h3 className="text-base font-bold text-slate-700 tracking-tight flex items-center gap-1.5 flex-wrap">
-                <span>{type === "exchange" ? "Exchange Request Tracking" : "Return Request Tracking"}</span>
+                <span>{isExchange ? "Exchange Request Tracking" : "Return Request Tracking"}</span>
                 {itemTitle && <span className="text-[#FD7100] font-extrabold text-sm border-l-2 border-slate-200 pl-2">({itemTitle})</span>}
               </h3>
               <p className="text-xs text-gray-500 font-medium">
-                {type === "exchange" ? "Tracking your replacement variant fulfillment & doorstep swap" : "Tracking your product return and item collection"}
+                {isExchange ? "Tracking your replacement variant fulfillment & doorstep swap" : "Tracking your product return and item collection"}
               </p>
             </div>
           </div>
           <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${isRejected ? "bg-rose-50 text-rose-700 border border-rose-200" : "bg-amber-50 text-amber-800 border border-amber-200"
             }`}>
-            {reqStatus.replace("_", " ")}
+            {displayStatusText}
           </span>
         </div>
 
         {!isRejected ? (
-          <div className={`grid grid-cols-2 ${type === "exchange" ? "sm:grid-cols-4 lg:grid-cols-7" : "sm:grid-cols-5"} gap-2.5 pt-2`}>
-            {(type === "exchange" ? [
-              { label: "Exchange Requested", desc: "Submitted", idx: 0 },
-              { label: "Approved", desc: "Reserved", idx: 1 },
-              { label: "Packed", desc: "Item Packed", idx: 2 },
-              { label: "Shipped", desc: "Dispatched", idx: 3 },
-              { label: "Out for Exchange", desc: "En Route", idx: 4 },
-              { label: "Quality Check", desc: "Tag Inspection", idx: 5 },
-              { label: "Exchanged", desc: "Swapped", idx: 6 }
-            ] : [
-              { label: "Return Requested", desc: "Submitted", idx: 0 },
-              { label: "Approved", desc: "Reviewed & Verified", idx: 1 },
-              { label: "Pickup Scheduled", desc: "Courier Assigned", idx: 2 },
-              { label: "Picked Up", desc: "Collected by Courier", idx: 3 },
-              { label: "Received", desc: "Arrived at Facility", idx: 4 }
-            ]).map((s, i) => {
-              const isComp = ["refunded", "exchanged"].includes(reqStatus) || currentIdx >= s.idx;
-              const isCurr = currentIdx === s.idx && !["refunded", "exchanged"].includes(reqStatus);
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+            {steps.map((s, i) => {
+              const isComp = ["completed", "refunded", "exchanged"].includes(reqStatus) || currentIdx >= s.idx;
+              const isCurr = currentIdx === s.idx && !["completed", "refunded", "exchanged"].includes(reqStatus);
 
               return (
                 <div key={i} className="flex flex-col items-center text-center p-3 rounded-xl bg-slate-50/70 border border-gray-100">
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-extrabold mb-1.5 ${isComp ? "bg-[#FD7100] text-white" : isCurr ? "bg-amber-500 text-white animate-pulse" : "bg-gray-200 text-gray-500"
                     }`}>
-                    {isComp ? <Check size={14} className="stroke-[3]" /> : i + 1}
+                  {isComp ? <Check size={14} className="stroke-[3]" /> : i + 1}
                   </div>
                   <span className={`text-xs font-bold ${isComp ? "text-slate-700" : isCurr ? "text-amber-700 font-extrabold" : "text-gray-400"}`}>
                     {s.label}
@@ -179,61 +193,7 @@ const CustomerTrackingCard = ({ order = null }) => {
     );
   };
 
-  // Quality Check (QC) Tracking
-  const renderQcTracking = (req) => {
-    if (!req) return null;
-    const qcStatus = (req.qcStatus || "pending").toLowerCase();
-    const reqStatus = (req.status || "pending").toLowerCase();
 
-    const showQc = ["picked_up", "received", "refunded", "exchanged"].includes(reqStatus) || qcStatus !== "pending";
-    if (!showQc) return null;
-
-    return (
-      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-2xl p-6 shadow-md border border-indigo-900/50 space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-indigo-500/20 border border-indigo-400/30 text-indigo-300 flex items-center justify-center font-bold shrink-0">
-              <ShieldCheck size={22} className="stroke-[2.25]" />
-            </div>
-            <div>
-              <h4 className="text-sm font-bold tracking-tight text-white">Quality Inspection Status</h4>
-              <p className="text-xs text-indigo-200 font-medium">Verifying product brand tags and condition during doorstep collection or upon facility intake</p>
-            </div>
-          </div>
-
-          <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${qcStatus === "passed" ? "bg-emerald-500 text-white" : qcStatus === "failed" ? "bg-rose-500 text-white" : "bg-amber-400 text-slate-950 font-extrabold"
-            }`}>
-            {qcStatus === "passed" ? "Passed Inspection" : qcStatus === "failed" ? "Inspection Failed" : "Pending Inspection"}
-          </span>
-        </div>
-
-        {/* Customer Friendly Explanatory Text */}
-        <div className="p-3.5 bg-white/10 rounded-xl border border-white/15 text-xs font-medium leading-relaxed">
-          {qcStatus === "passed" ? (
-            <span className="text-emerald-300 font-semibold flex items-center gap-2">
-              <CheckCircle2 size={16} className="shrink-0" />
-              Your item's quality, tags, and condition have been verified successfully.
-            </span>
-          ) : qcStatus === "failed" ? (
-            <div className="space-y-1 text-rose-200">
-              <p className="font-bold flex items-center gap-1.5 text-rose-300">
-                <XCircle size={15} className="shrink-0" />
-                We were unable to verify your return during item quality inspection:
-              </p>
-              <p className="italic pl-5 font-semibold bg-black/20 p-2 rounded-lg border border-rose-500/30">
-                "{req.qcReason || "Item condition check did not pass original verification standards."}"
-              </p>
-            </div>
-          ) : (
-            <span className="text-indigo-200 flex items-center gap-2">
-              <Clock size={16} className="text-amber-300 shrink-0" />
-              Your item is awaiting quality check of brand tags, packaging, and condition during courier collection or upon intake.
-            </span>
-          )}
-        </div>
-      </div>
-    );
-  };
 
   // Refund Tracking
   const renderRefundTracking = (req) => {
@@ -312,9 +272,9 @@ const CustomerTrackingCard = ({ order = null }) => {
     const orderEvents = Array.isArray(order.timeline) ? order.timeline : [];
     const allReturnEvents = returnRequests.flatMap(req => Array.isArray(req.timeline) ? req.timeline : []);
 
-    const combined = [...orderEvents, ...allReturnEvents].sort((a, b) => {
-      return new Date(a.timestamp || 0) - new Date(b.timestamp || 0);
-    });
+    const combined = [...orderEvents, ...allReturnEvents]
+      .filter(ev => !String(ev.type || "").toLowerCase().includes("qc") && !String(ev.type || "").toLowerCase().includes("quality check"))
+      .sort((a, b) => new Date(a.timestamp || 0) - new Date(b.timestamp || 0));
 
     if (combined.length === 0) return null;
 
@@ -323,27 +283,24 @@ const CustomerTrackingCard = ({ order = null }) => {
       let title = ev.type || "Update Received";
       let subtitle = ev.description || "";
 
-      if (t.includes("qc passed") || t.includes("quality check passed")) {
-        title = "Inspection Passed";
-        subtitle = "Your returned item has been inspected successfully.";
-      } else if (t.includes("qc failed") || t.includes("quality check failed")) {
-        title = "Inspection Did Not Pass";
-        subtitle = `We were unable to verify your return during inspection: ${activeReturn?.qcReason || "Condition mismatch."}`;
-      } else if (t.includes("refund initiated")) {
+      if (t.includes("refund initiated")) {
         title = "Refund Initiated";
         subtitle = "Your refund has been initiated and is currently being processed.";
       } else if (t.includes("refund completed") || t.includes("refunded")) {
         title = "Refund Completed";
         subtitle = "Your refund has been successfully completed and settled.";
-      } else if (t.includes("pickup scheduled")) {
+      } else if (t.includes("pickup scheduled") || t === "pickup") {
         title = "Pickup Scheduled";
         subtitle = "A logistics courier has been assigned to collect your return item.";
+      } else if (t.includes("pickup_replace") || t.includes("pickup & replace")) {
+        title = "Pickup & Replace Scheduled";
+        subtitle = "Courier assigned to collect item and deliver replacement.";
       } else if (t.includes("picked up")) {
         title = "Item Collected";
         subtitle = "Your item has been picked up by the logistics courier.";
-      } else if (t.includes("received")) {
-        title = "Arrived at Warehouse";
-        subtitle = "Your item has arrived at our facility for quality verification.";
+      } else if (t.includes("out for delivery") || t.includes("on_the_way")) {
+        title = "Out for Delivery";
+        subtitle = "Your package is out for delivery.";
       }
 
       return { title, subtitle };
@@ -419,7 +376,6 @@ const CustomerTrackingCard = ({ order = null }) => {
       {returnRequests.map((req, idx) => (
         <div key={req._id || idx} className="space-y-6 pt-2 border-t-2 border-orange-50/60">
           {renderReturnExchangeTracker(req)}
-          {renderQcTracking(req)}
           {renderRefundTracking(req)}
         </div>
       ))}

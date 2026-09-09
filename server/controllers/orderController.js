@@ -10,6 +10,7 @@ import { addTimelineEvent, appendAdminNote, mergeAdminNotesSafe } from "../utils
 import { ORDER_POPULATE_CONFIG, formatAndFilterNotes } from "../utils/populateHelper.js";
 import crypto from "crypto";
 import Razorpay from "razorpay";
+import { createNotification } from "../utils/notificationHelper.js";
 
 // GET ALL ORDERS (Admin)
 export const getAllOrders = async (req, res) => {
@@ -570,16 +571,31 @@ export const createOrder = async (req, res) => {
       status: "pending",
     });
 
+    const roundedPaidAmount = Math.round(order.totalAmount || totalAmount).toLocaleString('en-IN');
+
     // Automatically generate initial order audit timeline event
     addTimelineEvent(
       order,
       "Order Created",
-      `Order ${orderId} confirmed via ${paymentMethod.toUpperCase()}. Total amount: ₹${totalAmount}`,
+      `Order ${orderId} confirmed via ${paymentMethod.toUpperCase()}. Total amount: ₹${roundedPaidAmount}`,
       "Customer",
-      { orderId, totalAmount, paymentMethod, couponCode: couponApplied ? couponApplied.code : null }
+      { orderId, totalAmount: order.totalAmount, paymentMethod, couponCode: couponApplied ? couponApplied.code : null }
     );
 
     await order.save();
+
+    // Send user notification for placed order
+    createNotification({
+      userId: req.user.userId,
+      type: "orders",
+      title: "Order Placed Successfully!",
+      message: `Your order #${orderId} for ₹${roundedPaidAmount} has been confirmed.`,
+      link: `/account/orders/${order._id}`,
+      linkText: "Track Order",
+      iconType: "package",
+      color: "blue",
+      entityId: orderId,
+    });
 
     for (const item of cart.products) {
       await Variant.findByIdAndUpdate(item.variantId, {
@@ -727,7 +743,7 @@ export const updateOrderStatus = async (req, res) => {
         processing: ["Processing Started", "Order items inspected and packaging started.", "Warehouse"],
         packed: ["Order Packed", "Order items have been inspected, verified, and securely packed.", "Warehouse"],
         shipped: ["Shipped", `Order handed over to delivery partner.${trackingNumber || order.trackingNumber ? ` AWB/Tracking: ${trackingNumber || order.trackingNumber}` : ""}`, "Warehouse"],
-        on_the_way: ["On The Way", "Order is out for delivery and arriving soon.", "Courier"],
+        on_the_way: ["Out for Delivery", "Order is out for delivery and arriving soon.", "Courier"],
         delivered: ["Delivered", "Order package successfully delivered to customer.", "Warehouse"],
         cancelled: ["Cancelled", "Order cancelled by admin and item stock restored.", "Admin"],
         delayed: ["Delayed", "Order processing or transit has encountered a slight delay.", "Admin"]
@@ -741,6 +757,35 @@ export const updateOrderStatus = async (req, res) => {
     if (trackingNumber !== undefined) order.trackingNumber = trackingNumber;
 
     await order.save();
+
+    // Send user notification if status changed
+    if (status && status !== currentStatus) {
+      const statusTitles = {
+        processing: "Order Processing",
+        packed: "Order Packed!",
+        shipped: "Order Shipped!",
+        on_the_way: "Out for Delivery!",
+        delivered: "Order Delivered Successfully!",
+        cancelled: "Order Cancelled",
+        delayed: "Order Delivery Delayed",
+      };
+      const title = statusTitles[status] || `Order Status: ${status}`;
+      createNotification({
+        userId: order.user,
+        type: "orders",
+        title,
+        message: `Your order #${order.orderId} status has been updated to ${status.replace(/_/g, " ")}.`,
+        link: `/account/orders/${order._id}`,
+        linkText: "Track Order",
+        iconType: "package",
+        color: status === "delivered" 
+          ? "text-emerald-600 bg-emerald-50 border-emerald-100" 
+          : status === "cancelled" 
+            ? "text-red-600 bg-red-50 border-red-100" 
+            : "text-blue-600 bg-blue-50 border-blue-100",
+        entityId: order.orderId,
+      });
+    }
 
     const populatedOrder = await Order.findById(id)
       .populate(ORDER_POPULATE_CONFIG)

@@ -36,6 +36,8 @@ export default defineConfig({
       "/dashboard": proxyConfig,
       "/addresses": proxyConfig,
       "/return-requests": proxyConfig,
+      "/tickets": proxyConfig,
+      "/notifications": proxyConfig,
     },
   },
 });

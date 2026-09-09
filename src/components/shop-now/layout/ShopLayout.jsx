@@ -7,13 +7,13 @@ const ShopLayout = ({ sidebar, children, isMobileFilterOpen: externalOpen, setIs
   const setIsMobileFilterOpen = externalSetOpen || setInternalOpen;
 
   return (
-    <div className="min-h-screen bg-white lg:bg-[#FAFAFB] pt-[62px] sm:pt-[68px] lg:pt-[84px] relative">
+    <div className="min-h-screen bg-white lg:bg-[#FAFAFB] pt-[62px] sm:pt-[68px] lg:pt-[72px] relative">
       <div className="max-w-[1600px] mx-auto px-0 lg:px-4">
         <div className="flex flex-col lg:flex-row gap-0 lg:gap-4 items-start">
           
           {/* Filter Sidebar (Desktop Sticky / Mobile Modal) */}
           <aside className={`
-            fixed inset-0 z-50 bg-black/50 lg:bg-transparent lg:sticky lg:top-[84px] lg:self-start lg:h-[calc(100vh-84px)] lg:z-auto transition-opacity duration-300
+            fixed inset-0 z-50 bg-black/50 lg:bg-transparent lg:sticky lg:top-[72px] lg:self-start lg:h-[calc(100vh-72px)] lg:z-auto transition-opacity duration-300
             ${isMobileFilterOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none lg:opacity-100 lg:pointer-events-auto'}
           `}>
             {/* Sidebar Content Container */}

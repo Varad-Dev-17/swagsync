@@ -99,18 +99,28 @@ const ReturnsSection = () => {
     const styles = {
       pending: "bg-orange-50 text-orange-600 border-orange-100",
       approved: "bg-emerald-50 text-emerald-600 border-emerald-100",
+      pickup: "bg-amber-50 text-amber-700 border-amber-200",
+      pickup_replace: "bg-amber-50 text-amber-700 border-amber-200",
+      pickup_scheduled: "bg-amber-50 text-amber-700 border-amber-200",
+      picked_up: "bg-amber-50 text-amber-700 border-amber-200",
       rejected: "bg-red-50 text-red-600 border-red-100",
       received: "bg-blue-50 text-blue-600 border-blue-100",
+      completed: "bg-purple-50 text-purple-600 border-purple-100",
       refunded: "bg-purple-50 text-purple-600 border-purple-100",
       exchanged: "bg-purple-50 text-purple-600 border-purple-100",
     };
     
-    // As per user requirement, statuses are NOT clickable on the list view.
     const style = styles[status] || "bg-gray-50 text-gray-500 border-gray-100";
     
     let displayStatus = status;
-    if (status === 'refunded' || status === 'exchanged') {
-        displayStatus = 'completed'; // Simplify for list view as per image
+    if (status === 'refunded' || status === 'exchanged' || status === 'completed') {
+      displayStatus = 'completed';
+    } else if (status === 'pickup' || status === 'pickup_scheduled' || status === 'picked_up') {
+      displayStatus = 'pickup';
+    } else if (status === 'pickup_replace') {
+      displayStatus = 'pickup & replace';
+    } else if (status === 'pending') {
+      displayStatus = 'requested';
     }
     
     return (
@@ -404,12 +414,12 @@ const ReturnsSection = () => {
                   className="px-3 py-2 bg-white border border-gray-200 rounded-lg outline-none focus:ring-1 focus:ring-[#4648d4] text-[13px] text-gray-700 cursor-pointer w-[140px]"
                 >
                   <option value="">All Status</option>
-                  <option value="pending">Pending</option>
+                  <option value="pending">Requested</option>
                   <option value="approved">Approved</option>
-                  <option value="received">Received</option>
+                  <option value="pickup">Pickup</option>
+                  <option value="pickup_replace">Pickup & Replace</option>
+                  <option value="completed">Completed</option>
                   <option value="rejected">Rejected</option>
-                  <option value="refunded">Refunded</option>
-                  <option value="exchanged">Exchanged</option>
                 </select>
               </div>
 

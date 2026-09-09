@@ -1,9 +1,8 @@
-
 import { Filter } from "lucide-react";
 
 const ShopToolbar = ({ sort, onSortChange, onOpenMobileFilter }) => {
   return (
-    <div className="flex items-center justify-between lg:justify-end pb-4 mb-4 border-b border-[#E5E7EB]">
+    <div className="flex items-center justify-between lg:justify-end pb-1.5 mb-2 border-b border-[#E5E7EB]">
       {/* Mobile Filter Button (visible only on mobile/tablet < lg) */}
       <button 
         type="button"

@@ -10,14 +10,14 @@ import {
   Tags,
   Ticket,
   MessageSquare,
-  PackageCheck,
   LogOut,
   KeyRound,
   ChevronUp,
   User as UserIcon,
   PanelLeftClose,
   PanelLeftOpen,
-  RefreshCcw
+  RefreshCcw,
+  Headphones
 } from "lucide-react";
 
 const Sidebar = ({ onClose, isCollapsed, toggleCollapse }) => {
@@ -40,6 +40,7 @@ const Sidebar = ({ onClose, isCollapsed, toggleCollapse }) => {
     { path: "/admin/products", label: "Products", icon: Package },
     { path: "/admin/orders", label: "Orders", icon: ShoppingCart },
     { path: "/admin/returns", label: "Returns", icon: RefreshCcw },
+    { path: "/admin/tickets", label: "Tickets", icon: Headphones },
     { path: "/admin/users", label: "Users", icon: Users },
     { path: "/admin/coupons", label: "Coupons", icon: Ticket },
     { path: "/admin/reviews", label: "Reviews", icon: MessageSquare },

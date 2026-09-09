@@ -83,7 +83,7 @@ const OrderDetails = () => {
     processing: "Packed",
     packed: "Packed",
     shipped: "Shipped",
-    on_the_way: "On The Way",
+    on_the_way: "Out for delivery",
     delivered: "Delivered",
     cancelled: "Cancelled",
     delayed: "⚠️ Delayed • Slight Shipping Delay"

@@ -4,10 +4,12 @@ import axios from "axios";
 import { useAuth } from "../../context/AuthContext";
 import { useCart } from "../../context/CartContext";
 import { useWishlist } from "../../context/WishlistContext";
+import api from "../../api/axiosConfig";
 import {
   User,
   Heart,
   ShoppingBag,
+  Bell,
   Search,
   Menu,
   X,
@@ -105,10 +107,46 @@ const Navbar = () => {
   const { user, logout } = useAuth();
   const { cartCount } = useCart();
   const { wishlistItems } = useWishlist();
+  const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
 
   const wishlistCount = wishlistItems?.length || 0;
   const isAdmin = user?.isAdmin;
   const isHomePage = location.pathname === "/home" || location.pathname === "/";
+
+  useEffect(() => {
+    if (!user) {
+      setUnreadNotificationsCount(0);
+      return;
+    }
+
+    let isMounted = true;
+    const fetchUnreadCount = async () => {
+      try {
+        const res = await api.get("/notifications/unread-count");
+        if (isMounted && res.data?.success) {
+          setUnreadNotificationsCount(res.data.count || 0);
+        }
+      } catch {
+        // Silently catch
+      }
+    };
+
+    fetchUnreadCount();
+
+    const handleUpdate = (e) => {
+      if (e?.detail?.count !== undefined) {
+        setUnreadNotificationsCount(e.detail.count);
+      } else {
+        fetchUnreadCount();
+      }
+    };
+
+    window.addEventListener("notifications-updated", handleUpdate);
+    return () => {
+      isMounted = false;
+      window.removeEventListener("notifications-updated", handleUpdate);
+    };
+  }, [user, location.pathname]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -470,36 +508,56 @@ const Navbar = () => {
               {/* Icons */}
               <div className="flex items-center gap-1.5 sm:gap-4 lg:gap-5">
                 {!isAdmin && (
-                  <div className="flex items-center gap-0.5 sm:gap-1.5">
+                  <div className="flex items-center gap-1 sm:gap-2">
                     <Link
                       to="/wishlist"
-                      className={`relative flex flex-col items-center justify-center gap-1 ${textColor} transition-all duration-300 p-2 sm:px-2.5 sm:py-1 rounded-lg ${isScrolled ? "hover:bg-gray-100 hover:text-[#FD7100]" : "hover:text-white/80"
-                        }`}
+                      className={`relative p-2 rounded-full ${textColor} transition-all duration-200 ${
+                        isScrolled ? "hover:bg-gray-100 hover:text-[#FD7100]" : "hover:bg-white/10 hover:text-white"
+                      }`}
                       aria-label="Wishlist"
+                      title="Wishlist"
                     >
-                      <div className="relative">
-                        <Heart size={20} strokeWidth={1.5} />
-                        <span className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 bg-[#FD7100] text-white text-[8px] font-semibold rounded-full flex items-center justify-center leading-none">
+                      <Heart size={21} strokeWidth={1.75} />
+                      {wishlistCount > 0 && (
+                        <span className="absolute -top-0.5 -right-0.5 min-w-4 h-4 px-1 bg-[#FD7100] text-white text-[9px] font-bold rounded-full flex items-center justify-center leading-none shadow-xs">
                           {wishlistCount > 99 ? "99" : wishlistCount}
                         </span>
-                      </div>
-                      <span className="text-xs font-semibold hidden md:block">Wishlist</span>
+                      )}
                     </Link>
 
                     <Link
                       to="/bag"
-                      className={`relative flex flex-col items-center justify-center gap-1 ${textColor} transition-all duration-300 p-2 sm:px-2.5 sm:py-1 rounded-lg ${isScrolled ? "hover:bg-gray-100 hover:text-[#FD7100]" : "hover:text-white/80"
-                        }`}
+                      className={`relative p-2 rounded-full ${textColor} transition-all duration-200 ${
+                        isScrolled ? "hover:bg-gray-100 hover:text-[#FD7100]" : "hover:bg-white/10 hover:text-white"
+                      }`}
                       aria-label="Shopping Bag"
+                      title="Bag"
                     >
-                      <div className="relative">
-                        <ShoppingBag size={20} strokeWidth={1.5} />
-                        <span className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 bg-[#FD7100] text-white text-[8px] font-semibold rounded-full flex items-center justify-center leading-none">
+                      <ShoppingBag size={21} strokeWidth={1.75} />
+                      {cartCount > 0 && (
+                        <span className="absolute -top-0.5 -right-0.5 min-w-4 h-4 px-1 bg-[#FD7100] text-white text-[9px] font-bold rounded-full flex items-center justify-center leading-none shadow-xs">
                           {cartCount > 99 ? "99" : cartCount}
                         </span>
-                      </div>
-                      <span className="text-xs font-semibold hidden md:block">Bag</span>
+                      )}
                     </Link>
+
+                    {user && (
+                      <Link
+                        to="/account/notifications"
+                        className={`relative p-2 rounded-full ${textColor} transition-all duration-200 ${
+                          isScrolled ? "hover:bg-gray-100 hover:text-[#FD7100]" : "hover:bg-white/10 hover:text-white"
+                        }`}
+                        aria-label="Notifications"
+                        title="Notifications"
+                      >
+                        <Bell size={21} strokeWidth={1.75} />
+                        {unreadNotificationsCount > 0 && (
+                          <span className="absolute -top-0.5 -right-0.5 min-w-4 h-4 px-1 bg-[#FD7100] text-white text-[9px] font-bold rounded-full flex items-center justify-center leading-none shadow-xs">
+                            {unreadNotificationsCount > 99 ? "99+" : unreadNotificationsCount}
+                          </span>
+                        )}
+                      </Link>
+                    )}
                   </div>
                 )}
 

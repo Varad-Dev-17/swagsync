@@ -136,7 +136,7 @@ const OrdersSection = () => {
       processing: "Packed",
       packed: "Packed",
       shipped: "Shipped",
-      on_the_way: "On The Way",
+      on_the_way: "Out for delivery",
       delivered: "Delivered",
       cancelled: "Cancelled"
     };
@@ -374,7 +374,7 @@ const OrdersSection = () => {
                   <option value="pending">Order Confirmed</option>
                   <option value="packed">Packed</option>
                   <option value="shipped">Shipped</option>
-                  <option value="on_the_way">On The Way</option>
+                  <option value="on_the_way">Out for delivery</option>
                   <option value="delivered">Delivered</option>
                   <option value="cancelled">Cancelled</option>
                 </select>

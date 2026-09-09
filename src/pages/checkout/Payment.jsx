@@ -141,7 +141,7 @@ const Payment = () => {
                 
                 const verifyRes = await axios.post('/orders', verifyPayload, { headers: getAuthHeaders() });
                 if (verifyRes.data.success) {
-                  toast.success('Order placed successfully!', { duration: 4000, icon: '🎉' });
+                  toast.success('Order placed successfully!');
                   updateCartCount(0);
                   refreshCart();
                   navigate('/');
@@ -180,10 +180,7 @@ const Payment = () => {
         const response = await axios.post('/orders', payload, { headers: getAuthHeaders() });
         
         if (response.data.success) {
-          toast.success('Order placed successfully!', {
-            duration: 4000,
-            icon: '🎉'
-          });
+          toast.success('Order placed successfully!');
           
           // Clear cart globally
           updateCartCount(0);

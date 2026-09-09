@@ -5,13 +5,11 @@ import api from "../../../api/axiosConfig";
 import { AlertCircle } from "lucide-react";
 
 import CaseHeader from "./sections/CaseHeader";
-import CaseStatusSummary from "./components/CaseStatusSummary";
-import CustomerShippingSection from "./sections/CustomerShippingSection";
+import ReturnHeroProductCard from "./components/ReturnHeroProductCard";
+import CaseTabsSection from "./sections/CaseTabsSection";
+import ReturnTrackingTimelineCard from "./components/ReturnTrackingTimelineCard";
+import CaseSidebarCards from "./components/CaseSidebarCards";
 import ProductPriceSection from "./sections/ProductPriceSection";
-import ReturnExchangeSection from "./sections/ReturnExchangeSection";
-import QualityCheckSection from "./sections/QualityCheckSection";
-import RefundExchangeSection from "./sections/RefundExchangeSection";
-import AdminNotesSection from "./sections/AdminNotesSection";
 
 const AdminCaseDetailsPage = () => {
   const { id } = useParams();
@@ -71,13 +69,13 @@ const AdminCaseDetailsPage = () => {
     if (!newStatus) return;
     setIsUpdatingStatus(true);
     try {
-      if (isOrderView && orderData) {
+      if (isOrderView && orderData && !returnData) {
         const res = await api.put(`/admin/orders/${orderData._id || id}`, { status: newStatus });
         if (res.data.success) {
           toast.success(`Order status updated to ${newStatus}`);
           setOrderData(res.data.data || { ...orderData, status: newStatus });
         }
-      } else if (isReturnView && returnData) {
+      } else if (returnData) {
         const res = await api.put(`/admin/returns/${returnData._id || id}`, { status: newStatus });
         if (res.data.success) {
           toast.success(`Request status updated to ${newStatus}`);
@@ -92,43 +90,7 @@ const AdminCaseDetailsPage = () => {
     }
   };
 
-  // Item status update handler for split shipments / item-level control
-  const handleUpdateItemStatus = async (itemId, newStatus) => {
-    if (!newStatus || !orderData) return;
-    setIsUpdatingStatus(true);
-    try {
-      const res = await api.patch(`/admin/orders/${orderData._id || id}/item-status`, { itemId, status: newStatus });
-      if (res.data.success) {
-        toast.success(`Item status updated to ${newStatus.toUpperCase()}`);
-        setOrderData(res.data.data || { ...orderData });
-      }
-    } catch (err) {
-      console.error("Failed to update item status:", err);
-      toast.error(err.response?.data?.message || "Failed to update item status");
-    } finally {
-      setIsUpdatingStatus(false);
-    }
-  };
-
-  // Dedicated return request quick status transition
-  const handleUpdateReturnStatus = async (newReturnStatus) => {
-    if (!returnData) return;
-    setIsUpdatingStatus(true);
-    try {
-      const res = await api.put(`/admin/returns/${returnData._id}`, { status: newReturnStatus });
-      if (res.data.success) {
-        toast.success(`Return/Exchange request marked as ${newReturnStatus}`);
-        setReturnData(res.data.data || { ...returnData, status: newReturnStatus });
-      }
-    } catch (err) {
-      console.error("Failed to update return request:", err);
-      toast.error(err.response?.data?.message || "Failed to transition return request status");
-    } finally {
-      setIsUpdatingStatus(false);
-    }
-  };
-
-  // Generic updater for return attributes (Quality Check & Refund details)
+  // Generic updater for return attributes (Refund details, etc.)
   const handleUpdateReturnDetails = async (updatePayload, successMsg = "Details updated successfully") => {
     if (!returnData) return;
     setIsUpdatingStatus(true);
@@ -146,16 +108,16 @@ const AdminCaseDetailsPage = () => {
     }
   };
 
-  // Persistent Admin Notes handler supporting categorization & customer visibility flags
+  // Admin Notes handler
   const handleSaveNote = async (noteData) => {
     setIsSavingNote(true);
     try {
-      const targetEndpoint = isOrderView ? `/admin/orders/${id}` : `/admin/returns/${id}`;
+      const targetEndpoint = isOrderView && !returnData ? `/admin/orders/${id}` : `/admin/returns/${returnData?._id || id}`;
       const payload = typeof noteData === "string" ? { note: noteData } : noteData;
       const res = await api.put(targetEndpoint, payload);
       if (res.data.success && res.data.data) {
         toast.success("Case note recorded successfully");
-        if (isOrderView) {
+        if (isOrderView && !returnData) {
           setOrderData(res.data.data);
         } else {
           setReturnData(res.data.data);
@@ -199,149 +161,142 @@ const AdminCaseDetailsPage = () => {
     );
   }
 
-  const activeEntity = isReturnView && returnData ? returnData : orderData || returnData;
-  const activeStatus = activeEntity?.status || "pending";
+  const isExchangeCase = returnData?.type === "exchange";
+  const activeStatus = returnData ? returnData.status : (orderData?.status || "pending");
 
   const orderStatusOptions = [
-    { value: "pending", label: "1. Order Confirmed" },
-    { value: "packed", label: "2. Packed" },
-    { value: "shipped", label: "3. Shipped" },
-    { value: "on_the_way", label: "4. On The Way" },
-    { value: "delivered", label: "5. Delivered" },
-    { value: "delayed", label: "⚠️ Delayed" },
-    { value: "cancelled", label: "Cancel" },
+    { value: "pending", label: "Order Confirmed" },
+    { value: "packed", label: "Packed" },
+    { value: "shipped", label: "Shipped" },
+    { value: "on_the_way", label: "Out for delivery" },
+    { value: "delivered", label: "Delivered" },
+    { value: "cancelled", label: "Cancelled" },
   ];
 
-  const isExchangeCase = returnData?.type === "exchange";
-  const returnStatusOptions = [
-    { value: "pending", label: "0. Pending" },
-    { value: "approved", label: "1. Request Approved" },
-    { value: "pickup_scheduled", label: "2. Pickup Scheduled" },
-    { value: "picked_up", label: "3. Picked Up" },
-    { value: "received", label: "4. Received" },
-    ...(isExchangeCase 
-      ? [{ value: "exchanged", label: "5.Exchanged" }] 
-      : [{ value: "refunded", label: "5. Refund Completed" }]
-    ),
+  const returnStatusOptions = isExchangeCase ? [
+    { value: "pending", label: "Requested" },
+    { value: "approved", label: "Approved" },
+    { value: "pickup_replace", label: "Pickup & Replace" },
+    { value: "completed", label: "Exchange Completed" },
+    { value: "rejected", label: "Rejected" },
+  ] : [
+    { value: "pending", label: "Requested" },
+    { value: "approved", label: "Approved" },
+    { value: "pickup", label: "Pickup" },
+    { value: "completed", label: "Return Completed" },
     { value: "rejected", label: "Rejected" },
   ];
 
-  const headerTitle = isReturnView
-    ? `${isExchangeCase ? "Exchange Request" : "Return Request"} #${returnData?._id ? returnData._id.slice(-8).toUpperCase() : id.slice(-8).toUpperCase()}`
+  const caseIdCode = returnData?._id ? returnData._id.slice(-8).toUpperCase() : (orderData?.orderId || id.slice(-8).toUpperCase());
+
+  const headerTitle = returnData
+    ? `${isExchangeCase ? "Exchange Request" : "Return Request"} #${caseIdCode}`
     : `Order Details #${orderData?.orderId || id.slice(-8).toUpperCase()}`;
 
-  const headerSubtitle = isReturnView
-    ? `Requested by ${returnData?.user?.username || orderData?.user?.username || "Customer"} on ${new Date(returnData?.createdAt || Date.now()).toLocaleDateString("en-IN", { dateStyle: "long" })}`
-    : `Placed by ${orderData?.user?.username || "Customer"} on ${new Date(orderData?.createdAt || Date.now()).toLocaleDateString("en-IN", { dateStyle: "long" })}`;
+  const customerName = returnData?.user?.username || orderData?.user?.username || "Customer";
+  const caseDate = new Date(returnData?.createdAt || orderData?.createdAt || Date.now()).toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true
+  });
 
-  const notesList = isReturnView ? returnData?.adminNotes : orderData?.adminNotes;
+  const headerSubtitle = `Order ${orderData?.orderId || returnData?.order?.orderId || 'ORD-25'} • Submitted on ${caseDate}`;
+
+  const notesList = returnData ? returnData.adminNotes || [] : orderData?.adminNotes || [];
 
   return (
-    <div className="w-full min-h-screen bg-white p-4 sm:p-6 lg:p-8 print:p-0">
+    <div className="w-full min-h-screen bg-slate-50/50 p-3 sm:p-5 lg:p-6 print:p-0">
       
-      {/* 1. Case Header Navigation & Controls with 3 Labeled Dropdowns */}
+      {/* 1. Case Header */}
       <CaseHeader
         title={headerTitle}
         subtitle={headerSubtitle}
         status={activeStatus}
-        statusOptions={isReturnView ? returnStatusOptions : orderStatusOptions}
+        statusOptions={returnData ? returnStatusOptions : orderStatusOptions}
         onUpdateStatus={handleUpdateStatus}
         returnRequest={returnData}
-        onUpdateQcStatus={(newQc) => handleUpdateReturnDetails({ qcStatus: newQc }, `Quality Check updated to ${newQc.toUpperCase()}`)}
-        onUpdateRefundStatus={(newRef) => {
-          handleUpdateReturnDetails({ refundStatus: newRef }, `Refund status marked as ${newRef.toUpperCase()}`);
-          if (newRef === "completed") {
-            handleUpdateStatus("refunded");
-          }
-        }}
+        order={orderData}
         isUpdating={isUpdatingStatus}
         isReturnView={isReturnView}
       />
 
-      {/* Full Page Document Architecture (Primary Workspace on Left, Details & Controls on Right) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 items-start pt-2">
+      {/* 2. Main 2-Column Responsive Layout: ONE Cohesive Workspace */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 items-start">
         
-        {/* Left Workspace (Orders, Chronological Timelines, Photo Evidence & Notes) */}
-        <div className="lg:col-span-2 divide-y divide-gray-100 lg:pr-6 lg:border-r border-gray-200">
-          <ProductPriceSection
-            items={orderData?.items || []}
-            order={orderData || {}}
-            isReturnItemOnly={isReturnView && (!orderData?.items || orderData.items.length === 0)}
-            returnItem={returnData ? {
-              product: returnData.product,
-              title: returnData.product?.title,
-              price: returnData.originalPrice ?? returnData.product?.sellingPrice ?? returnData.product?.price ?? returnData.originalVariant?.price ?? 0,
-              variant: returnData.originalVariant,
-              quantity: 1
-            } : null}
-            returnRequest={returnData}
-            isReturnView={isReturnView}
-            onUpdateStatus={handleUpdateStatus}
-            onUpdateItemStatus={handleUpdateItemStatus}
-          />
-
-          {returnData && (
+        {/* Left Column (~70% = 8 cols) - Unified Workspace Card */}
+        <div className="lg:col-span-8 bg-white rounded-xl border border-slate-200 shadow-2xs divide-y divide-slate-100 overflow-hidden">
+          
+          {returnData ? (
             <>
-              <ReturnExchangeSection
+              {/* Section 1: Hero Product Details & Contextual Alert */}
+              <ReturnHeroProductCard
                 returnRequest={returnData}
-                onUpdateRequestStatus={handleUpdateReturnStatus}
-                isProcessing={isUpdatingStatus}
+                order={orderData}
               />
 
-              <RefundExchangeSection
+              {/* Section 2: Main Content Tabs */}
+              <CaseTabsSection
                 returnRequest={returnData}
                 order={orderData || {}}
-                onUpdateRefundStatus={(payload) => handleUpdateReturnDetails(payload, `Refund status updated to ${payload.refundStatus.toUpperCase()}`)}
-                onUpdateRequestStatus={handleUpdateReturnStatus}
-                isProcessing={isUpdatingStatus}
+                notes={notesList}
+                onSaveNote={handleSaveNote}
+                isSavingNote={isSavingNote}
+              />
+
+              {/* Section 3: ONE Detailed Return Tracking Vertical Timeline */}
+              <ReturnTrackingTimelineCard
+                returnRequest={returnData}
               />
             </>
-          )}
-        </div>
-
-        {/* Right Sidebar (Summary, Customer Logistics & QC) */}
-        <div className="divide-y divide-gray-100 lg:sticky lg:top-6">
-          <CaseStatusSummary
-            order={orderData}
-            returnRequest={returnData}
-          />
-
-          <CustomerShippingSection
-            customer={orderData?.user || returnData?.user || {}}
-            shippingAddress={orderData?.shippingAddress || {}}
-            originalOrderId={isReturnView && orderData ? orderData._id : ""}
-            originalOrderNumber={isReturnView && orderData ? orderData.orderId : ""}
-          />
-
-          {returnData ? (
-            <QualityCheckSection
-              returnRequest={returnData}
-              onUpdateQcStatus={(payload) => handleUpdateReturnDetails(payload, `Quality Check status recorded as ${payload.qcStatus.toUpperCase()}`)}
-              isProcessing={isUpdatingStatus}
-            />
           ) : (
-            <div className="py-6 border-b border-gray-100 text-xs text-slate-500 space-y-2 last:border-b-0">
-              <div className="flex items-center gap-2 font-bold text-slate-700">
-                <span className="text-sm font-extrabold text-[#4F46E5]">⇄</span>
-                <span>No Return Claim Active</span>
-              </div>
-              <p className="leading-relaxed font-medium">
-                This order currently has no return or exchange request. Return evaluation, refund accounting, and warehouse quality check controls will dynamically unlock here if a claim is filed.
-              </p>
+            /* Standard Order View fallback if accessed via /admin/orders without return claim */
+            <div className="p-4 sm:p-5 space-y-5">
+              <ProductPriceSection
+                items={orderData?.items || []}
+                order={orderData || {}}
+                isReturnItemOnly={false}
+                returnItem={null}
+                returnRequest={null}
+                isReturnView={false}
+                onUpdateStatus={handleUpdateStatus}
+              />
+
+              <CaseTabsSection
+                returnRequest={{
+                  type: "return",
+                  status: orderData?.status,
+                  reason: "Fulfillment Processing",
+                  additionalDetails: "Standard order processing",
+                  createdAt: orderData?.createdAt,
+                  timeline: orderData?.timeline || [],
+                  refundStatus: "not_required",
+                  refundAmount: orderData?.totalAmount
+                }}
+                order={orderData || {}}
+                notes={notesList}
+                onSaveNote={handleSaveNote}
+                isSavingNote={isSavingNote}
+              />
             </div>
           )}
+
+        </div>
+
+        {/* Right Column Sidebar (~30% = 4 cols) - Unified Information Rail */}
+        <div className="lg:col-span-4 lg:sticky lg:top-4">
+          <CaseSidebarCards
+            returnRequest={returnData}
+            order={orderData || {}}
+            onUpdateStatus={handleUpdateStatus}
+            isProcessing={isUpdatingStatus}
+          />
         </div>
 
       </div>
 
-      {/* Full-Width Admin Notes Section spanning entire bottom width */}
-      <div className="w-full mt-8 pt-4 border-t border-gray-200/80">
-        <AdminNotesSection
-          notes={notesList}
-          onSaveNote={handleSaveNote}
-          isSaving={isSavingNote}
-        />
-      </div>
     </div>
   );
 };

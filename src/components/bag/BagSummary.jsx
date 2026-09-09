@@ -1,7 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Ticket, Check, X } from "lucide-react";
 
-const BagSummary = ({ totals }) => {
+const BagSummary = ({
+  totals,
+  appliedCoupon,
+  onOpenCouponModal,
+  onRemoveCoupon,
+}) => {
   const [isTermsAccepted, setIsTermsAccepted] = useState(true);
   const navigate = useNavigate();
 
@@ -14,6 +20,8 @@ const BagSummary = ({ totals }) => {
   };
 
   const totalItems = totals.items.reduce((acc, item) => acc + item.quantity, 0);
+  const couponDiscount = totals.couponDiscount || 0;
+  const totalSavings = (totals.discountOnMRP || 0);
 
   return (
     <div className="bg-white rounded-[12px] shadow-[0_2px_20px_-4px_rgba(0,0,0,0.05)] sticky top-32 overflow-hidden">
@@ -41,15 +49,36 @@ const BagSummary = ({ totals }) => {
           <div className="flex justify-between items-center text-[#282c3f]">
             <span>Discount on MRP</span>
             <span className="text-[#03a685] font-medium">
-              {totals.discountOnMRP > 0 ? `- ${formatPrice(totals.discountOnMRP)}` : formatPrice(0)}
+              {totals.discountOnMRP > 0 ? `- ${formatPrice(totals.discountOnMRP - couponDiscount)}` : formatPrice(0)}
             </span>
           </div>
 
           <div className="flex justify-between items-center text-[#282c3f]">
             <span>Coupon Discount</span>
-            <button className="text-[#FD7100] font-bold hover:underline text-[13px] cursor-pointer">
-              Apply Coupon
-            </button>
+            {appliedCoupon && couponDiscount > 0 ? (
+              <div className="flex items-center gap-1.5">
+                <span className="text-[#03a685] font-bold">
+                  - {formatPrice(couponDiscount)}
+                </span>
+                <span className="font-mono text-[11px] font-bold bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded border border-emerald-200">
+                  {appliedCoupon.code}
+                </span>
+                <button
+                  onClick={onRemoveCoupon}
+                  className="text-gray-400 hover:text-red-500 p-0.5 transition-colors cursor-pointer"
+                  title="Remove coupon"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={onOpenCouponModal}
+                className="text-[#FD7100] font-bold hover:underline text-[13px] cursor-pointer"
+              >
+                Apply Coupon
+              </button>
+            )}
           </div>
 
           <div className="flex justify-between items-center text-[#282c3f]">
@@ -65,18 +94,34 @@ const BagSummary = ({ totals }) => {
           </div>
         </div>
 
+        {/* Applied Coupon Info Box */}
+        {appliedCoupon && couponDiscount > 0 && (
+          <div className="bg-[#E6F6F1] text-[#03a685] text-[12px] font-semibold px-3.5 py-2.5 rounded-lg flex items-center justify-between mb-4 border border-[#03a685]/20">
+            <div className="flex items-center gap-1.5">
+              <Check size={14} />
+              <span>Coupon <strong>{appliedCoupon.code}</strong> applied (-{formatPrice(couponDiscount)})</span>
+            </div>
+            <button
+              onClick={onOpenCouponModal}
+              className="text-[#FD7100] font-bold hover:underline text-[11px] cursor-pointer"
+            >
+              Change
+            </button>
+          </div>
+        )}
+
         <div className="bg-[#FD7100]/5 rounded-lg p-4 flex justify-between items-center mb-4">
           <span className="text-[16px] font-bold text-[#111827]">Total Amount</span>
           <span className="text-[18px] font-bold text-[#FD7100]">{formatPrice(totals.grandTotal)}</span>
         </div>
 
-        {totals.discountOnMRP > 0 && (
+        {totalSavings > 0 && (
           <div className="bg-[#E6F6F1] text-[#03a685] text-[13px] font-medium px-4 py-3 rounded-lg flex items-center gap-2 mb-6">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
               <line x1="7" y1="7" x2="7.01" y2="7"></line>
             </svg>
-            You are saving {formatPrice(totals.discountOnMRP)} on this order
+            You are saving {formatPrice(totalSavings)} on this order
           </div>
         )}
 

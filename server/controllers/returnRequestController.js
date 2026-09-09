@@ -6,6 +6,7 @@ import Address from "../models/address.js";
 import { addTimelineEvent, appendAdminNote, mergeAdminNotesSafe } from "../utils/timelineHelper.js";
 import { RETURN_REQUEST_POPULATE_CONFIG, formatAndFilterNotes } from "../utils/populateHelper.js";
 import { validateQcTransition, validateRefundTransition, validateReturnStatusTransition } from "../utils/returnValidationHelper.js";
+import { createNotification } from "../utils/notificationHelper.js";
 
 // CREATE RETURN/EXCHANGE REQUEST
 export const createReturnRequest = async (req, res) => {
@@ -182,6 +183,19 @@ export const createReturnRequest = async (req, res) => {
     );
 
     await returnRequest.save();
+
+    // Send user notification for return/exchange request
+    createNotification({
+      userId,
+      type: "returns",
+      title: type === "exchange" ? "Exchange Requested" : "Return Requested",
+      message: `Your ${type} request for order #${order.orderId || "item"} has been submitted and is under review.`,
+      link: `/account/orders/${order._id}`,
+      linkText: "View Request",
+      iconType: "return",
+      color: "text-amber-600 bg-amber-50 border-amber-100",
+      entityId: returnRequest._id.toString(),
+    });
 
     return res.status(201).json({
       success: true,
@@ -493,8 +507,8 @@ export const updateReturnRequestStatusAdmin = async (req, res) => {
 
     // Handle Return Status mutations & timeline generation
     if (status && status !== request.status) {
-      // Stock update rules if exchanged
-      if (status === "exchanged" && request.status !== "exchanged" && request.type === "exchange") {
+      // Stock update rules if exchanged / completed
+      if ((status === "exchanged" || status === "completed") && request.status !== "exchanged" && request.status !== "completed" && request.type === "exchange") {
         const Variant = (await import("../models/variant.js")).default;
         if (request.requestedExchangeVariant) {
           await Variant.findByIdAndUpdate(request.requestedExchangeVariant, {
@@ -505,22 +519,28 @@ export const updateReturnRequestStatusAdmin = async (req, res) => {
 
       const isExchangeRequest = request.type === "exchange";
       const eventMap = isExchangeRequest ? {
-        approved: ["Approved", "Exchange request verified and replacement product reserved.", "Admin"],
+        approved: ["Exchange Approved", "Exchange request verified and replacement product reserved.", "Admin"],
+        rejected: ["Exchange Rejected", "Exchange request reviewed and declined by admin.", "Admin"],
+        pickup_replace: ["Pickup & Replace", "Courier en route with replacement product for simultaneous doorstep exchange.", "Logistics"],
+        completed: ["Exchange Completed", "Replacement product successfully handed over and exchange completed.", "Courier"],
+        // Legacy aliases
         packed: ["Packed", "Replacement product packed and verified at facility.", "Warehouse"],
         shipped: ["Shipped", "Replacement product dispatched via logistics carrier.", "Warehouse"],
-        rejected: ["Rejected", "Exchange request reviewed and declined by admin.", "Admin"],
-        pickup_scheduled: ["Out for Exchange", "Courier en route with replacement product for simultaneous doorstep exchange.", "Logistics"],
-        picked_up: ["Quality Check", "Doorstep quality and tag check performed by courier partner.", "Courier"],
+        pickup_scheduled: ["Pickup & Replace", "Courier en route with replacement product for simultaneous doorstep exchange.", "Logistics"],
+        picked_up: ["Pickup & Replace", "Doorstep pickup and replacement initiated.", "Courier"],
         received: ["Received at Facility", "Returned item logged at facility.", "Warehouse"],
-        exchanged: ["Exchanged", "Doorstep Quality Check passed and replacement product successfully handed over.", "Courier"]
+        exchanged: ["Exchange Completed", "Replacement product successfully handed over and exchange completed.", "Courier"]
       } : {
         approved: ["Return Approved", "Request reviewed and approved by admin.", "Admin"],
         rejected: ["Return Rejected", "Request reviewed and declined by admin.", "Admin"],
-        pickup_scheduled: ["Pickup Scheduled", "Logistics courier scheduled for collection.", "Warehouse"],
-        picked_up: ["Picked Up", "Item picked up by courier from customer location.", "Warehouse"],
-        received: ["Received", "Returned product received and logged at warehouse.", "Warehouse"],
-        refunded: ["Refund Completed", "Return closed and refund finalized.", "Finance"],
-        exchanged: ["Exchange Completed", "Replacement product dispatched and exchange fulfilled.", "Warehouse"]
+        pickup: ["Pickup", "Courier assigned for item collection from customer address.", "Logistics"],
+        completed: ["Return Completed", "Return fulfilled, item received and return closed.", "Finance"],
+        // Legacy aliases
+        pickup_scheduled: ["Pickup", "Logistics courier scheduled for collection.", "Warehouse"],
+        picked_up: ["Pickup", "Item picked up by courier from customer location.", "Warehouse"],
+        received: ["Pickup", "Returned product received and logged at warehouse.", "Warehouse"],
+        refunded: ["Return Completed", "Return closed and refund finalized.", "Finance"],
+        exchanged: ["Return Completed", "Return request completed.", "Warehouse"]
       };
 
       const [evType, evDesc, perfBy] = eventMap[status] || [`Status Changed to ${status}`, `Status updated to ${status}.`, "Admin"];
@@ -531,8 +551,33 @@ export const updateReturnRequestStatusAdmin = async (req, res) => {
 
     await request.save();
 
+    // Send user notification if status changed
+    if (status && status !== request.status) {
+      const displayStatus = status === "pickup_replace" 
+        ? "Pickup & Replace" 
+        : status === "completed" 
+          ? (request.type === "exchange" ? "Exchange Completed" : "Return Completed")
+          : status.replace(/_/g, " ");
+
+      createNotification({
+        userId: request.user,
+        type: "returns",
+        title: `${request.type === "exchange" ? "Exchange" : "Return"}: ${displayStatus.toUpperCase()}`,
+        message: `Your ${request.type} request status has been updated to ${displayStatus}.`,
+        link: request.order ? `/account/orders/${request.order._id || request.order}` : "/account/orders",
+        linkText: "View Request",
+        iconType: "return",
+        color: status === "approved" || status === "completed" || status === "refunded" || status === "exchanged" 
+          ? "text-emerald-600 bg-emerald-50 border-emerald-100" 
+          : status === "rejected" 
+            ? "text-red-600 bg-red-50 border-red-100" 
+            : "text-amber-600 bg-amber-50 border-amber-100",
+        entityId: request._id.toString(),
+      });
+    }
+
     // Automatically synchronize Order's paymentStatus when refund is finalized
-    if ((request.refundStatus === "completed" || request.status === "refunded") && request.order) {
+    if ((request.refundStatus === "completed" || request.status === "refunded" || request.status === "completed") && request.order && request.type === "return") {
       await Order.findByIdAndUpdate(request.order, { paymentStatus: "refunded" });
     }
 

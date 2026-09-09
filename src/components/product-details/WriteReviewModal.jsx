@@ -142,7 +142,7 @@ const WriteReviewModal = ({
 
       if (response.data?.success) {
         toast.success(
-          existingReview ? "Review updated!" : "🎉 Thank you! Your review has been published."
+          existingReview ? "Review updated!" : "Thank you! Your review has been published."
         );
         if (onSuccess) onSuccess(response.data.data);
         onClose();
