@@ -12,6 +12,7 @@ import Navbar from "./components/common/Navbar";
 import Footer from "./components/common/Footer";
 import PageNotFound from "./components/common/PageNotFound";
 import PageLoader from "./components/common/PageLoader";
+import AdminUserDetailsPage from "./pages/admin/Users/AdminUserDetailsPage";
 
 import { CartProvider } from "./context/CartContext";
 import { WishlistProvider } from "./context/WishlistContext";
@@ -327,6 +328,7 @@ const AppRoutes = () => {
         </Route>
         <Route path="tickets" element={<AdminTickets />} />
         <Route path="users" element={<Users />} />
+        <Route path="users/:id" element={<AdminUserDetailsPage />} />
         <Route path="coupons" element={<Coupons />} />
         <Route path="reviews" element={<Reviews />} />
       </Route>

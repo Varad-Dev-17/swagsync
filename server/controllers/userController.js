@@ -1,4 +1,9 @@
 import User from "../models/user.js";
+import Order from "../models/order.js";
+import ReturnRequest from "../models/returnRequest.js";
+import Ticket from "../models/ticket.js";
+import Address from "../models/address.js";
+import ProductReview from "../models/productReview.js";
 import { hmacProcess } from "../utils/hash.js";
 import { verificationEmailTemplate } from "../utils/verificationEmailTemplate.js";
 import transport from "../middlewares/sendMail.js";
@@ -356,3 +361,70 @@ export const updateProfileInfo = async (req, res) => {
     res.status(500).json({ success: false, message: "Server error." });
   }
 };
+
+export const getUserDetails = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const user = await User.findById(id).select("-password").lean();
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    // Parallel fetch for user's related data
+    const [orders, returns, tickets, reviews, addresses] = await Promise.all([
+      Order.find({ user: id })
+        .populate("items.product", "name images price category")
+        .sort({ createdAt: -1 })
+        .lean(),
+      ReturnRequest.find({ user: id })
+        .populate("product", "name images price")
+        .populate("order", "orderId totalAmount createdAt")
+        .sort({ createdAt: -1 })
+        .lean(),
+      Ticket.find({ user: id })
+        .sort({ createdAt: -1 })
+        .lean(),
+      ProductReview.find({ user: id })
+        .populate("product", "name images")
+        .sort({ createdAt: -1 })
+        .lean(),
+      Address.find({ userId: id })
+        .sort({ isDefault: -1, createdAt: -1 })
+        .lean(),
+    ]);
+
+    // Calculate real stats
+    const totalOrders = orders.length;
+    const totalSpent = orders.reduce((sum, order) => {
+      if (order.status !== "cancelled") {
+        return sum + (Number(order.totalAmount) || 0);
+      }
+      return sum;
+    }, 0);
+    const totalReturns = returns.length;
+    const totalTickets = tickets.length;
+    const totalReviews = reviews.length;
+
+    res.status(200).json({
+      success: true,
+      user,
+      orders,
+      returns,
+      tickets,
+      reviews,
+      addresses,
+      stats: {
+        totalOrders,
+        totalSpent,
+        totalReturns,
+        totalTickets,
+        totalReviews,
+      },
+    });
+  } catch (error) {
+    console.error("[Get User Details] Server error:", error);
+    res.status(500).json({ success: false, message: "Server error." });
+  }
+};
+

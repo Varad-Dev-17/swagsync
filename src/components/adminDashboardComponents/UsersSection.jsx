@@ -1,16 +1,45 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { 
-  Trash2, Shield, ShieldOff, Ban, UserCheck, 
+  Trash2, Shield, Ban, UserCheck, 
   Users, CheckCircle2, ShieldAlert, RefreshCcw,
-  Search, MoreVertical, Crown, Lock, Unlock, UserX
+  Search, ChevronDown, ChevronLeft, ChevronRight,
+  Eye
 } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "../../api/axiosConfig";
-import PageCard from "../admin/ui/PageCard";
-import DataTable from "../admin/ui/DataTable";
-import Pagination from "../admin/ui/Pagination";
+
+const UserAvatar = ({ user, initial, size = "md" }) => {
+  const [imgError, setImgError] = useState(false);
+  const avatarUrl =
+    user?.profileImage?.url ||
+    (typeof user?.profileImage === "string" ? user.profileImage : null) ||
+    user?.avatar;
+
+  const sizeClasses = size === "lg" ? "w-14 h-14 text-lg" : "w-10 h-10 text-sm";
+
+  if (avatarUrl && !imgError) {
+    return (
+      <img
+        src={avatarUrl}
+        alt={user?.username || "User avatar"}
+        onError={() => setImgError(true)}
+        className={`${sizeClasses} rounded-full object-cover border border-slate-200 shrink-0 shadow-2xs`}
+        loading="lazy"
+        decoding="async"
+      />
+    );
+  }
+
+  return (
+    <div className={`${sizeClasses} rounded-full bg-indigo-50 border border-indigo-100/90 text-[#4F46E5] font-bold flex items-center justify-center shrink-0 shadow-2xs`}>
+      {initial}
+    </div>
+  );
+};
 
 const UsersSection = () => {
+  const navigate = useNavigate();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -20,28 +49,13 @@ const UsersSection = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
   const [page, setPage] = useState(1);
-  const itemsPerPage = 10;
-
-  // Actions Dropdown state
-  const [activeDropdown, setActiveDropdown] = useState(null);
-  const dropdownRef = useRef(null);
-
-  // Close dropdown on outside click
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setActiveDropdown(null);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  const itemsPerPage = 7;
 
   const fetchUsers = async () => {
     setLoading(true);
     try {
       const res = await api.get("/admin/users");
-      if (res.data.success) setUsers(res.data.users);
+      if (res.data.success) setUsers(res.data.users || []);
     } catch (err) {
       console.error("Error fetching users:", err);
       toast.error("Failed to load users");
@@ -61,7 +75,6 @@ const UsersSection = () => {
       if (res.data.success) {
         setUsers((prev) => prev.filter((u) => u._id !== id));
         toast.success("User deleted successfully");
-        setActiveDropdown(null);
       }
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to delete user");
@@ -77,7 +90,6 @@ const UsersSection = () => {
           prev.map((u) => (u._id === id ? { ...u, isBlocked } : u))
         );
         toast.success(`User ${isBlocked ? "blocked" : "unblocked"}`);
-        setActiveDropdown(null);
       }
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to update status");
@@ -92,7 +104,6 @@ const UsersSection = () => {
           prev.map((u) => (u._id === id ? { ...u, isAdmin: true } : u))
         );
         toast.success("User promoted to admin");
-        setActiveDropdown(null);
       }
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to make admin");
@@ -107,7 +118,6 @@ const UsersSection = () => {
           prev.map((u) => (u._id === id ? { ...u, isAdmin: false } : u))
         );
         toast.success("Admin rights removed");
-        setActiveDropdown(null);
       }
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to remove admin");
@@ -173,231 +183,115 @@ const UsersSection = () => {
     page * itemsPerPage
   );
 
-  const columns = [
-    {
-      header: 'USER',
-      accessor: 'username',
-      align: 'left',
-      headerAlign: 'left',
-      width: '40%',
-      render: (row) => (
-        <div className="flex items-center gap-4 py-2 pl-2">
-          <div className="w-10 h-10 rounded-full bg-[#e8e8fb] flex items-center justify-center text-[#4648d4] font-bold text-sm shrink-0">
-            {row.username?.charAt(0).toUpperCase() || "U"}
-          </div>
-          <div className="flex flex-col text-left">
-            <span className="font-semibold text-slate-800 text-[13px] leading-tight mb-1">{row.username}</span>
-            <span className="text-slate-500 text-[11.5px] leading-tight">{row.email}</span>
-          </div>
-        </div>
-      )
-    },
-    {
-      header: 'STATUS',
-      accessor: 'status',
-      align: 'left',
-      headerAlign: 'left',
-      width: '18%',
-      render: (row) => {
-        let label = "Pending";
-        let style = "bg-amber-50 text-amber-600 border border-amber-100";
-        if (row.isBlocked) {
-          label = "Blocked";
-          style = "bg-red-50 text-red-600 border border-red-100";
-        } else if (row.verified) {
-          label = "Verified";
-          style = "bg-emerald-50 text-emerald-600 border border-emerald-100";
-        }
-        return (
-          <div className="flex items-center">
-            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11.5px] font-semibold ${style}`}>
-              {row.verified && !row.isBlocked && <CheckCircle2 size={12} className="text-emerald-500" />}
-              {row.isBlocked && <Ban size={12} className="text-red-500" />}
-              {label}
-            </span>
-          </div>
-        );
-      }
-    },
-    {
-      header: 'ROLE',
-      accessor: 'role',
-      align: 'left',
-      headerAlign: 'left',
-      width: '16%',
-      render: (row) => (
-        <div className="flex items-center">
-          <select
-            value={row.isAdmin ? "admin" : "user"}
-            onChange={(e) => {
-              if (e.target.value === "admin") {
-                handleMakeAdmin(row._id);
-              } else {
-                handleRemoveAdmin(row._id);
-              }
-            }}
-            className={`pl-3 pr-7 py-1 text-[11.5px] font-semibold rounded-full outline-none cursor-pointer transition-colors ${
-              row.isAdmin
-                ? "bg-[#e8e8fb] text-[#4648d4] border border-[#d2d2f7]"
-                : "bg-slate-100 text-slate-600 border border-slate-200"
-            }`}
-          >
-            <option value="user" className="text-slate-700 bg-white font-medium">User</option>
-            <option value="admin" className="text-[#4648d4] bg-white font-medium">Admin</option>
-          </select>
-        </div>
-      )
-    },
-    {
-      header: 'JOINED',
-      accessor: 'createdAt',
-      align: 'left',
-      headerAlign: 'left',
-      width: '16%',
-      render: (row) => {
-        const dateStr = new Date(row.createdAt).toLocaleDateString("en-GB", {
-          day: 'numeric',
-          month: 'short',
-          year: 'numeric'
-        });
-        return (
-          <div className="flex items-center">
-             <span className="text-slate-600 text-xs font-medium">{dateStr}</span>
-          </div>
-        );
-      }
-    },
-    {
-      header: 'ACTIONS',
-      align: 'right',
-      headerAlign: 'right',
-      width: '10%',
-      render: (row) => (
-        <div className="flex items-center justify-end gap-2 pr-4">
-          <button
-            onClick={() => handleToggleStatus(row._id)}
-            className={`p-1.5 rounded-lg transition-colors ${
-              row.isBlocked
-                ? "text-emerald-500 hover:bg-emerald-50"
-                : "text-slate-400 hover:text-amber-600 hover:bg-amber-50"
-            }`}
-            title={row.isBlocked ? "Unblock User" : "Block User"}
-          >
-            {row.isBlocked ? <UserCheck size={16} /> : <Ban size={16} />}
-          </button>
-          
-          <button
-            onClick={() => handleDelete(row._id)}
-            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-            title="Delete User"
-          >
-            <Trash2 size={16} />
-          </button>
-        </div>
-      )
-    }
-  ];
-
   return (
-    <div className="flex flex-col gap-8 p-8">
+    <div className="w-full min-h-screen bg-slate-50/50 py-6 px-4 sm:px-8 lg:px-12">
+      <div className="w-full max-w-7xl mx-auto space-y-6">
       
-      {/* Page Header */}
-      <div className="flex items-start justify-between">
+      {/* 1. Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-[22px] font-bold text-[#1a1a2e] tracking-tight mb-1">User Management</h1>
-          <p className="text-sm text-slate-500 font-medium">Manage customer accounts, access, roles, and account status.</p>
+          <h1 className="text-2xl sm:text-[26px] font-bold text-slate-900 tracking-tight">User Management</h1>
+          <p className="text-sm text-slate-500 font-medium mt-1">
+            Manage customer accounts, access permissions, roles, and status.
+          </p>
         </div>
+
         <button
           onClick={fetchUsers}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 rounded-xl transition-all shadow-[0_2px_4px_rgba(0,0,0,0.02)]"
+          className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 hover:text-[#4F46E5] rounded-lg transition-colors shadow-2xs cursor-pointer self-start sm:self-auto"
         >
-          <RefreshCcw size={15} className={loading ? "animate-spin text-[#4648d4]" : ""} />
-          Refresh
+          <RefreshCcw size={14} className={loading ? "animate-spin text-[#4F46E5]" : ""} />
+          <span>Refresh</span>
         </button>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* 2. Stat Cards Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
+        
         {/* Total Users */}
-        <div className="bg-white rounded-[20px] p-5 border border-slate-100 shadow-[0_2px_8px_rgba(0,0,0,0.04)] flex items-center gap-4">
-          <div className="w-12 h-12 rounded-full bg-[#f0f0fd] flex items-center justify-center shrink-0">
-            <Users className="text-[#4648d4]" size={22} />
+        <div className="bg-white rounded-xl p-4 sm:p-4.5 border border-slate-200 shadow-2xs flex items-center gap-3.5 hover:border-slate-300 transition-colors">
+          <div className="w-12 h-12 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center shrink-0 text-[#4F46E5]">
+            <Users size={22} className="stroke-[2.2]" />
           </div>
-          <div>
-            <p className="text-[13px] font-semibold text-slate-600">Total Users</p>
-            <h3 className="text-[26px] font-bold text-slate-800 leading-tight mt-0.5">{stats.total}</h3>
-            <p className="text-[11px] text-slate-400 font-medium mt-1">All registered users</p>
+          <div className="min-w-0">
+            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider truncate">Total Users</p>
+            <h3 className="text-2xl sm:text-[26px] font-bold text-slate-900 tracking-tight leading-tight mt-0.5">{stats.total}</h3>
+            <p className="text-xs text-slate-400 font-medium mt-0.5 truncate">All registered users</p>
           </div>
         </div>
 
         {/* Active Users */}
-        <div className="bg-white rounded-[20px] p-5 border border-slate-100 shadow-[0_2px_8px_rgba(0,0,0,0.04)] flex items-center gap-4">
-          <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center shrink-0">
-            <CheckCircle2 className="text-emerald-500" size={22} />
+        <div className="bg-white rounded-xl p-4 sm:p-4.5 border border-slate-200 shadow-2xs flex items-center gap-3.5 hover:border-slate-300 transition-colors">
+          <div className="w-12 h-12 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center shrink-0 text-emerald-600">
+            <CheckCircle2 size={22} className="stroke-[2.2]" />
           </div>
-          <div>
-            <p className="text-[13px] font-semibold text-slate-600">Active Users</p>
-            <h3 className="text-[26px] font-bold text-slate-800 leading-tight mt-0.5">{stats.active}</h3>
-            <p className="text-[11px] text-slate-400 font-medium mt-1">Verified & active</p>
+          <div className="min-w-0">
+            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider truncate">Active Users</p>
+            <h3 className="text-2xl sm:text-[26px] font-bold text-slate-900 tracking-tight leading-tight mt-0.5">{stats.active}</h3>
+            <p className="text-xs text-slate-400 font-medium mt-0.5 truncate">Verified & active</p>
           </div>
         </div>
 
         {/* Admins */}
-        <div className="bg-white rounded-[20px] p-5 border border-slate-100 shadow-[0_2px_8px_rgba(0,0,0,0.04)] flex items-center gap-4">
-          <div className="w-12 h-12 rounded-full bg-[#f3f0ff] flex items-center justify-center shrink-0">
-            <Shield className="text-[#8b5cf6]" size={22} />
+        <div className="bg-white rounded-xl p-4 sm:p-4.5 border border-slate-200 shadow-2xs flex items-center gap-3.5 hover:border-slate-300 transition-colors">
+          <div className="w-12 h-12 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center shrink-0 text-purple-600">
+            <Shield size={22} className="stroke-[2.2]" />
           </div>
-          <div>
-            <p className="text-[13px] font-semibold text-slate-600">Admins</p>
-            <h3 className="text-[26px] font-bold text-slate-800 leading-tight mt-0.5">{stats.admins}</h3>
-            <p className="text-[11px] text-slate-400 font-medium mt-1">Administrators</p>
+          <div className="min-w-0">
+            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider truncate">Admins</p>
+            <h3 className="text-2xl sm:text-[26px] font-bold text-slate-900 tracking-tight leading-tight mt-0.5">{stats.admins}</h3>
+            <p className="text-xs text-slate-400 font-medium mt-0.5 truncate">Administrators</p>
           </div>
         </div>
 
         {/* Restricted Users */}
-        <div className="bg-white rounded-[20px] p-5 border border-slate-100 shadow-[0_2px_8px_rgba(0,0,0,0.04)] flex items-center gap-4">
-          <div className="w-12 h-12 rounded-full bg-rose-50 flex items-center justify-center shrink-0">
-            <ShieldAlert className="text-rose-500" size={22} />
+        <div className="bg-white rounded-xl p-4 sm:p-4.5 border border-slate-200 shadow-2xs flex items-center gap-3.5 hover:border-slate-300 transition-colors">
+          <div className="w-12 h-12 rounded-xl bg-rose-50 border border-rose-100 flex items-center justify-center shrink-0 text-rose-600">
+            <ShieldAlert size={22} className="stroke-[2.2]" />
           </div>
-          <div>
-            <p className="text-[13px] font-semibold text-slate-600">Restricted Users</p>
-            <h3 className="text-[26px] font-bold text-slate-800 leading-tight mt-0.5">{stats.restricted}</h3>
-            <p className="text-[11px] text-slate-400 font-medium mt-1">Blocked or restricted</p>
+          <div className="min-w-0">
+            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider truncate">Restricted Users</p>
+            <h3 className="text-2xl sm:text-[26px] font-bold text-slate-900 tracking-tight leading-tight mt-0.5">{stats.restricted}</h3>
+            <p className="text-xs text-slate-400 font-medium mt-0.5 truncate">Blocked or restricted</p>
           </div>
         </div>
+
       </div>
 
-      {/* Main Table Card */}
-      <PageCard>
+      {/* 3. Main Table Card */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
         
-        {/* Toolbar */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-6 p-5 border-b border-slate-100 bg-white">
-          <div className="relative w-full md:w-auto md:min-w-[320px]">
+        {/* Filter Toolbar */}
+        <div className="p-4 sm:p-4.5 border-b border-slate-100 bg-white flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+          
+          {/* Search Input */}
+          <div className="relative w-full md:w-80">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
             <input
               type="text"
               placeholder="Search by name or email..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-[10px] outline-none focus:border-[#4648d4] focus:ring-1 focus:ring-[#4648d4] transition-colors text-[13px] font-medium text-slate-700 placeholder:text-slate-400 shadow-sm"
+              className="w-full pl-10 pr-4 py-2 text-sm font-medium text-slate-800 placeholder:text-slate-400 bg-slate-50/60 hover:bg-slate-50 focus:bg-white border border-slate-200 rounded-lg outline-none focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5] transition-all shadow-2xs"
             />
           </div>
-          
-          <div className="flex items-center justify-end gap-4 w-full md:w-auto overflow-x-auto pb-1 md:pb-0 hide-scrollbar">
+
+          {/* Filter Dropdowns */}
+          <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
             <select
               value={roleFilter}
               onChange={(e) => setRoleFilter(e.target.value)}
-              className="px-3 py-2 bg-white border border-slate-200 rounded-[10px] outline-none focus:border-[#4648d4] focus:ring-1 focus:ring-[#4648d4] text-[13px] font-medium text-slate-700 cursor-pointer min-w-[120px] shadow-sm"
+              className="px-3.5 py-2 bg-slate-50/60 hover:bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 outline-none focus:border-[#4F46E5] cursor-pointer transition-colors shadow-2xs"
             >
               <option value="all">All Roles</option>
               <option value="admin">Admin</option>
               <option value="user">User</option>
             </select>
-            
+
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 bg-white border border-slate-200 rounded-[10px] outline-none focus:border-[#4648d4] focus:ring-1 focus:ring-[#4648d4] text-[13px] font-medium text-slate-700 cursor-pointer min-w-[120px] shadow-sm"
+              className="px-3.5 py-2 bg-slate-50/60 hover:bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 outline-none focus:border-[#4F46E5] cursor-pointer transition-colors shadow-2xs"
             >
               <option value="all">All Status</option>
               <option value="verified">Verified</option>
@@ -408,48 +302,258 @@ const UsersSection = () => {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="px-3 py-2 bg-white border border-slate-200 rounded-[10px] outline-none focus:border-[#4648d4] focus:ring-1 focus:ring-[#4648d4] text-[13px] font-medium text-slate-700 cursor-pointer min-w-[150px] shadow-sm"
+              className="px-3.5 py-2 bg-slate-50/60 hover:bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 outline-none focus:border-[#4F46E5] cursor-pointer transition-colors shadow-2xs"
             >
               <option value="newest">Sort by: Newest</option>
               <option value="oldest">Sort by: Oldest</option>
-              <option value="name-asc">Name (A-Z)</option>
-              <option value="name-desc">Name (Z-A)</option>
+              <option value="name-asc">Name (A–Z)</option>
+              <option value="name-desc">Name (Z–A)</option>
             </select>
           </div>
+
         </div>
 
-        <div className="flex-1 overflow-x-auto">
-          <DataTable
-            columns={columns}
-            data={currentUsers}
-            isLoading={loading}
-            emptyMessage="No users found."
-            noBorders={true}
-          />
+        {/* Semantic Responsive Data Table */}
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            
+            {/* Table Header */}
+            <thead className="bg-slate-50/80 border-b border-slate-200 text-xs font-bold text-slate-600 uppercase tracking-wider">
+              <tr>
+                <th className="px-5 py-3.5 w-[26%] text-center">User</th>
+                <th className="px-4 py-3.5 w-[14%] text-center">Status</th>
+                <th className="px-4 py-3.5 w-[14%] text-center">Role</th>
+                <th className="px-4 py-3.5 w-[16%] text-center">Joined</th>
+                <th className="px-5 py-3.5 w-[30%] text-center">Actions</th>
+              </tr>
+            </thead>
+
+            {/* Table Body */}
+            <tbody className="divide-y divide-slate-100 bg-white">
+              {loading ? (
+                <tr>
+                  <td colSpan={5} className="text-center py-12">
+                    <div className="w-8 h-8 border-3 border-[#4F46E5] border-t-transparent rounded-full animate-spin mx-auto shadow-2xs" />
+                    <p className="mt-3 text-sm font-medium text-slate-500">Loading users...</p>
+                  </td>
+                </tr>
+              ) : currentUsers.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="text-center py-12">
+                    <div className="w-12 h-12 bg-slate-50 border border-slate-200 rounded-full flex items-center justify-center mx-auto mb-2.5 text-slate-400">
+                      <Users size={24} />
+                    </div>
+                    <p className="text-sm font-bold text-slate-700">No users found</p>
+                    <p className="text-xs text-slate-400 mt-0.5">Try adjusting your search or filter options.</p>
+                  </td>
+                </tr>
+              ) : (
+                currentUsers.map((user) => {
+                  const initial = user.username?.charAt(0).toUpperCase() || "U";
+                  const dateStr = user.createdAt
+                    ? new Date(user.createdAt).toLocaleDateString("en-GB", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric"
+                      })
+                    : "—";
+
+                  // Status Badge Styling
+                  let statusBadge = (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200/80 shadow-2xs">
+                      Pending
+                    </span>
+                  );
+
+                  if (user.isBlocked) {
+                    statusBadge = (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200/80 shadow-2xs">
+                        <Ban size={13} className="text-rose-600 stroke-[2.5]" />
+                        Blocked
+                      </span>
+                    );
+                  } else if (user.verified) {
+                    statusBadge = (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/80 shadow-2xs">
+                        <CheckCircle2 size={13} className="text-emerald-600 stroke-[2.5]" />
+                        Verified
+                      </span>
+                    );
+                  }
+
+                  return (
+                    <tr key={user._id} className="hover:bg-slate-50/60 transition-colors">
+                      
+                      {/* 1. User Info */}
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-3.5 pl-8 sm:pl-12 lg:pl-16">
+                          <UserAvatar user={user} initial={initial} />
+                          <div className="min-w-0">
+                            <span className="block font-bold text-slate-900 text-sm truncate">
+                              {user.username || "Anonymous"}
+                            </span>
+                            <span className="block text-xs text-slate-500 font-medium truncate mt-0.5">
+                              {user.email}
+                            </span>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* 2. Status */}
+                      <td className="px-4 py-4 text-center">
+                        <div className="flex justify-center">
+                          {statusBadge}
+                        </div>
+                      </td>
+
+                      {/* 3. Role Dropdown */}
+                      <td className="px-4 py-4 text-center">
+                        <div className="relative inline-block">
+                          <select
+                            value={user.isAdmin ? "admin" : "user"}
+                            onChange={(e) => {
+                              if (e.target.value === "admin") {
+                                handleMakeAdmin(user._id);
+                              } else {
+                                handleRemoveAdmin(user._id);
+                              }
+                            }}
+                            className={`appearance-none pl-3 pr-7 py-1.5 rounded-lg text-xs font-bold outline-none cursor-pointer transition-colors shadow-2xs border ${
+                              user.isAdmin
+                                ? "bg-indigo-50 text-[#4F46E5] border-indigo-200 hover:bg-indigo-100/70"
+                                : "bg-slate-100/90 text-slate-700 border-slate-200 hover:bg-slate-200/70"
+                            }`}
+                          >
+                            <option value="user" className="bg-white text-slate-700 font-medium">User</option>
+                            <option value="admin" className="bg-white text-[#4F46E5] font-bold">Admin</option>
+                          </select>
+                          <ChevronDown size={13} className={`absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none ${user.isAdmin ? "text-[#4F46E5]" : "text-slate-400"}`} />
+                        </div>
+                      </td>
+
+                      {/* 4. Joined Date */}
+                      <td className="px-4 py-4 text-center text-slate-700 font-medium text-sm">
+                        {dateStr}
+                      </td>
+
+                      {/* 5. Actions */}
+                      <td className="px-5 py-4 text-center">
+                        <div className="inline-flex items-center justify-center gap-1.5 sm:gap-2 flex-wrap sm:flex-nowrap">
+                          
+                          {/* View Button */}
+                          <button
+                            onClick={() => navigate(`/admin/users/${user._id}`)}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-white text-slate-700 border border-slate-200 hover:bg-indigo-50 hover:text-[#4F46E5] hover:border-indigo-200 transition-colors cursor-pointer shadow-2xs"
+                            title="View User Details"
+                          >
+                            <Eye size={13} className="stroke-[2.2] text-[#4F46E5]" />
+                            <span>View</span>
+                          </button>
+
+                          {/* Block / Unblock Toggle */}
+                          <button
+                            onClick={() => handleToggleStatus(user._id)}
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold border transition-colors cursor-pointer shadow-2xs ${
+                              user.isBlocked
+                                ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
+                                : "bg-white text-slate-700 border-slate-200 hover:text-amber-700 hover:bg-amber-50 hover:border-amber-200"
+                            }`}
+                            title={user.isBlocked ? "Unblock User" : "Block User"}
+                          >
+                            {user.isBlocked ? (
+                              <>
+                                <UserCheck size={13} className="stroke-[2.2] text-emerald-600" />
+                                <span>Unblock</span>
+                              </>
+                            ) : (
+                              <>
+                                <Ban size={13} className="stroke-[2.2] text-amber-600" />
+                                <span>Block</span>
+                              </>
+                            )}
+                          </button>
+
+                          {/* Delete User */}
+                          <button
+                            onClick={() => handleDelete(user._id)}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-white border border-slate-200 text-slate-700 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-200 transition-colors cursor-pointer shadow-2xs"
+                            title="Delete User"
+                          >
+                            <Trash2 size={13} className="stroke-[2.2] text-rose-500" />
+                            <span>Delete</span>
+                          </button>
+
+                        </div>
+                      </td>
+
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+
+          </table>
         </div>
-        
-        {/* Pagination Footer */}
-        <div className="flex items-center justify-between p-4 border-t border-slate-100 bg-white rounded-b-[20px]">
-          <div className="text-[13px] font-medium text-slate-500">
+
+        {/* 4. Pagination Footer */}
+        <div className="flex items-center justify-between px-6 py-4 border-t border-slate-100 bg-slate-50/40 text-sm">
+          
+          <div className="font-medium text-slate-600">
             {totalItems > 0 ? (
-              <>Showing {((page - 1) * itemsPerPage) + 1} to {Math.min(page * itemsPerPage, totalItems)} of {totalItems} users</>
+              <>
+                Showing <span className="text-slate-900 font-bold">{((page - 1) * itemsPerPage) + 1}</span> to{" "}
+                <span className="text-slate-900 font-bold">{Math.min(page * itemsPerPage, totalItems)}</span> of{" "}
+                <span className="text-slate-900 font-bold">{totalItems}</span> users
+              </>
             ) : (
-              <>Showing 0 users</>
+              <span>Showing 0 users</span>
             )}
           </div>
-          {totalItems > 0 && (
-            <Pagination
-              currentPage={page}
-              totalPages={totalPages}
-              onPageChange={setPage}
-              totalItems={totalItems}
-              itemsPerPage={itemsPerPage}
-            />
+
+          {totalPages > 1 && (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+                disabled={page === 1}
+                className="p-2 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-[#4F46E5] disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer shadow-2xs"
+                title="Previous page"
+              >
+                <ChevronLeft size={16} />
+              </button>
+
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                <button
+                  key={p}
+                  onClick={() => setPage(p)}
+                  className={`min-w-[32px] h-8 px-2.5 rounded-lg text-xs sm:text-sm font-bold transition-colors cursor-pointer flex items-center justify-center shadow-2xs ${
+                    page === p
+                      ? "bg-[#4F46E5] text-white"
+                      : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:text-[#4F46E5]"
+                  }`}
+                >
+                  {p}
+                </button>
+              ))}
+
+              <button
+                onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
+                disabled={page === totalPages}
+                className="p-2 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-[#4F46E5] disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer shadow-2xs"
+                title="Next page"
+              >
+                <ChevronRight size={16} />
+              </button>
+            </div>
           )}
+
         </div>
-      </PageCard>
+
+      </div>
+
     </div>
-  );
+
+  </div>
+);
 };
 
 export default UsersSection;
