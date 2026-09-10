@@ -89,19 +89,15 @@ const CaseHeader = ({
   return (
     <div className="pb-3 mb-4 print:hidden space-y-1.5">
       
-      {/* Top Breadcrumb Navigation */}
-      <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
+      {/* Back Navigation */}
+      <div>
         <button
           onClick={() => navigate(isReturnView ? "/admin/returns" : "/admin/orders")}
-          className="inline-flex items-center gap-1 hover:text-[#4F46E5] transition-colors cursor-pointer"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-[#4F46E5] transition-colors cursor-pointer"
         >
-          <ArrowLeft size={13} className="stroke-[2]" />
-          <span>{isReturnView ? "Returns & Exchanges" : "Orders"}</span>
+          <ArrowLeft size={13} className="stroke-[2.5]" />
+          <span>Back to {isReturnView ? "Returns" : "Orders"}</span>
         </button>
-        <span className="text-slate-300 font-bold">&gt;</span>
-        <span className="text-slate-700 font-semibold truncate max-w-[250px] sm:max-w-none">
-          {title || "Case Details"}
-        </span>
       </div>
 
       {/* Main Title Row & Actions */}

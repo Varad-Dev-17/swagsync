@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { useParams, useLocation } from "react-router-dom";
+import { useParams, useLocation, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import api from "../../../api/axiosConfig";
 import { AlertCircle } from "lucide-react";
@@ -10,10 +10,12 @@ import CaseTabsSection from "./sections/CaseTabsSection";
 import ReturnTrackingTimelineCard from "./components/ReturnTrackingTimelineCard";
 import CaseSidebarCards from "./components/CaseSidebarCards";
 import ProductPriceSection from "./sections/ProductPriceSection";
+import OrderTabsSection from "./sections/OrderTabsSection";
 
 const AdminCaseDetailsPage = () => {
   const { id } = useParams();
   const location = useLocation();
+  const navigate = useNavigate();
   const isReturnView = location.pathname.includes("/admin/returns");
   const isOrderView = location.pathname.includes("/admin/orders");
 
@@ -21,6 +23,7 @@ const AdminCaseDetailsPage = () => {
   const [error, setError] = useState(null);
   const [orderData, setOrderData] = useState(null);
   const [returnData, setReturnData] = useState(null);
+  const [associatedReturn, setAssociatedReturn] = useState(null);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [isSavingNote, setIsSavingNote] = useState(false);
 
@@ -33,10 +36,11 @@ const AdminCaseDetailsPage = () => {
         if (res.data.success && res.data.data) {
           const data = res.data.data;
           setOrderData(data);
+          setReturnData(null); // Keep null so order view never renders return view layout
           if (Array.isArray(data.returnRequests) && data.returnRequests.length > 0) {
-            setReturnData(data.returnRequests[0]);
+            setAssociatedReturn(data.returnRequests[0]);
           } else {
-            setReturnData(null);
+            setAssociatedReturn(null);
           }
         }
       } else if (isReturnView) {
@@ -69,8 +73,8 @@ const AdminCaseDetailsPage = () => {
     if (!newStatus) return;
     setIsUpdatingStatus(true);
     try {
-      if (isOrderView && orderData && !returnData) {
-        const res = await api.put(`/admin/orders/${orderData._id || id}`, { status: newStatus });
+      if (isOrderView) {
+        const res = await api.put(`/admin/orders/${orderData?._id || id}`, { status: newStatus });
         if (res.data.success) {
           toast.success(`Order status updated to ${newStatus}`);
           setOrderData(res.data.data || { ...orderData, status: newStatus });
@@ -112,12 +116,12 @@ const AdminCaseDetailsPage = () => {
   const handleSaveNote = async (noteData) => {
     setIsSavingNote(true);
     try {
-      const targetEndpoint = isOrderView && !returnData ? `/admin/orders/${id}` : `/admin/returns/${returnData?._id || id}`;
+      const targetEndpoint = isOrderView ? `/admin/orders/${id}` : `/admin/returns/${returnData?._id || id}`;
       const payload = typeof noteData === "string" ? { note: noteData } : noteData;
       const res = await api.put(targetEndpoint, payload);
       if (res.data.success && res.data.data) {
         toast.success("Case note recorded successfully");
-        if (isOrderView && !returnData) {
+        if (isOrderView) {
           setOrderData(res.data.data);
         } else {
           setReturnData(res.data.data);
@@ -161,8 +165,8 @@ const AdminCaseDetailsPage = () => {
     );
   }
 
-  const isExchangeCase = returnData?.type === "exchange";
-  const activeStatus = returnData ? returnData.status : (orderData?.status || "pending");
+  const isExchangeCase = isReturnView && returnData?.type === "exchange";
+  const activeStatus = isReturnView ? (returnData?.status || "pending") : (orderData?.status || "pending");
 
   const orderStatusOptions = [
     { value: "pending", label: "Order Confirmed" },
@@ -187,14 +191,15 @@ const AdminCaseDetailsPage = () => {
     { value: "rejected", label: "Rejected" },
   ];
 
-  const caseIdCode = returnData?._id ? returnData._id.slice(-8).toUpperCase() : (orderData?.orderId || id.slice(-8).toUpperCase());
+  const caseIdCode = isReturnView
+    ? (returnData?._id ? returnData._id.slice(-8).toUpperCase() : (orderData?.orderId || id.slice(-8).toUpperCase()))
+    : (orderData?.orderId || id.slice(-8).toUpperCase());
 
-  const headerTitle = returnData
+  const headerTitle = isReturnView
     ? `${isExchangeCase ? "Exchange Request" : "Return Request"} #${caseIdCode}`
     : `Order Details #${orderData?.orderId || id.slice(-8).toUpperCase()}`;
 
-  const customerName = returnData?.user?.username || orderData?.user?.username || "Customer";
-  const caseDate = new Date(returnData?.createdAt || orderData?.createdAt || Date.now()).toLocaleDateString("en-IN", {
+  const caseDate = new Date((isReturnView ? returnData?.createdAt : orderData?.createdAt) || Date.now()).toLocaleDateString("en-IN", {
     day: "numeric",
     month: "short",
     year: "numeric",
@@ -203,9 +208,11 @@ const AdminCaseDetailsPage = () => {
     hour12: true
   });
 
-  const headerSubtitle = `Order ${orderData?.orderId || returnData?.order?.orderId || 'ORD-25'} • Submitted on ${caseDate}`;
+  const headerSubtitle = isReturnView
+    ? `Order ${orderData?.orderId || returnData?.order?.orderId || 'ORD-25'} • Submitted on ${caseDate}`
+    : `Placed on ${caseDate}`;
 
-  const notesList = returnData ? returnData.adminNotes || [] : orderData?.adminNotes || [];
+  const notesList = isReturnView ? (returnData?.adminNotes || []) : (orderData?.adminNotes || []);
 
   return (
     <div className="w-full min-h-screen bg-slate-50/50 p-3 sm:p-5 lg:p-6 print:p-0">
@@ -215,7 +222,7 @@ const AdminCaseDetailsPage = () => {
         title={headerTitle}
         subtitle={headerSubtitle}
         status={activeStatus}
-        statusOptions={returnData ? returnStatusOptions : orderStatusOptions}
+        statusOptions={isReturnView ? returnStatusOptions : orderStatusOptions}
         onUpdateStatus={handleUpdateStatus}
         returnRequest={returnData}
         order={orderData}
@@ -229,7 +236,7 @@ const AdminCaseDetailsPage = () => {
         {/* Left Column (~70% = 8 cols) - Unified Workspace Card */}
         <div className="lg:col-span-8 bg-white rounded-xl border border-slate-200 shadow-2xs divide-y divide-slate-100 overflow-hidden">
           
-          {returnData ? (
+          {isReturnView && returnData ? (
             <>
               {/* Section 1: Hero Product Details & Contextual Alert */}
               <ReturnHeroProductCard
@@ -246,14 +253,31 @@ const AdminCaseDetailsPage = () => {
                 isSavingNote={isSavingNote}
               />
 
-              {/* Section 3: ONE Detailed Return Tracking Vertical Timeline */}
+              {/* Section 3: ONE Detailed Return Tracking Horizontal Timeline */}
               <ReturnTrackingTimelineCard
                 returnRequest={returnData}
               />
             </>
           ) : (
-            /* Standard Order View fallback if accessed via /admin/orders without return claim */
+            /* Standard Order View: ONLY Order Details */
             <div className="p-4 sm:p-5 space-y-5">
+              {associatedReturn && (
+                <div className="p-3.5 bg-amber-50/90 border border-amber-200 rounded-xl flex items-center justify-between gap-3 text-xs">
+                  <div className="flex items-center gap-2 text-amber-900 font-medium">
+                    <AlertCircle size={16} className="text-amber-600 shrink-0" />
+                    <span>
+                      This order has an active {associatedReturn.type === "exchange" ? "Exchange" : "Return"} Request ({associatedReturn.status}).
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => navigate(`/admin/returns/${associatedReturn._id}`)}
+                    className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-lg shadow-2xs transition-colors shrink-0 cursor-pointer"
+                  >
+                    View Return Dossier &rarr;
+                  </button>
+                </div>
+              )}
+
               <ProductPriceSection
                 items={orderData?.items || []}
                 order={orderData || {}}
@@ -262,19 +286,10 @@ const AdminCaseDetailsPage = () => {
                 returnRequest={null}
                 isReturnView={false}
                 onUpdateStatus={handleUpdateStatus}
+                hideAuditLog={true}
               />
 
-              <CaseTabsSection
-                returnRequest={{
-                  type: "return",
-                  status: orderData?.status,
-                  reason: "Fulfillment Processing",
-                  additionalDetails: "Standard order processing",
-                  createdAt: orderData?.createdAt,
-                  timeline: orderData?.timeline || [],
-                  refundStatus: "not_required",
-                  refundAmount: orderData?.totalAmount
-                }}
+              <OrderTabsSection
                 order={orderData || {}}
                 notes={notesList}
                 onSaveNote={handleSaveNote}
@@ -292,6 +307,8 @@ const AdminCaseDetailsPage = () => {
             order={orderData || {}}
             onUpdateStatus={handleUpdateStatus}
             isProcessing={isUpdatingStatus}
+            isReturnView={isReturnView}
+            associatedReturn={associatedReturn}
           />
         </div>
 

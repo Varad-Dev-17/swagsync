@@ -12,7 +12,8 @@ const ProductPriceSection = ({
   returnRequest = null,
   isReturnView = false,
   onUpdateStatus = null,
-  onUpdateItemStatus = null
+  onUpdateItemStatus = null,
+  hideAuditLog = false
 }) => {
   const [showAuditLog, setShowAuditLog] = useState(false);
   const [showRetainedItems, setShowRetainedItems] = useState(false);
@@ -426,7 +427,7 @@ const ProductPriceSection = ({
         )}
 
         {/* Activity History Log Section */}
-        {auditSteps.length > 0 && (
+        {!hideAuditLog && auditSteps.length > 0 && (
           <div className="pt-3 border-t border-gray-100">
             <button
               onClick={() => setShowAuditLog(!showAuditLog)}

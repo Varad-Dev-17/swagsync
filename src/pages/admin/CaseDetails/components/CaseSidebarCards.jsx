@@ -18,7 +18,9 @@ const CaseSidebarCards = ({
   returnRequest,
   order = {},
   onUpdateStatus,
-  isProcessing = false
+  isProcessing = false,
+  isReturnView = false,
+  associatedReturn = null
 }) => {
   const navigate = useNavigate();
   const [showStatusMenu, setShowStatusMenu] = useState(false);
@@ -50,31 +52,58 @@ const CaseSidebarCards = ({
   ].filter(Boolean).join(", ") || "No address recorded";
 
   // Payment Financials
-  const itemPrice = returnRequest?.refundAmount || returnRequest?.originalPrice || returnRequest?.product?.price || order?.totalAmount || 999;
-  const deliveryFee = order?.shippingAmount !== undefined ? order.shippingAmount : 49;
-  const totalAmount = returnRequest?.refundAmount || order?.totalAmount || itemPrice;
+  const orderItems = Array.isArray(order?.items) ? order.items : [];
+  const itemsCount = orderItems.length || 1;
+  const deliveryFee = order?.shippingAmount !== undefined ? order.shippingAmount : (isReturnView ? 49 : 0);
   const paymentMethod = (order?.paymentMethod || (typeof returnRequest?.order === "object" && returnRequest?.order?.paymentMethod) || "COD").toUpperCase();
 
-  // Next actionable button logic
-  let primaryActionLabel = "Schedule Pickup";
-  let nextTargetStatus = "pickup";
+  // Return view vs Order view financials
+  const itemPrice = isReturnView
+    ? (returnRequest?.refundAmount || returnRequest?.originalPrice || returnRequest?.product?.price || 999)
+    : (orderItems.reduce((acc, item) => acc + (Number(item?.sellingPrice ?? item?.price ?? 0) * Number(item?.quantity || 1)), 0) || Number(order?.totalAmount || 0));
 
-  if (status === "pending") {
-    primaryActionLabel = "Approve Request";
-    nextTargetStatus = "approved";
-  } else if (status === "approved") {
-    primaryActionLabel = isExchange ? "Schedule Pickup & Swap" : "Schedule Pickup";
-    nextTargetStatus = isExchange ? "pickup_replace" : "pickup";
-  } else if (status === "pickup" || status === "pickup_scheduled" || status === "pickup_replace") {
-    primaryActionLabel = isExchange ? "Complete Exchange" : "Complete Return";
-    nextTargetStatus = "completed";
+  const totalAmount = isReturnView
+    ? (returnRequest?.refundAmount || itemPrice)
+    : Number(order?.totalAmount || itemPrice);
+
+  const gstAmount = !isReturnView
+    ? orderItems.reduce((acc, item) => acc + (Number(item?.gstAmount || 0) * Number(item?.quantity || 1)), 0)
+    : 0;
+
+  // Next actionable button logic
+  let primaryActionLabel = null;
+  let nextTargetStatus = null;
+
+  if (isReturnView) {
+    if (status === "pending") {
+      primaryActionLabel = "Approve Request";
+      nextTargetStatus = "approved";
+    } else if (status === "approved") {
+      primaryActionLabel = isExchange ? "Schedule Pickup & Swap" : "Schedule Pickup";
+      nextTargetStatus = isExchange ? "pickup_replace" : "pickup";
+    } else if (status === "pickup" || status === "pickup_scheduled" || status === "pickup_replace") {
+      primaryActionLabel = isExchange ? "Complete Exchange" : "Complete Return";
+      nextTargetStatus = "completed";
+    }
   } else {
-    primaryActionLabel = null;
-    nextTargetStatus = null;
+    // Order View Workflow
+    if (status === "pending") {
+      primaryActionLabel = "Mark as Packed";
+      nextTargetStatus = "packed";
+    } else if (status === "packed" || status === "processing") {
+      primaryActionLabel = "Mark as Shipped";
+      nextTargetStatus = "shipped";
+    } else if (status === "shipped") {
+      primaryActionLabel = "Out for Delivery";
+      nextTargetStatus = "on_the_way";
+    } else if (status === "on_the_way") {
+      primaryActionLabel = "Mark as Delivered";
+      nextTargetStatus = "delivered";
+    }
   }
 
   // Dropdown options
-  const statusOptions = isExchange ? [
+  const returnStatusOptions = isExchange ? [
     { value: "approved", label: "Approve" },
     { value: "pickup_replace", label: "Pickup & Replace" },
     { value: "completed", label: "Exchange Completed" },
@@ -85,6 +114,17 @@ const CaseSidebarCards = ({
     { value: "completed", label: "Return Completed" },
     { value: "rejected", label: "Reject / Cancel" }
   ];
+
+  const orderStatusOptions = [
+    { value: "pending", label: "Order Confirmed" },
+    { value: "packed", label: "Packed" },
+    { value: "shipped", label: "Shipped" },
+    { value: "on_the_way", label: "Out for delivery" },
+    { value: "delivered", label: "Delivered" },
+    { value: "cancelled", label: "Cancelled" }
+  ];
+
+  const statusOptions = isReturnView ? returnStatusOptions : orderStatusOptions;
 
   return (
     <div className="bg-white rounded-xl border border-slate-200 shadow-2xs divide-y divide-slate-100 overflow-hidden">
@@ -116,14 +156,25 @@ const CaseSidebarCards = ({
           </div>
         </div>
 
-        {/* View Order Link */}
-        {orderObjId && (
+        {/* View Order Link - Only in Return View */}
+        {orderObjId && isReturnView && (
           <button
             onClick={() => navigate(`/admin/orders/${orderObjId}`)}
             className="w-full py-2 px-3 rounded-lg bg-indigo-50/80 hover:bg-indigo-100 text-[#4F46E5] font-bold text-xs border border-indigo-100 transition-colors flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer"
           >
             <ExternalLink size={12} className="stroke-[2.5]" />
             <span>View Order {orderDisplayId ? `(${orderDisplayId})` : ""}</span>
+          </button>
+        )}
+
+        {/* View Return Link - If on Order View and order has active claim */}
+        {!isReturnView && associatedReturn && (
+          <button
+            onClick={() => navigate(`/admin/returns/${associatedReturn._id}`)}
+            className="w-full py-2 px-3 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 font-bold text-xs border border-amber-200 transition-colors flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer"
+          >
+            <ExternalLink size={12} className="stroke-[2.5]" />
+            <span>View Return Request (#{associatedReturn._id.slice(-6).toUpperCase()})</span>
           </button>
         )}
       </div>
@@ -156,16 +207,25 @@ const CaseSidebarCards = ({
 
         <div className="space-y-1.5 text-xs text-slate-600">
           <div className="flex items-center justify-between">
-            <span>Item Price (1 unit)</span>
+            <span>{isReturnView ? "Item Price (1 unit)" : `Items (${itemsCount} ${itemsCount === 1 ? 'unit' : 'units'})`}</span>
             <span className="font-bold text-slate-800 font-mono">₹{Number(itemPrice).toLocaleString("en-IN")}</span>
           </div>
 
           <div className="flex items-center justify-between">
             <span>Delivery Fee</span>
             <span className="text-slate-500 font-mono">
-              ₹{deliveryFee} (Non-refundable)
+              {deliveryFee > 0 ? `₹${deliveryFee} (Non-refundable)` : "FREE (₹0)"}
             </span>
           </div>
+
+          {gstAmount > 0 && (
+            <div className="flex items-center justify-between">
+              <span>Tax (Total GST)</span>
+              <span className="text-amber-700 font-mono font-semibold">
+                ₹{Number(gstAmount).toLocaleString("en-IN")}
+              </span>
+            </div>
+          )}
 
           <div className="pt-2 border-t border-slate-100 flex items-center justify-between font-bold text-sm text-slate-900">
             <span>Total Amount</span>
