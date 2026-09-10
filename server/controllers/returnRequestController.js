@@ -34,14 +34,19 @@ export const createReturnRequest = async (req, res) => {
     }
 
     // Validate Product exists in Order
-    const orderItem = order.items.find(
-      (item) => item.product.toString() === productId && item.variant.toString() === variantId
-    );
+    const orderItem = order.items.find((item) => {
+      const pId = typeof item.product === 'object' ? item.product?._id : item.product;
+      const pMatch = String(pId) === String(productId) || String(item._id) === String(productId);
+      if (!pMatch) return false;
+      if (!variantId) return true;
+      const vId = typeof item.variant === 'object' ? item.variant?._id : item.variant;
+      return !vId || String(vId) === String(variantId);
+    });
 
     if (!orderItem) {
       return res.status(404).json({
         success: false,
-        message: "Product/Variant not found in this order",
+        message: "Product not found in this order",
         data: null,
       });
     }
@@ -78,7 +83,7 @@ export const createReturnRequest = async (req, res) => {
       });
     }
 
-    const deliveryDate = new Date(order.deliveredAt || order.updatedAt || order.createdAt);
+    const deliveryDate = order.deliveredAt ? new Date(order.deliveredAt) : new Date(order.updatedAt || Date.now());
     const expiryDate = new Date(deliveryDate);
     expiryDate.setDate(expiryDate.getDate() + returnDays);
 
@@ -94,8 +99,7 @@ export const createReturnRequest = async (req, res) => {
     const existingRequest = await ReturnRequest.findOne({
       order: orderId,
       product: productId,
-      originalVariant: variantId,
-      status: { $nin: ["rejected", "refunded", "exchanged"] }, // active statuses
+      status: { $nin: ["rejected", "refunded", "exchanged", "completed"] }, // active statuses
     });
 
     if (existingRequest) {
@@ -153,11 +157,13 @@ export const createReturnRequest = async (req, res) => {
       refundAmount = originalPrice;
     }
 
+    const origVariantId = (typeof orderItem.variant === 'object' ? orderItem.variant?._id : orderItem.variant) || variantId || undefined;
+
     // Create request with initial QC and Refund states
     const returnRequest = new ReturnRequest({
       order: orderId,
       product: productId,
-      originalVariant: variantId,
+      originalVariant: origVariantId,
       user: userId,
       type,
       reason,

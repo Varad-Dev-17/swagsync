@@ -15,7 +15,7 @@ const ReturnRequestSchema = new mongoose.Schema(
     originalVariant: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Variant",
-      required: true,
+      required: false,
     },
     user: {
       type: mongoose.Schema.Types.ObjectId,
@@ -30,9 +30,14 @@ const ReturnRequestSchema = new mongoose.Schema(
     reason: {
       type: String,
       enum: [
+        "Damaged Product",
         "Damaged or Defective Product",
         "Wrong Item Received",
         "Size / Fit Issue",
+        "Color Mismatch",
+        "Quality Not as Expected",
+        "Missing Items / Accessories",
+        "Defective or Not Working",
         "Other"
       ],
       required: true,

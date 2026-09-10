@@ -18,8 +18,8 @@ export const getReturnEligibility = (order, item, activeRequest = null) => {
   const isReturnable = policy?.returnable ?? true;
   const returnDays = policy?.returnDays ?? 7;
 
-  // Prefer deliveredAt for date calculation, fallback to updatedAt/createdAt for legacy data
-  const deliveryDate = new Date(order.deliveredAt || order.updatedAt || order.createdAt);
+  // Prefer deliveredAt for date calculation, fallback to updatedAt or current date
+  const deliveryDate = order.deliveredAt ? new Date(order.deliveredAt) : new Date(order.updatedAt || Date.now());
   const expiryDate = new Date(deliveryDate);
   expiryDate.setDate(expiryDate.getDate() + returnDays);
 

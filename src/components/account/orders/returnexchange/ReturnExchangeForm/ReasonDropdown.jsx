@@ -3,10 +3,12 @@ import { ChevronDown } from 'lucide-react';
 
 const ReasonDropdown = ({ reason, setReason }) => {
   const reasons = [
-    "Damaged Product",
+    "Damaged or Defective Product",
     "Wrong Item Received",
     "Size / Fit Issue",
     "Color Mismatch",
+    "Quality Not as Expected",
+    "Missing Items / Accessories",
     "Other"
   ];
 

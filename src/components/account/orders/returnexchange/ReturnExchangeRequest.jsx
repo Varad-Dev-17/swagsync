@@ -40,7 +40,10 @@ const ReturnExchangeRequest = () => {
           setOrder(fetchedOrder);
           
           // Find the specific product in the order
-          const item = fetchedOrder.items.find(i => i.product?._id === productId || i.product === productId);
+          const item = fetchedOrder.items.find(i => {
+            const pId = typeof i.product === 'object' ? i.product?._id : i.product;
+            return String(pId) === String(productId) || String(i._id) === String(productId);
+          });
           
           if (item) {
             if (item.product?.slug) {
@@ -50,8 +53,8 @@ const ReturnExchangeRequest = () => {
                   setProductVariants(prodRes.data.data.product.variants);
                   
                   // Ensure current item variant is populated
-                  const currentVariantId = typeof item.variant === 'object' ? item.variant._id : item.variant;
-                  const populatedVariant = prodRes.data.data.product.variants.find(v => v._id === currentVariantId);
+                  const currentVariantId = typeof item.variant === 'object' ? item.variant?._id : item.variant;
+                  const populatedVariant = prodRes.data.data.product.variants.find(v => String(v._id) === String(currentVariantId));
                   
                   if (populatedVariant) {
                     item.variant = populatedVariant;
@@ -95,10 +98,13 @@ const ReturnExchangeRequest = () => {
     
     setIsSubmitting(true);
     try {
+      const prodId = typeof orderItem.product === 'object' ? (orderItem.product?._id || productId) : (orderItem.product || productId);
+      const varId = typeof orderItem.variant === 'object' ? (orderItem.variant?._id || orderItem.variant) : orderItem.variant;
+
       const payload = {
         orderId: order._id,
-        productId: orderItem.product._id,
-        variantId: orderItem.variant._id,
+        productId: prodId,
+        variantId: varId,
         quantity: selectedQty || 1,
         type: action,
         reason,
@@ -205,7 +211,7 @@ const ReturnExchangeRequest = () => {
               requestedVariantId={requestedVariantId} 
               setRequestedVariantId={setRequestedVariantId} 
               productVariants={productVariants}
-              currentVariantId={orderItem.variant._id}
+              currentVariantId={orderItem.variant?._id || orderItem.variant} 
               selectedQty={selectedQty || 1}
               currentPrice={Number(orderItem.sellingPrice ?? orderItem.price ?? orderItem.mrp ?? orderItem.variant?.price ?? orderItem.product?.sellingPrice ?? orderItem.product?.price ?? 0) || 0}
             />
