@@ -13,7 +13,6 @@ import {
   MessageSquare
 } from "lucide-react";
 import toast from "react-hot-toast";
-import PageCard from "../../../components/admin/ui/PageCard";
 import { useAuth } from "../../../context/AuthContext";
 
 const STATUS_BADGES = {
@@ -193,80 +192,82 @@ const Tickets = () => {
   };
 
   return (
-    <PageCard>
-      <div className="flex flex-col h-full bg-white">
+    <div className="w-full min-h-screen bg-slate-50/50 py-6 px-4 sm:px-8 lg:px-12">
+      <div className="w-full max-w-7xl mx-auto space-y-6">
         {/* Top Header */}
-        <div className="p-6 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2.5">
+            <h1 className="text-2xl sm:text-[26px] font-bold text-slate-900 tracking-tight flex items-center gap-2.5">
               <div className="w-9 h-9 rounded-xl bg-[#4648d4]/10 text-[#4648d4] flex items-center justify-center">
                 <Headphones size={22} />
               </div>
               Support Tickets Management
             </h1>
-            <p className="text-sm text-slate-500 mt-1">
+            <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">
               Review customer tickets, inspect uploaded evidence images, and dispatch official support responses.
             </p>
           </div>
 
           {/* Stat pills */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <div className="px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700">
+          <div className="flex items-center gap-2 flex-wrap self-start md:self-auto">
+            <div className="px-3 py-1.5 rounded-xl bg-white border border-slate-200/90 text-xs font-semibold text-slate-700 shadow-2xs">
               Total: <span className="font-bold text-slate-900">{stats.total || tickets.length}</span>
             </div>
-            <div className="px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-xs font-semibold text-amber-800">
+            <div className="px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-xs font-semibold text-amber-800 shadow-2xs">
               Open: <span className="font-bold">{stats.open || 0}</span>
             </div>
-            <div className="px-3 py-1.5 rounded-xl bg-blue-50 border border-blue-200 text-xs font-semibold text-blue-800">
+            <div className="px-3 py-1.5 rounded-xl bg-blue-50 border border-blue-200 text-xs font-semibold text-blue-800 shadow-2xs">
               In Progress: <span className="font-bold">{stats.in_progress || 0}</span>
             </div>
-            <div className="px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-800">
+            <div className="px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-800 shadow-2xs">
               Resolved: <span className="font-bold">{stats.resolved || 0}</span>
             </div>
           </div>
         </div>
 
-        {/* Toolbar & Filter Bar */}
-        <div className="p-4 bg-slate-50/70 border-b border-gray-100 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
-          {/* Search Box */}
-          <div className="relative flex-1 max-w-md">
-            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search by Ticket ID, Customer, Email, Order ID, query..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-[#4648d4] transition-colors"
-            />
-          </div>
-
-          {/* Status Tabs & Refresh */}
-          <div className="flex items-center gap-2 overflow-x-auto">
-            <div className="flex bg-slate-200/60 p-1 rounded-xl gap-1 shrink-0">
-              {["all", "open", "in_progress", "resolved", "closed"].map((st) => (
-                <button
-                  key={st}
-                  onClick={() => setStatusFilter(st)}
-                  className={`px-3 py-1 text-xs font-semibold rounded-lg capitalize transition-all ${
-                    statusFilter === st
-                      ? "bg-white text-[#4648d4] shadow-2xs font-bold"
-                      : "text-slate-600 hover:text-slate-900"
-                  }`}
-                >
-                  {st === "in_progress" ? "In Progress" : st}
-                </button>
-              ))}
+        {/* Main Table Card */}
+        <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
+          {/* Toolbar & Filter Bar */}
+          <div className="p-4 sm:p-4.5 bg-slate-50/70 border-b border-slate-100 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+            {/* Search Box */}
+            <div className="relative flex-1 max-w-md">
+              <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search by Ticket ID, Customer, Email, Order ID, query..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#4648d4] transition-colors shadow-2xs"
+              />
             </div>
 
-            <button
-              onClick={fetchTickets}
-              className="p-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-xl transition-colors shrink-0"
-              title="Refresh"
-            >
-              <RefreshCw size={15} className={isLoading ? "animate-spin text-[#4648d4]" : ""} />
-            </button>
+            {/* Status Tabs & Refresh */}
+            <div className="flex items-center gap-2 overflow-x-auto">
+              <div className="flex bg-slate-200/60 p-1 rounded-xl gap-1 shrink-0">
+                {["all", "open", "in_progress", "resolved", "closed"].map((st) => (
+                  <button
+                    key={st}
+                    onClick={() => setStatusFilter(st)}
+                    className={`px-3 py-1 text-xs font-semibold rounded-lg capitalize transition-all cursor-pointer ${
+                      statusFilter === st
+                        ? "bg-white text-[#4648d4] shadow-2xs font-bold"
+                        : "text-slate-600 hover:text-slate-900"
+                    }`}
+                  >
+                    {st === "in_progress" ? "In Progress" : st}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                onClick={fetchTickets}
+                className="p-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-xl transition-colors shrink-0 shadow-2xs cursor-pointer"
+                title="Refresh"
+              >
+                <RefreshCw size={15} className={isLoading ? "animate-spin text-[#4648d4]" : ""} />
+              </button>
+            </div>
           </div>
-        </div>
 
         {/* Ticket List Table */}
         <div className="flex-1 overflow-y-auto">
@@ -710,7 +711,8 @@ const Tickets = () => {
           </div>
         </div>
       )}
-    </PageCard>
+      </div>
+    </div>
   );
 };
 

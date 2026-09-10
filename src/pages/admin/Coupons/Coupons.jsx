@@ -16,7 +16,6 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useAuth } from "../../../context/AuthContext";
-import PageCard from "../../../components/admin/ui/PageCard";
 import DataTable from "../../../components/admin/ui/DataTable";
 import Pagination from "../../../components/admin/ui/Pagination";
 import ConfirmDialog from "../../../components/admin/ui/ConfirmDialog";
@@ -302,135 +301,136 @@ const Coupons = () => {
   ];
 
   return (
-    <div className="space-y-6">
-      {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
-            Coupons & Discounts
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Manage promotional discount vouchers and seasonal coupon campaigns.
-          </p>
-        </div>
-
-        <button
-          onClick={() => {
-            setCouponToEdit(null);
-            setIsModalOpen(true);
-          }}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#4648d4] hover:bg-[#3b3dbf] text-white font-bold text-sm shadow-md shadow-[#4648d4]/20 transition-all active:scale-95 cursor-pointer self-start sm:self-auto"
-        >
-          <Plus size={18} />
-          <span>Add Coupon</span>
-        </button>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-xs flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-            <Ticket size={24} />
-          </div>
+    <div className="w-full min-h-screen bg-slate-50/50 py-6 px-4 sm:px-8 lg:px-12">
+      <div className="w-full max-w-7xl mx-auto space-y-6">
+        {/* Top Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-              Total Coupons
+            <h1 className="text-2xl sm:text-[26px] font-bold text-slate-900 tracking-tight">
+              Coupons & Discounts
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">
+              Manage promotional discount vouchers and seasonal coupon campaigns.
             </p>
-            <h3 className="text-2xl font-bold text-gray-900 mt-0.5">{stats.total}</h3>
+          </div>
+
+          <button
+            onClick={() => {
+              setCouponToEdit(null);
+              setIsModalOpen(true);
+            }}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#4648d4] hover:bg-[#3b3dbf] text-white font-bold text-sm shadow-md shadow-[#4648d4]/20 transition-all active:scale-95 cursor-pointer self-start sm:self-auto"
+          >
+            <Plus size={18} />
+            <span>Add Coupon</span>
+          </button>
+        </div>
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="bg-white rounded-xl border border-slate-200/90 p-5 shadow-2xs flex items-center gap-4 hover:border-slate-300 transition-colors">
+            <div className="w-12 h-12 rounded-xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+              <Ticket size={24} />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                Total Coupons
+              </p>
+              <h3 className="text-2xl font-bold text-slate-900 mt-0.5">{stats.total}</h3>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl border border-slate-200/90 p-5 shadow-2xs flex items-center gap-4 hover:border-slate-300 transition-colors">
+            <div className="w-12 h-12 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+              <CheckCircle2 size={24} />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                Active Vouchers
+              </p>
+              <h3 className="text-2xl font-bold text-emerald-600 mt-0.5">{stats.active}</h3>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl border border-slate-200/90 p-5 shadow-2xs flex items-center gap-4 hover:border-slate-300 transition-colors">
+            <div className="w-12 h-12 rounded-xl bg-red-50 border border-red-100 text-red-600 flex items-center justify-center shrink-0">
+              <Clock size={24} />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                Expired Coupons
+              </p>
+              <h3 className="text-2xl font-bold text-red-500 mt-0.5">{stats.expired}</h3>
+            </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-xs flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-            <CheckCircle2 size={24} />
+        {/* Main Table Card */}
+        <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
+          {/* Search & Filters */}
+          <div className="p-4 sm:p-4.5 border-b border-slate-100 bg-white flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="relative w-full sm:w-80">
+              <Search
+                size={16}
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
+              />
+              <input
+                type="text"
+                placeholder="Search coupon code or title..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 bg-slate-50/70 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#4648d4] focus:bg-white transition-colors"
+              />
+            </div>
+
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              <select
+                value={statusFilter}
+                onChange={(e) => {
+                  setStatusFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="px-3 py-2 bg-slate-50/70 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:border-[#4648d4] focus:bg-white cursor-pointer"
+              >
+                <option value="all">All Status</option>
+                <option value="active">Active Only</option>
+                <option value="inactive">Inactive Only</option>
+              </select>
+
+              <select
+                value={typeFilter}
+                onChange={(e) => {
+                  setTypeFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="px-3 py-2 bg-slate-50/70 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:border-[#4648d4] focus:bg-white cursor-pointer"
+              >
+                <option value="all">All Types</option>
+                <option value="percentage">Percentage (%)</option>
+                <option value="fixed">Fixed (₹)</option>
+              </select>
+            </div>
           </div>
-          <div>
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-              Active Vouchers
-            </p>
-            <h3 className="text-2xl font-bold text-emerald-600 mt-0.5">{stats.active}</h3>
-          </div>
+
+          {/* Data Table */}
+          <DataTable
+            columns={columns}
+            data={coupons}
+            isLoading={isLoading}
+            emptyMessage="No coupons found matching your search."
+          />
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="p-4 border-t border-slate-100">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+              />
+            </div>
+          )}
         </div>
-
-        <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-xs flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-red-50 text-red-600 flex items-center justify-center">
-            <Clock size={24} />
-          </div>
-          <div>
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-              Expired Coupons
-            </p>
-            <h3 className="text-2xl font-bold text-red-500 mt-0.5">{stats.expired}</h3>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Table Card */}
-      <PageCard>
-        {/* Search & Filters */}
-        <div className="p-4 border-b border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="relative w-full sm:w-80">
-            <Search
-              size={16}
-              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
-            />
-            <input
-              type="text"
-              placeholder="Search coupon code or title..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-[#4648d4] focus:bg-white transition-colors"
-            />
-          </div>
-
-          <div className="flex items-center gap-3 w-full sm:w-auto">
-            <select
-              value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-700 focus:outline-none focus:border-[#4648d4] cursor-pointer"
-            >
-              <option value="all">All Status</option>
-              <option value="active">Active Only</option>
-              <option value="inactive">Inactive Only</option>
-            </select>
-
-            <select
-              value={typeFilter}
-              onChange={(e) => {
-                setTypeFilter(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-700 focus:outline-none focus:border-[#4648d4] cursor-pointer"
-            >
-              <option value="all">All Types</option>
-              <option value="percentage">Percentage (%)</option>
-              <option value="fixed">Fixed (₹)</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Data Table */}
-        <DataTable
-          columns={columns}
-          data={coupons}
-          isLoading={isLoading}
-          emptyMessage="No coupons found matching your search."
-        />
-
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="p-4 border-t border-gray-100">
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-            />
-          </div>
-        )}
-      </PageCard>
 
       {/* Coupon Modal (Create / Edit) */}
       <CouponModal
@@ -458,6 +458,7 @@ const Coupons = () => {
         isLoading={isDeleting}
         isDestructive={true}
       />
+      </div>
     </div>
   );
 };
