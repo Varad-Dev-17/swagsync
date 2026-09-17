@@ -192,50 +192,48 @@ const DashboardSection = () => {
   ];
 
   return (
-    <div className="min-h-full bg-slate-100/70 font-sans text-slate-900 selection:bg-purple-100 p-4 md:p-6 lg:p-8 rounded-2xl border border-slate-200/90 my-2 lg:my-3 mx-2 lg:mx-3">
+    <div className="w-full min-h-screen bg-slate-50/50 font-sans text-slate-900 selection:bg-purple-100 p-6 lg:p-8">
       {/* Header */}
-      <div className="mb-8">
-        <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 mb-1.5 flex items-center gap-2.5 tracking-tight">
-          Welcome back, admin! <span>👋</span>
+      <div className="mb-6">
+        <h2 className="text-xl sm:text-[22px] md:text-2xl font-bold text-slate-900 flex items-center gap-2 tracking-tight">
+          Welcome back, admin! <span className="text-xl sm:text-2xl">👋</span>
         </h2>
-        <p className="text-sm md:text-base text-slate-600 font-medium">
+        <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">
           Here's what's happening with your store today.
         </p>
       </div>
 
-      {/* Top Stats Panel */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      {/* Top Stats Panel - Compact & Left-Aligned */}
+      <div className="flex flex-wrap items-center gap-4 mb-8">
         {stats.map((stat, index) => {
           const Icon = stat.icon;
           return (
             <motion.div
               key={index}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className="relative overflow-hidden bg-white rounded-2xl p-6 border border-slate-200/90 shadow-2xs hover:border-slate-300 hover:shadow-xs transition-all flex items-center gap-5"
+              transition={{ delay: index * 0.08 }}
+              className="relative overflow-hidden bg-white rounded-xl px-5 py-3.5 border border-slate-200/90 shadow-2xs hover:border-slate-300 transition-colors flex items-center gap-3.5 w-full sm:w-auto sm:min-w-[215px]"
             >
-              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 ${stat.iconBg}`}>
-                <Icon size={24} className={stat.iconColor} />
+              <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${stat.iconBg}`}>
+                <Icon size={20} className={stat.iconColor} />
               </div>
               <div className="flex flex-col z-10 min-w-0">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">{stat.label}</span>
-                <span className="text-2xl font-black text-slate-900 tracking-tight mb-1.5">{stat.value}</span>
-                <div className="text-xs font-medium text-slate-600 flex items-center gap-1.5 flex-wrap">
-                  <span className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[11px] font-bold border ${
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">{stat.label}</span>
+                <span className="text-xl font-extrabold text-slate-900 tracking-tight leading-tight mt-0.5">{stat.value}</span>
+                <div className="text-[11px] font-medium text-slate-500 flex items-center gap-1.5 mt-1 flex-wrap">
+                  <span className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold border ${
                     stat.isPositive 
                       ? 'text-emerald-700 bg-emerald-50 border-emerald-200' 
                       : 'text-rose-700 bg-rose-50 border-rose-200'
                   }`}>
                     {stat.isPositive ? '▲' : '▼'} {stat.change.replace(/[+▲▼]/g, '').trim().split(' ')[0]}
                   </span>
-                  <span className="text-slate-500 font-medium text-[11px]">
+                  <span className="text-slate-400 font-medium text-[10px]">
                     {stat.change.replace(/[+▲▼]/g, '').trim().split(' ').slice(1).join(' ')}
                   </span>
                 </div>
               </div>
-              {/* Decorative faint circle at bottom right */}
-              <div className={`absolute -bottom-6 -right-6 w-24 h-24 rounded-full opacity-[0.08] ${stat.iconBg}`} />
             </motion.div>
           );
         })}

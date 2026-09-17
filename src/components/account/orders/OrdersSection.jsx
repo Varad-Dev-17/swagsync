@@ -231,11 +231,12 @@ const OrdersSection = () => {
 
             if (item.variant && item.variant.attributes) {
               item.variant.attributes.forEach(attr => {
-                if (attr.attribute?.name?.toLowerCase() === 'color') {
-                  color = attr.option?.displayName || color;
+                const name = attr.attribute?.name?.toLowerCase();
+                if (name === 'color' || name === 'colour' || name === 'color / shade' || name === 'shade' || attr.attribute?.fieldType === 'color') {
+                  color = attr.option?.displayName || attr.option?.storedValue || color;
                 }
-                if (attr.attribute?.name?.toLowerCase() === 'size') {
-                  size = attr.option?.displayName || size;
+                if (name === 'size' || name === 'size / net quantity') {
+                  size = attr.option?.displayName || attr.option?.storedValue || size;
                 }
               });
             }
@@ -341,7 +342,7 @@ const OrdersSection = () => {
                   <div className="flex items-start sm:items-center gap-4 sm:gap-6 flex-1 min-w-0">
                     <div className="w-20 h-28 sm:w-24 sm:h-32 bg-gray-100 border border-gray-200 shrink-0 overflow-hidden relative group">
                       <img
-                        src={item.variant?.mainImage?.url || item.product?.images?.[0]?.url || 'https://via.placeholder.com/150'}
+                        src={item.variant?.mainImage?.url || item.product?.images?.[0]?.url || 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="150" height="150" viewBox="0 0 150 150"><rect fill="%23f1f5f9" width="150" height="150"/><path fill="%23cbd5e1" d="M45 60a15 15 0 1030 0 15 15 0 00-30 0zm67 52H38a7 7 0 01-6-11l22-29a7 7 0 0111 0l10 13 15-19a7 7 0 0111 0l22 29a7 7 0 01-6 17z"/></svg>'}
                         alt={item.product?.title || 'Product'}
                         className="w-full h-full object-cover object-top transition-transform duration-300 group-hover:scale-105"
                        loading="lazy" decoding="async" />

@@ -114,20 +114,20 @@ const ShopProductCard = ({ product }) => {
 
       {/* Product Information */}
       <div className="mt-3 relative z-30 bg-white">
-        {/* Default State (Brand & Title) */}
+        {/* Default State (Brand & Title with Processor) */}
         <Link to={`/product/${product.slug}${product.variantId ? `?variant=${product.variantId}` : (product.colorName && product.colorName !== 'default' ? `?color=${encodeURIComponent(product.colorName)}` : '')}`} className="block group-hover:hidden px-2 pb-0.5">
           <h3 className="text-[14px] font-bold text-[#282c3f] mb-0.5 line-clamp-1">
             {product.brand?.name || product.brand || 'Brand'}
           </h3>
-          <p className="text-[13px] text-[#535766] mb-0 line-clamp-1">
-            {product.title || product.productName || 'Product Title'}
+          <p className="text-[13px] text-[#535766] mb-0 line-clamp-1" title={`${product.title || product.productName || 'Product Title'}${product.processor ? `, ${product.processor}` : ''}`}>
+            {product.title || product.productName || 'Product Title'}{product.processor ? `, ${product.processor}` : ''}
           </p>
         </Link>
 
-        {/* Hover State (Dots, Wishlist, Sizes) */}
+        {/* Hover State (Dots, Wishlist, Processor, Sizes) */}
         <div className="hidden group-hover:block absolute top-[-16px] left-0 right-0 bg-white px-2 pb-3 z-40 shadow-[0_10px_15px_-3px_rgba(0,0,0,0.1)]">
           {/* Dots */}
-          <div className="flex justify-center items-center gap-1.5 pt-2 mb-3">
+          <div className="flex justify-center items-center gap-1.5 pt-2 mb-2.5">
             {product.images?.map((_, idx) => (
               <span 
                 key={idx} 
@@ -135,7 +135,13 @@ const ShopProductCard = ({ product }) => {
               />
             ))}
           </div>
-          {/* Sizes */}
+          {/* Processor (for electronics) */}
+          {product.processor && (
+            <div className="text-[13px] text-[#535766] truncate mb-1">
+              Processor: <span className="text-[#282c3f] font-semibold">{product.processor}</span>
+            </div>
+          )}
+          {/* Sizes / Secondary Attribute */}
           <div className="text-[13px] text-[#535766] truncate mb-2">
             {product.secondaryAttributeName || 'Sizes'}: <span className="text-[#282c3f]">
             {product.availableSizes && product.availableSizes.length > 0 ? (

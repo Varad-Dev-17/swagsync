@@ -1,8 +1,19 @@
 import React from 'react';
 
-const ProductInfo = ({ product, variant, quantity, selectedQty, onQtyChange, price, color, size }) => {
+const ProductInfo = ({ product, variant, quantity, selectedQty, onQtyChange, price, color, size, attributes = [] }) => {
   const maxQty = Number(quantity || 1);
   const currentQty = Number(selectedQty || maxQty);
+
+  // Compute display attributes
+  const displayAttributes = attributes.length > 0 
+    ? attributes.map(a => ({
+        name: a.attribute?.name || 'Option',
+        value: a.option?.displayName || a.option?.storedValue || a.option || 'Default'
+      }))
+    : [
+        ...(color ? [{ name: 'Color', value: color }] : []),
+        ...(size ? [{ name: 'Size', value: size }] : [])
+      ];
 
   return (
     <div className="flex gap-6 items-start">
@@ -12,7 +23,9 @@ const ProductInfo = ({ product, variant, quantity, selectedQty, onQtyChange, pri
             src={variant?.mainImage?.url || product?.images?.[0]?.url} 
             alt={product?.title || 'Product'} 
             className="w-full h-full object-cover"
-           loading="lazy" decoding="async" />
+            loading="lazy" 
+            decoding="async" 
+          />
         ) : (
           <div className="w-full h-full bg-gray-100" />
         )}
@@ -21,8 +34,11 @@ const ProductInfo = ({ product, variant, quantity, selectedQty, onQtyChange, pri
         {product?.brand?.name && <h3 className="font-bold text-slate-700 text-[14px] uppercase tracking-wider">{product.brand.name}</h3>}
         {product?.title && <p className="text-gray-600 text-[15px] mt-1 font-semibold">{product.title}</p>}
         <div className="text-gray-500 text-[14px] mt-3 flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center gap-x-6 gap-y-2">
-          {color && <span>Color: <span className="font-medium text-slate-700">{color}</span></span>}
-          {size && <span>Size: <span className="font-medium text-slate-700">{size}</span></span>}
+          {displayAttributes.map((attr, idx) => (
+            <span key={idx}>
+              {attr.name}: <span className="font-medium text-slate-700">{attr.value}</span>
+            </span>
+          ))}
           {maxQty <= 1 ? (
             <span>Qty: <span className="font-medium text-slate-700">1</span></span>
           ) : (

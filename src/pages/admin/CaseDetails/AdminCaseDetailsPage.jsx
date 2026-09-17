@@ -112,6 +112,26 @@ const AdminCaseDetailsPage = () => {
     }
   };
 
+  // 1-Click Automated Razorpay Refund
+  const handleProcessRazorpayRefund = async () => {
+    if (!returnData) return;
+    setIsUpdatingStatus(true);
+    try {
+      const res = await api.post(`/admin/returns/${returnData._id}/refund-razorpay`);
+      if (res.data.success) {
+        toast.success(res.data.message || "Refund processed successfully via Razorpay!");
+        if (res.data.data) {
+          setReturnData(res.data.data);
+        }
+      }
+    } catch (err) {
+      console.error("Razorpay refund error:", err);
+      toast.error(err.response?.data?.message || "Failed to process Razorpay refund");
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  };
+
   // Admin Notes handler
   const handleSaveNote = async (noteData) => {
     setIsSavingNote(true);
@@ -251,6 +271,9 @@ const AdminCaseDetailsPage = () => {
                 notes={notesList}
                 onSaveNote={handleSaveNote}
                 isSavingNote={isSavingNote}
+                onUpdateRefundDetails={handleUpdateReturnDetails}
+                onProcessRazorpayRefund={handleProcessRazorpayRefund}
+                isUpdatingRefund={isUpdatingStatus}
               />
 
               {/* Section 3: ONE Detailed Return Tracking Horizontal Timeline */}

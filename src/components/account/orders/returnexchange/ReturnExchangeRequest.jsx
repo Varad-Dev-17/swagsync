@@ -85,6 +85,15 @@ const ReturnExchangeRequest = () => {
     }
   }, [orderId, productId, getAuthHeaders, navigate]);
 
+  const selectedVariant = productVariants?.find(v => String(v._id) === String(requestedVariantId));
+  const currentItemPrice = Number(orderItem?.sellingPrice ?? orderItem?.price ?? orderItem?.mrp ?? orderItem?.variant?.price ?? orderItem?.product?.sellingPrice ?? orderItem?.product?.price ?? 0) || 0;
+  const currentVariantPrice = Number(currentItemPrice) || 0;
+  const selectedVariantPrice = Number(selectedVariant?.price ?? 0) || 0;
+  const qty = Number(selectedQty) || 1;
+  const totalCurrentPrice = currentVariantPrice * qty;
+  const totalSelectedPrice = selectedVariantPrice * qty;
+  const priceDifference = action === 'exchange' && selectedVariant ? totalSelectedPrice - totalCurrentPrice : 0;
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!reason) {
@@ -96,11 +105,32 @@ const ReturnExchangeRequest = () => {
       return;
     }
     
+    const prodId = typeof orderItem.product === 'object' ? (orderItem.product?._id || productId) : (orderItem.product || productId);
+    const varId = typeof orderItem.variant === 'object' ? (orderItem.variant?._id || orderItem.variant) : orderItem.variant;
+
+    // If exchange requires additional payment, redirect to Exchange Payment screen
+    if (action === 'exchange' && priceDifference > 0) {
+      navigate(`/account/orders/${order._id}/exchange-payment`, {
+        state: {
+          orderId: order._id,
+          productId: prodId,
+          orderItem,
+          selectedVariant,
+          requestedVariantId,
+          quantity: selectedQty || 1,
+          reason,
+          additionalDetails,
+          images,
+          priceDifference,
+          totalCurrentPrice,
+          totalSelectedPrice,
+        }
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      const prodId = typeof orderItem.product === 'object' ? (orderItem.product?._id || productId) : (orderItem.product || productId);
-      const varId = typeof orderItem.variant === 'object' ? (orderItem.variant?._id || orderItem.variant) : orderItem.variant;
-
       const payload = {
         orderId: order._id,
         productId: prodId,
@@ -176,11 +206,12 @@ const ReturnExchangeRequest = () => {
             
             if (orderItem.variant && orderItem.variant.attributes) {
               orderItem.variant.attributes.forEach(attr => {
-                if (attr.attribute?.name?.toLowerCase() === 'color') {
-                  color = attr.option?.displayName || color;
+                const name = attr.attribute?.name?.toLowerCase();
+                if (name === 'color' || name === 'colour' || name === 'color / shade' || name === 'shade' || attr.attribute?.fieldType === 'color') {
+                  color = attr.option?.displayName || attr.option?.storedValue || color;
                 }
-                if (attr.attribute?.name?.toLowerCase() === 'size') {
-                  size = attr.option?.displayName || size;
+                if (name === 'size' || name === 'size / net quantity') {
+                  size = attr.option?.displayName || attr.option?.storedValue || size;
                 }
               });
             }
@@ -197,6 +228,7 @@ const ReturnExchangeRequest = () => {
                 price={itemPrice}
                 color={color}
                 size={size}
+                attributes={orderItem.variant?.attributes || []}
               />
             );
           })()}
@@ -242,9 +274,15 @@ const ReturnExchangeRequest = () => {
             <button
               type="submit"
               disabled={isSubmitting}
-              className={`px-8 py-3 bg-[#FD7100] text-white rounded-lg text-[14px] font-bold hover:bg-[#E06400] transition-colors shadow-sm flex items-center justify-center min-w-[160px] ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}
+              className={`px-8 py-3 bg-[#FD7100] text-white rounded-lg text-[14px] font-bold hover:bg-[#E06400] transition-colors shadow-sm flex items-center justify-center min-w-[160px] cursor-pointer ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}
             >
-              {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Submit Request'}
+              {isSubmitting ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : action === 'exchange' && priceDifference > 0 ? (
+                `Proceed to Pay Difference (₹${priceDifference.toLocaleString('en-IN')}) →`
+              ) : (
+                'Submit Request'
+              )}
             </button>
             <button
               type="button"

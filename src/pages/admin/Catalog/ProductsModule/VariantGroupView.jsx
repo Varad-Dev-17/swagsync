@@ -43,7 +43,10 @@ const VariantGroupView = () => {
           const filtered = allVariants.filter(variant => {
             let pOptId = 'default';
             if (variant.attributes && variant.attributes.length > 0) {
-              const colorAttr = variant.attributes.find(a => a.attribute?.name?.toLowerCase() === 'color' || a.attribute?.name?.toLowerCase() === 'colour');
+              const colorAttr = variant.attributes.find(a => {
+                const name = a.attribute?.name?.toLowerCase();
+                return name === 'color' || name === 'colour' || name === 'color / shade' || name === 'shade' || a.attribute?.fieldType === 'color';
+              });
               if (colorAttr) {
                 pOptId = colorAttr.option?._id?.toString() || 'default';
               } else {
@@ -74,8 +77,10 @@ const VariantGroupView = () => {
     let groupName = 'Standard';
     const firstVariant = variants[0];
     if (primaryOptionId !== 'default') {
-      const colorAttr = firstVariant.attributes?.find(a => a.attribute?.name?.toLowerCase() === 'color' || a.attribute?.name?.toLowerCase() === 'colour') 
-        || firstVariant.attributes?.[0];
+      const colorAttr = firstVariant.attributes?.find(a => {
+        const name = a.attribute?.name?.toLowerCase();
+        return name === 'color' || name === 'colour' || name === 'color / shade' || name === 'shade' || a.attribute?.fieldType === 'color';
+      }) || firstVariant.attributes?.[0];
       if (colorAttr && colorAttr.option) {
         groupName = colorAttr.option.displayName || colorAttr.option.storedValue;
       }

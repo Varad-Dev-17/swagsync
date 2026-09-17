@@ -206,31 +206,68 @@ const CaseSidebarCards = ({
         </div>
 
         <div className="space-y-1.5 text-xs text-slate-600">
-          <div className="flex items-center justify-between">
-            <span>{isReturnView ? "Item Price (1 unit)" : `Items (${itemsCount} ${itemsCount === 1 ? 'unit' : 'units'})`}</span>
-            <span className="font-bold text-slate-800 font-mono">₹{Number(itemPrice).toLocaleString("en-IN")}</span>
-          </div>
+          {isReturnView && returnRequest?.type === "exchange" ? (
+            <>
+              <div className="flex items-center justify-between">
+                <span>Original Item Price</span>
+                <span className="font-bold text-slate-800 font-mono">
+                  ₹{Number(returnRequest.originalPrice || itemPrice).toLocaleString("en-IN")}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Replacement Item Price</span>
+                <span className="font-bold text-[#4F46E5] font-mono">
+                  ₹{Number(returnRequest.exchangePrice || itemPrice).toLocaleString("en-IN")}
+                </span>
+              </div>
+              <div className="pt-2 border-t border-slate-100 flex items-center justify-between font-bold text-sm text-slate-900">
+                <span>
+                  {(returnRequest.priceDifference || 0) > 0
+                    ? "Payable Difference"
+                    : (returnRequest.priceDifference || 0) < 0
+                    ? "Refund Difference"
+                    : "Net Settlement"}
+                </span>
+                <span className={`font-mono text-base font-bold ${
+                  (returnRequest.priceDifference || 0) > 0 ? "text-amber-600" : (returnRequest.priceDifference || 0) < 0 ? "text-emerald-600" : "text-slate-800"
+                }`}>
+                  {(returnRequest.priceDifference || 0) > 0
+                    ? `+₹${Number(returnRequest.priceDifference).toLocaleString("en-IN")}`
+                    : (returnRequest.priceDifference || 0) < 0
+                    ? `-₹${Number(Math.abs(returnRequest.priceDifference)).toLocaleString("en-IN")}`
+                    : "₹0 (Even Swap)"}
+                </span>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex items-center justify-between">
+                <span>{isReturnView ? "Item Price (1 unit)" : `Items (${itemsCount} ${itemsCount === 1 ? 'unit' : 'units'})`}</span>
+                <span className="font-bold text-slate-800 font-mono">₹{Number(itemPrice).toLocaleString("en-IN")}</span>
+              </div>
 
-          <div className="flex items-center justify-between">
-            <span>Delivery Fee</span>
-            <span className="text-slate-500 font-mono">
-              {deliveryFee > 0 ? `₹${deliveryFee} (Non-refundable)` : "FREE (₹0)"}
-            </span>
-          </div>
+              <div className="flex items-center justify-between">
+                <span>Delivery Fee</span>
+                <span className="text-slate-500 font-mono">
+                  {deliveryFee > 0 ? `₹${deliveryFee} (Non-refundable)` : "FREE (₹0)"}
+                </span>
+              </div>
 
-          {gstAmount > 0 && (
-            <div className="flex items-center justify-between">
-              <span>Tax (Total GST)</span>
-              <span className="text-amber-700 font-mono font-semibold">
-                ₹{Number(gstAmount).toLocaleString("en-IN")}
-              </span>
-            </div>
+              {gstAmount > 0 && (
+                <div className="flex items-center justify-between">
+                  <span>Tax (Total GST)</span>
+                  <span className="text-amber-700 font-mono font-semibold">
+                    ₹{Number(gstAmount).toLocaleString("en-IN")}
+                  </span>
+                </div>
+              )}
+
+              <div className="pt-2 border-t border-slate-100 flex items-center justify-between font-bold text-sm text-slate-900">
+                <span>Total Amount</span>
+                <span className="font-mono text-base font-bold text-[#4F46E5]">₹{Number(totalAmount).toLocaleString("en-IN")}</span>
+              </div>
+            </>
           )}
-
-          <div className="pt-2 border-t border-slate-100 flex items-center justify-between font-bold text-sm text-slate-900">
-            <span>Total Amount</span>
-            <span className="font-mono text-base font-bold text-[#4F46E5]">₹{Number(totalAmount).toLocaleString("en-IN")}</span>
-          </div>
         </div>
       </div>
 

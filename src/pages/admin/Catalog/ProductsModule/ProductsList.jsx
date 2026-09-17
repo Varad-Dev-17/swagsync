@@ -153,9 +153,8 @@ const ProductsList = () => {
     {
       header: 'Product',
       accessor: 'title',
-      align: 'left',
+      align: 'center',
       headerAlign: 'center',
-      width: '1%',
       render: (row) => {
         let image = null;
         if (row.variants && row.variants.length > 0) {
@@ -165,7 +164,7 @@ const ProductsList = () => {
           }
         }
         return (
-          <div className="flex items-center gap-3 pl-4 pr-12">
+          <div className="flex items-center gap-3 py-0.5 w-[240px] max-w-full mx-auto text-left">
             <div className="w-10 h-10 rounded-lg bg-gray-50 flex items-center justify-center shrink-0 border border-gray-100 overflow-hidden">
               {image ? (
                 <img src={image} alt={row.title} className="w-full h-full object-cover" loading="lazy" decoding="async" />
@@ -173,8 +172,8 @@ const ProductsList = () => {
                 <PackageSearch className="w-5 h-5 text-gray-400" />
               )}
             </div>
-            <div className="flex flex-col justify-center">
-              <span className="font-medium text-slate-800">
+            <div className="flex flex-col text-left min-w-0">
+              <span className="font-medium text-slate-800 line-clamp-1">
                 {row.title}
               </span>
             </div>
@@ -210,7 +209,7 @@ const ProductsList = () => {
         <div className="flex items-center justify-center gap-2">
           <button
             onClick={() => navigate(`/admin/products/${row._id}/view`)}
-            className="flex items-center gap-1.5 px-3 py-1 text-sm font-semibold text-[#4648d4] border border-[#4648d4]/30 hover:bg-[#4648d4]/10 rounded-xl transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1 text-sm font-semibold text-[#4648d4] border border-[#4648d4]/30 hover:bg-[#4648d4]/10 rounded-xl transition-colors cursor-pointer"
             title="View Details"
           >
             <Eye size={14} />
@@ -218,14 +217,14 @@ const ProductsList = () => {
           </button>
           <button
             onClick={() => navigate(`/admin/products/${row._id}/edit`)}
-            className="p-1.5 text-gray-400 hover:text-[#4648d4] hover:bg-[#4648d4]/10 rounded-lg transition-colors"
+            className="p-1.5 text-gray-400 hover:text-[#4648d4] hover:bg-[#4648d4]/10 rounded-lg transition-colors cursor-pointer"
             title="Edit"
           >
             <Edit2 size={14} />
           </button>
           <button
             onClick={() => handleDeleteClick(row)}
-            className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+            className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
             title="Delete"
           >
             <Trash2 size={14} />
@@ -246,11 +245,10 @@ const ProductsList = () => {
     {
       header: 'Product',
       accessor: 'product',
-      align: 'left',
+      align: 'center',
       headerAlign: 'center',
-      width: '1%',
       render: (row) => (
-        <div className="flex items-center gap-3 pl-4 pr-12">
+        <div className="flex items-center gap-3 py-0.5 w-[240px] max-w-full mx-auto text-left">
           <div className="w-10 h-10 rounded-lg bg-gray-50 flex items-center justify-center shrink-0 border border-gray-100 overflow-hidden">
             {row.productImage ? (
               <img src={row.productImage} alt={row.productTitle} className="w-full h-full object-cover" loading="lazy" decoding="async" />
@@ -258,8 +256,8 @@ const ProductsList = () => {
               <PackageSearch className="w-5 h-5 text-gray-400" />
             )}
           </div>
-          <div className="flex flex-col justify-center">
-            <span className="text-xs font-medium text-slate-800">{row.productTitle}</span>
+          <div className="flex flex-col text-left min-w-0">
+            <span className="text-xs font-medium text-slate-800 line-clamp-1">{row.productTitle}</span>
           </div>
         </div>
       )
@@ -337,20 +335,28 @@ const ProductsList = () => {
       <div className="bg-white rounded-[20px] shadow-sm border border-gray-100 flex flex-col flex-1 overflow-hidden">
         <SearchToolbar 
           leftSlot={
-            <div className="flex items-center gap-2 pr-4 border-r border-slate-200 mr-2">
-              <div className="flex bg-slate-100/80 p-1.5 rounded-xl border border-slate-200/50 shadow-inner">
+            <div className="flex items-center">
+              <div className="flex bg-white p-1 rounded-xl border border-slate-200 shadow-2xs">
                 <button
                   onClick={() => setViewMode('products')}
-                  className={`relative flex items-center gap-2 px-5 py-2 text-sm font-semibold rounded-lg transition-all duration-300 ${viewMode === 'products' ? 'bg-white text-[#4648d4] shadow-md shadow-indigo-100 scale-100' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50 scale-95'}`}
+                  className={`flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                    viewMode === 'products'
+                      ? 'bg-[#4648d4] text-white shadow-sm shadow-[#4648d4]/25'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                  }`}
                 >
-                  <Package size={16} className={viewMode === 'products' ? 'text-[#4648d4]' : 'text-slate-400'} />
+                  <Package size={14} className={viewMode === 'products' ? 'text-white' : 'text-slate-400'} />
                   Products
                 </button>
                 <button
                   onClick={() => setViewMode('variants')}
-                  className={`relative flex items-center gap-2 px-5 py-2 text-sm font-semibold rounded-lg transition-all duration-300 ${viewMode === 'variants' ? 'bg-white text-[#4648d4] shadow-md shadow-indigo-100 scale-100' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50 scale-95'}`}
+                  className={`flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                    viewMode === 'variants'
+                      ? 'bg-[#4648d4] text-white shadow-sm shadow-[#4648d4]/25'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                  }`}
                 >
-                  <Layers size={16} className={viewMode === 'variants' ? 'text-[#4648d4]' : 'text-slate-400'} />
+                  <Layers size={14} className={viewMode === 'variants' ? 'text-white' : 'text-slate-400'} />
                   Variants
                 </button>
               </div>
@@ -358,11 +364,11 @@ const ProductsList = () => {
           }
           searchQuery={search}
           onSearchChange={setSearch}
-          searchPlaceholder="Search products by name, SKU..."
+          searchPlaceholder="Search products..."
           extraFilters={
             <div className="flex items-center gap-2">
               <SearchableSelect
-                className="w-[130px] shrink-0"
+                className="w-[145px] shrink-0"
                 size="sm"
                 value={departmentFilter}
                 onChange={setDepartmentFilter}
@@ -370,7 +376,7 @@ const ProductsList = () => {
               />
               
               <SearchableSelect
-                className="w-[130px] shrink-0"
+                className="w-[135px] shrink-0"
                 size="sm"
                 value={categoryFilter}
                 onChange={setCategoryFilter}
@@ -402,10 +408,10 @@ const ProductsList = () => {
           actionButton={
             <button 
               onClick={() => navigate('/admin/products/add')}
-              className="bg-[#4648d4] hover:bg-[#3b3db0] text-white px-4 py-2 rounded-xl flex items-center justify-center gap-2 transition-colors font-medium text-sm whitespace-nowrap shrink-0"
+              className="bg-[#4648d4] hover:bg-[#3b3dbf] text-white px-4 py-2 rounded-xl flex items-center justify-center gap-1.5 transition-all text-xs font-bold shadow-sm shadow-[#4648d4]/20 active:scale-95 cursor-pointer whitespace-nowrap shrink-0"
             >
-              <Plus size={18} />
-              Add Product
+              <Plus size={16} />
+              <span>Add Product</span>
             </button>
           }
         />

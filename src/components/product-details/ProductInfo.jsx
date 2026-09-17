@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { ShoppingBag, Heart, CreditCard, RotateCcw, Banknote, Truck, Award, ShieldCheck, Star } from 'lucide-react';
 import { useWishlist } from '../../context/WishlistContext';
 import { useAuth } from '../../context/AuthContext';
@@ -88,11 +88,16 @@ const ProductInfo = ({ product, activeVariant, onVariantChange }) => {
     discount = Math.round(((mrp - price) / mrp) * 100);
   }
 
-  // Color Variants Mapping
+  // Color / Shade / Fragrance Variants Mapping
+  const isColorAttribute = (a) => {
+    const name = a.attribute?.name?.toLowerCase();
+    return name === 'color' || name === 'colour' || name === 'color / shade' || name === 'shade' || name === 'fragrance / scent' || name === 'fragrance' || name === 'scent' || a.attribute?.fieldType === 'color';
+  };
+
   const colorVariantsMap = new Map();
   product.variants?.forEach(v => {
-    const colorAttr = v.attributes?.find(a => a.attribute?.name?.toLowerCase() === 'color');
-    const colorName = colorAttr?.option?.displayName || 'default';
+    const colorAttr = v.attributes?.find(isColorAttribute);
+    const colorName = colorAttr?.option?.displayName || colorAttr?.option?.storedValue || 'default';
     if (!colorVariantsMap.has(colorName)) {
       colorVariantsMap.set(colorName, v);
     }
@@ -118,64 +123,135 @@ const ProductInfo = ({ product, activeVariant, onVariantChange }) => {
     { icon: ShieldCheck, title: "Secure Transaction" },
   ];
 
-  const activeColorAttr = activeVariant.attributes?.find(a => a.attribute?.name?.toLowerCase() === 'color');
-  const activeColorName = activeColorAttr?.option?.displayName || 'default';
+  const activeColorAttr = activeVariant.attributes?.find(isColorAttribute);
+  const activeColorName = activeColorAttr?.option?.displayName || activeColorAttr?.option?.storedValue || 'default';
 
-  // Size Variants Mapping for the Active Color
-  const variantsOfActiveColor = product.variants?.filter(v => {
-    const cAttr = v.attributes?.find(a => a.attribute?.name?.toLowerCase() === 'color');
-    const cName = cAttr?.option?.displayName || 'default';
-    return cName === activeColorName;
-  }) || [];
+  // Variants Mapping for the Active Color (or all variants if product has no color attribute)
+  const variantsOfActiveColor = useMemo(() => {
+    return product.variants?.filter(v => {
+      const cAttr = v.attributes?.find(isColorAttribute);
+      if (!cAttr) return true;
+      const cName = cAttr?.option?.displayName || cAttr?.option?.storedValue || 'default';
+      return cName === activeColorName;
+    }) || [];
+  }, [product.variants, activeColorName]);
 
-  let secondaryAttributeName = 'Size';
-  const uniqueSizesMap = new Map();
-  const isLaptop = 
-    product.category?.name?.toLowerCase() === 'laptop' || 
-    product.category?.slug?.toLowerCase() === 'laptop' || 
-    (typeof product.category === 'string' && product.category.toLowerCase() === 'laptop') ||
-    (Array.isArray(product.categories) && product.categories.some(c => 
-      c?.name?.toLowerCase() === 'laptop' || 
-      c?.slug?.toLowerCase() === 'laptop' || 
-      (typeof c === 'string' && c.toLowerCase() === 'laptop')
-    ));
+  // Group all non-color attributes dynamically (e.g. RAM, Storage, Size, etc.)
+  const secondaryAttributeGroups = useMemo(() => {
+    const groupsMap = new Map();
 
-  variantsOfActiveColor.forEach(v => {
-    let secAttr;
-    if (isLaptop) {
-      secAttr = v.attributes?.find(a => a.attribute?.name?.toLowerCase().includes('processor'));
-    }
-    if (!secAttr) {
-      secAttr = v.attributes?.find(a => a.attribute?.name?.toLowerCase() !== 'color');
-    }
-    if (secAttr && secAttr.attribute?.name) {
-      secondaryAttributeName = secAttr.attribute.name;
-    }
-    const name = secAttr?.option?.displayName;
-    if (name) {
-      // To handle stock, we can sum the stock of all variants with this name
-      const existing = uniqueSizesMap.get(name);
-      const isCurrentlyActive = v._id === activeVariant._id;
-      
-      if (!existing) {
-        uniqueSizesMap.set(name, {
-          name,
-          stock: v.stock || 0,
-          variantId: v._id,
-          isActive: isCurrentlyActive
-        });
-      } else {
-        existing.stock += (v.stock || 0);
-        // If this variant is the active one, use its variantId and set isActive
-        if (isCurrentlyActive) {
-          existing.variantId = v._id;
-          existing.isActive = true;
+    variantsOfActiveColor.forEach(v => {
+      v.attributes?.forEach(attr => {
+        if (isColorAttribute(attr)) return;
+
+        const attrName = attr.attribute?.name;
+        if (!attrName) return;
+
+        const optName = attr.option?.displayName || attr.option?.storedValue;
+        if (!optName) return;
+
+        if (!groupsMap.has(attrName)) {
+          groupsMap.set(attrName, {
+            name: attrName,
+            optionsMap: new Map(),
+          });
         }
-      }
+
+        const group = groupsMap.get(attrName);
+        if (!group.optionsMap.has(optName)) {
+          group.optionsMap.set(optName, {
+            name: optName,
+            stock: v.stock || 0,
+            variantId: v._id,
+            status: v.status,
+          });
+        } else {
+          const existing = group.optionsMap.get(optName);
+          existing.stock += (v.stock || 0);
+        }
+      });
+    });
+
+    return Array.from(groupsMap.values()).map(g => ({
+      name: g.name,
+      options: Array.from(g.optionsMap.values()),
+    }));
+  }, [variantsOfActiveColor]);
+
+  // Handler for selecting an attribute option dynamically
+  const handleAttributeOptionChange = (targetAttrName, targetOptName) => {
+    const matchingVariants = variantsOfActiveColor.filter(v => 
+      v.attributes?.some(a => 
+        a.attribute?.name?.toLowerCase() === targetAttrName.toLowerCase() && 
+        (a.option?.displayName === targetOptName || a.option?.storedValue === targetOptName)
+      )
+    );
+
+    if (matchingVariants.length === 0) return;
+
+    // Pick the variant that matches the maximum other active attributes
+    const bestMatch = matchingVariants.sort((a, b) => {
+      const scoreA = a.attributes?.filter(attrA => 
+        activeVariant.attributes?.some(act => 
+          act.attribute?.name === attrA.attribute?.name && 
+          (act.option?._id === attrA.option?._id || act.option?.displayName === attrA.option?.displayName)
+        )
+      ).length || 0;
+
+      const scoreB = b.attributes?.filter(attrB => 
+        activeVariant.attributes?.some(act => 
+          act.attribute?.name === attrB.attribute?.name && 
+          (act.option?._id === attrB.option?._id || act.option?.displayName === attrB.option?.displayName)
+        )
+      ).length || 0;
+
+      return scoreB - scoreA;
+    })[0];
+
+    if (bestMatch) {
+      onVariantChange(bestMatch._id);
     }
-  });
-  
-  const availableSizes = Array.from(uniqueSizesMap.values());
+  };
+
+  // Combine product-level attributes and active variant attributes for Specifications
+  const allSpecifications = useMemo(() => {
+    const specsMap = new Map();
+
+    // 1. Add product-level attributes (e.g. Processor, Display Size, OS, Material, Fit, etc.)
+    if (Array.isArray(product.attributes)) {
+      product.attributes.forEach(attr => {
+        const name = attr.attribute?.name;
+        if (name && Array.isArray(attr.values) && attr.values.length > 0) {
+          const valStr = attr.values.map(val => {
+            if (!val) return '';
+            let clean = val;
+            const attrName = name.toLowerCase();
+            if (attrName.includes('material') || attrName.includes('fabric')) {
+              clean = clean.replace(/(\d+)-/g, '$1% ');
+            }
+            return clean.replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+          }).filter(Boolean).join(', ');
+          
+          if (valStr) {
+            specsMap.set(name.toLowerCase(), { name, value: valStr });
+          }
+        }
+      });
+    }
+
+    // 2. Add active variant attributes (e.g. Color, RAM, Storage, Size, etc.)
+    if (Array.isArray(activeVariant.attributes)) {
+      activeVariant.attributes.forEach(attr => {
+        const name = attr.attribute?.name;
+        const val = attr.option?.displayName || attr.option?.storedValue;
+        if (name && val && !specsMap.has(name.toLowerCase())) {
+          specsMap.set(name.toLowerCase(), { name, value: val });
+        }
+      });
+    }
+
+    return Array.from(specsMap.values());
+  }, [product.attributes, activeVariant.attributes]);
 
   return (
     <div className="flex flex-col">
@@ -249,14 +325,16 @@ const ProductInfo = ({ product, activeVariant, onVariantChange }) => {
         </div>
       </div>
 
-      {/* Select Color */}
+      {/* Select Color / Shade */}
       {uniqueColorVariants.length > 1 && (
         <div className="mb-6">
-          <h4 className="text-[13px] font-bold text-[#282c3f] uppercase tracking-wide mb-2.5">Select Color</h4>
+          <h4 className="text-[13px] font-bold text-[#282c3f] uppercase tracking-wide mb-2.5">
+            Select {activeColorAttr?.attribute?.name || 'Color'}
+          </h4>
           <div className="flex flex-wrap gap-4">
             {uniqueColorVariants.map((v) => {
-              const cAttr = v.attributes?.find(a => a.attribute?.name?.toLowerCase() === 'color');
-              const cName = cAttr?.option?.displayName || 'default';
+              const cAttr = v.attributes?.find(isColorAttribute);
+              const cName = cAttr?.option?.displayName || cAttr?.option?.storedValue || 'default';
               const isSelected = cName === activeColorName;
               return (
                 <button
@@ -266,7 +344,7 @@ const ProductInfo = ({ product, activeVariant, onVariantChange }) => {
                   title={cName}
                 >
                   <div className={`relative w-14 h-18 rounded overflow-hidden border-2 transition-all ${isSelected ? 'border-[#FD7100]' : 'border-transparent group-hover:border-[#d4d5d9]'}`}>
-                    <img src={v.mainImage?.url} alt={cName} className="w-full h-full object-cover"  loading="lazy" decoding="async" />
+                    <img src={v.mainImage?.url} alt={cName} className="w-full h-full object-cover" loading="lazy" decoding="async" />
                   </div>
                   <span className={`text-[11px] font-semibold transition-colors ${isSelected ? 'text-[#FD7100]' : 'text-gray-500 group-hover:text-gray-800'}`}>
                     {cName}
@@ -278,53 +356,65 @@ const ProductInfo = ({ product, activeVariant, onVariantChange }) => {
         </div>
       )}
 
-      {/* Select Secondary Option */}
-      {availableSizes.length > 0 && (
-        <div className="mb-7">
-          <div className="mb-3.5 flex items-center gap-14">
-            <h4 className="text-[13px] font-bold text-[#282c3f] uppercase tracking-wide">Select {secondaryAttributeName}</h4>
-            {secondaryAttributeName.toLowerCase() === 'size' && (
-              <button
-                type="button"
-                onClick={() => setIsSizeChartOpen(true)}
-                className="text-[12px] font-bold text-[#FD7100] hover:underline transition-all cursor-pointer uppercase tracking-wide"
-              >
-                View Size Chart
-              </button>
-            )}
-          </div>
-          <div className="flex flex-wrap gap-2.5">
-            {availableSizes.map((size) => {
-              const isOutOfStock = size.stock <= 0;
-              const isSize = secondaryAttributeName.toLowerCase() === 'size';
-              return (
+      {/* Dynamic Secondary Attribute Selectors (RAM, Storage, Size, etc.) */}
+      {secondaryAttributeGroups.map((group) => {
+        const isSize = group.name.toLowerCase() === 'size';
+        const activeOption = activeVariant.attributes?.find(a => 
+          a.attribute?.name?.toLowerCase() === group.name.toLowerCase()
+        );
+        const activeOptionName = activeOption?.option?.displayName || activeOption?.option?.storedValue;
+
+        return (
+          <div key={group.name} className="mb-6">
+            <div className="mb-3 flex items-center gap-14">
+              <h4 className="text-[13px] font-bold text-[#282c3f] uppercase tracking-wide">
+                Select {group.name}
+              </h4>
+              {isSize && (
                 <button
-                  key={size.variantId}
-                  onClick={() => !isOutOfStock && onVariantChange(size.variantId)}
-                  disabled={isOutOfStock}
-                  className={`relative overflow-hidden flex items-center justify-center text-[13px] font-bold transition-all border
-                    ${isSize ? 'w-11 h-11 rounded-full' : 'px-4 py-2 rounded-md min-w-[3rem]'}
-                    ${
-                      isOutOfStock 
-                        ? 'border-red-500 text-[#282c3f] cursor-not-allowed bg-white' 
-                        : size.isActive 
-                          ? 'border-[#FD7100] text-[#FD7100] cursor-pointer bg-white' 
-                          : 'border-[#bfc0c6] text-[#282c3f] hover:border-[#282c3f] cursor-pointer bg-white'
-                    }
-                  `}
+                  type="button"
+                  onClick={() => setIsSizeChartOpen(true)}
+                  className="text-[12px] font-bold text-[#FD7100] hover:underline transition-all cursor-pointer uppercase tracking-wide"
                 >
-                  {size.name}
-                  {isOutOfStock && (
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      <div className="w-[140%] h-[1.5px] bg-red-500 -rotate-45" />
-                    </div>
-                  )}
+                  View Size Chart
                 </button>
-              );
-            })}
+              )}
+            </div>
+            <div className="flex flex-wrap gap-2.5">
+              {group.options.map((opt) => {
+                const isSelected = activeOptionName === opt.name;
+                const isOutOfStock = opt.stock <= 0;
+
+                return (
+                  <button
+                    key={opt.name}
+                    type="button"
+                    onClick={() => !isOutOfStock && handleAttributeOptionChange(group.name, opt.name)}
+                    disabled={isOutOfStock}
+                    className={`relative overflow-hidden flex items-center justify-center text-[13px] font-bold transition-all border
+                      ${isSize ? 'w-11 h-11 rounded-full' : 'px-4 py-2 rounded-md min-w-[3rem]'}
+                      ${
+                        isOutOfStock 
+                          ? 'border-red-500 text-[#282c3f] cursor-not-allowed bg-white' 
+                          : isSelected 
+                            ? 'border-[#FD7100] text-[#FD7100] cursor-pointer bg-[#FFF5ED] ring-1 ring-[#FD7100]' 
+                            : 'border-[#bfc0c6] text-[#282c3f] hover:border-[#282c3f] cursor-pointer bg-white'
+                      }
+                    `}
+                  >
+                    {opt.name}
+                    {isOutOfStock && (
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div className="w-[140%] h-[1.5px] bg-red-500 -rotate-45" />
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })}
 
       <div className="flex flex-col sm:flex-row gap-3.5 mb-7">
         <button 
@@ -375,32 +465,18 @@ const ProductInfo = ({ product, activeVariant, onVariantChange }) => {
       )}
 
       {/* Specifications */}
-      {product.attributes && product.attributes.length > 0 && (
-        <div>
+      {allSpecifications.length > 0 && (
+        <div className="mb-7">
           <h4 className="text-[18px] font-extrabold text-[#282c3f] tracking-wide mb-3.5">
             Specifications
           </h4>
           <div className="grid grid-cols-2 gap-x-8 gap-y-4">
-            {product.attributes.map((attr, idx) => {
-              if (!attr.attribute?.name) return null;
-              
-              const formattedValues = attr.values?.map(val => {
-                if (!val) return '';
-                let clean = val;
-                const attrName = attr.attribute?.name?.toLowerCase() || '';
-                if (attrName.includes('material') || attrName.includes('fabric')) {
-                  clean = clean.replace(/(\d+)-/g, '$1% ');
-                }
-                return clean.replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-              }).join(", ");
-
-              return (
-                <div key={idx} className="border-b border-[#eaeaec] pb-2.5">
-                  <div className="text-[12px] text-[#7e818c] mb-1">{attr.attribute.name}</div>
-                  <div className="text-[13px] text-[#282c3f]">{formattedValues}</div>
-                </div>
-              );
-            })}
+            {allSpecifications.map((attr, idx) => (
+              <div key={idx} className="border-b border-[#eaeaec] pb-2.5">
+                <div className="text-[12px] text-[#7e818c] mb-1">{attr.name}</div>
+                <div className="text-[13.5px] font-semibold text-[#282c3f]">{attr.value}</div>
+              </div>
+            ))}
           </div>
         </div>
       )}
@@ -413,7 +489,7 @@ const ProductInfo = ({ product, activeVariant, onVariantChange }) => {
         isOpen={isSizeChartOpen}
         onClose={() => setIsSizeChartOpen(false)}
         product={product}
-        availableSizes={availableSizes}
+        availableSizes={secondaryAttributeGroups.find(g => g.name.toLowerCase() === 'size')?.options || []}
         activeVariantId={activeVariant._id}
         onSelectSize={onVariantChange}
       />

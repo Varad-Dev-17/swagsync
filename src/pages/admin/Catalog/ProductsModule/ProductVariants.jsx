@@ -24,8 +24,8 @@ const ProductVariants = forwardRef(({ isUnifiedMode = false, categoryId = null, 
   // Derived Attributes
   const primaryAttribute = useMemo(() => {
     if (!mappedAttributes || mappedAttributes.length === 0) return null;
-    const colorAttr = mappedAttributes.find(a => a.name.toLowerCase() === 'color');
-    if (colorAttr) return colorAttr;
+    const leadAttr = mappedAttributes.find(a => /^(color|color \/ shade|shade|fragrance \/ scent|fragrance|scent|flavor|flavour)$/i.test(a.name) || a.fieldType === 'color');
+    if (leadAttr) return leadAttr;
     return mappedAttributes[0];
   }, [mappedAttributes]);
 
@@ -34,7 +34,7 @@ const ProductVariants = forwardRef(({ isUnifiedMode = false, categoryId = null, 
     return mappedAttributes.filter(a => a._id !== primaryAttribute._id);
   }, [mappedAttributes, primaryAttribute]);
 
-  const isColorGroup = primaryAttribute?.name?.toLowerCase() === 'color';
+  const isColorGroup = primaryAttribute?.fieldType === 'color' || /^(color|color \/ shade|shade|fragrance \/ scent|fragrance|scent)$/i.test(primaryAttribute?.name || '');
 
   // Form State (Grouped)
   const getEmptyGroup = () => {
@@ -897,15 +897,13 @@ const ProductVariants = forwardRef(({ isUnifiedMode = false, categoryId = null, 
                <div>
                  <div className="flex justify-between items-center mb-4">
                    <h3 className="text-base font-bold text-[#221B59]">Inventory Configurations</h3>
-                   {secondaryAttributes.length > 0 && (
-                     <button 
-                       type="button" 
-                       onClick={addRow}
-                       className="text-[11px] font-semibold text-[#4648d4] border border-[#4648d4]/30 hover:bg-[#4648d4]/5 px-3 py-1.5 rounded-md flex items-center gap-1 transition-colors uppercase tracking-wide"
-                     >
-                       <Plus size={14} /> {isColorGroup && secondaryAttributes[0].name.toLowerCase() === 'size' ? 'Add Size' : 'Add Option'}
-                     </button>
-                   )}
+                   <button 
+                     type="button" 
+                     onClick={addRow}
+                     className="text-[11px] font-semibold text-[#4648d4] border border-[#4648d4]/30 hover:bg-[#4648d4]/5 px-3 py-1.5 rounded-md flex items-center gap-1 transition-colors uppercase tracking-wide"
+                   >
+                     <Plus size={14} /> {secondaryAttributes.length > 0 ? (isColorGroup && secondaryAttributes[0]?.name.toLowerCase() === 'size' ? 'Add Size' : 'Add Option') : 'Add Variant'}
+                   </button>
                  </div>
                  
                  <div className="overflow-x-auto">
@@ -921,9 +919,7 @@ const ProductVariants = forwardRef(({ isUnifiedMode = false, categoryId = null, 
                          <th className="pb-2 px-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider">Price (₹)</th>
                          <th className="pb-2 px-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider w-20">GST</th>
                          <th className="pb-2 px-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider w-20">Status</th>
-                         {secondaryAttributes.length > 0 && (
-                           <th className="pb-2 px-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider w-10 text-center">Act</th>
-                         )}
+                         <th className="pb-2 px-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider w-10 text-center">Act</th>
                        </tr>
                      </thead>
                      <tbody className="divide-y divide-gray-50">
@@ -976,13 +972,17 @@ const ProductVariants = forwardRef(({ isUnifiedMode = false, categoryId = null, 
                                  {item.status}
                                </button>
                              </td>
-                             {secondaryAttributes.length > 0 && (
-                               <td className="p-1 text-center">
-                                 <button type="button" onClick={() => removeRow(index)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors">
-                                   <Trash2 size={14} />
-                                 </button>
-                               </td>
-                             )}
+                             <td className="p-1 text-center">
+                               <button 
+                                 type="button" 
+                                 onClick={() => removeRow(index)} 
+                                 disabled={currentGroup.items.length <= 1}
+                                 className={`p-1.5 rounded-md transition-colors ${currentGroup.items.length <= 1 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-400 hover:text-red-500 hover:bg-red-50'}`}
+                                 title={currentGroup.items.length <= 1 ? "At least one configuration required" : "Delete configuration"}
+                               >
+                                 <Trash2 size={14} />
+                               </button>
+                             </td>
                            </tr>
                          );
                        })}
@@ -1056,14 +1056,14 @@ const ProductVariants = forwardRef(({ isUnifiedMode = false, categoryId = null, 
           <div className="flex flex-col items-center justify-center py-10 px-4 border border-dashed border-gray-200 rounded-xl">
              <Package className="w-10 h-10 text-gray-300 mb-3" />
              <p className="text-sm font-medium text-gray-600 mb-1">No variant groups added yet</p>
-             <p className="text-xs text-gray-400">Add a color group with variants to see them here.</p>
+             <p className="text-xs text-gray-400">Add a variant group to see them here.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
                <thead>
                  <tr className="border-b border-gray-100">
-                   <th className="pb-3 px-2 text-xs font-bold text-gray-500 uppercase tracking-wider">Color</th>
+                   <th className="pb-3 px-2 text-xs font-bold text-gray-500 uppercase tracking-wider">{primaryAttribute?.name || 'Group'}</th>
                    <th className="pb-3 px-2 text-xs font-bold text-gray-500 uppercase tracking-wider">Variants</th>
                    <th className="pb-3 px-2 text-xs font-bold text-gray-500 uppercase tracking-wider">Images</th>
                    <th className="pb-3 px-2 text-xs font-bold text-gray-500 uppercase tracking-wider">Stock</th>
@@ -1087,7 +1087,7 @@ const ProductVariants = forwardRef(({ isUnifiedMode = false, categoryId = null, 
                          </div>
                        </td>
                        <td className="p-3 text-sm text-gray-600 font-medium">
-                         {group.items.length} {group.items.length === 1 ? 'size' : 'sizes'}
+                         {group.items.length} {group.items.length === 1 ? 'variant' : 'variants'}
                        </td>
                        <td className="p-3 text-sm text-gray-600">
                          {1 + (group.galleryImages?.length || 0)}

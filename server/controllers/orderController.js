@@ -685,12 +685,13 @@ export const updateOrderStatus = async (req, res) => {
       mergeAdminNotesSafe(order, adminNotes, "Admin");
     }
 
+    const previousStatus = order.status;
+
     if (status && status !== order.status) {
       if (!validStatuses.includes(status)) {
         return res.status(400).json({ success: false, message: "Invalid status", data: null });
       }
 
-      const currentStatus = order.status;
       const transitionRules = {
         pending: ["processing", "packed", "shipped", "on_the_way", "delivered", "cancelled", "delayed"],
         processing: ["packed", "shipped", "on_the_way", "delivered", "cancelled", "delayed"],
@@ -702,16 +703,16 @@ export const updateOrderStatus = async (req, res) => {
         cancelled: [],
       };
 
-      if (!transitionRules[currentStatus].includes(status)) {
+      if (!transitionRules[previousStatus].includes(status)) {
         return res.status(400).json({
           success: false,
-          message: `Invalid status transition from ${currentStatus} to ${status}`,
+          message: `Invalid status transition from ${previousStatus} to ${status}`,
           data: null,
         });
       }
 
       // Handle cancellation - restore stock
-      if (status === "cancelled" && currentStatus !== "cancelled") {
+      if (status === "cancelled" && previousStatus !== "cancelled") {
         const Variant = (await import("../models/variant.js")).default;
         for (const item of order.items) {
           if (item.variant) {
@@ -722,12 +723,12 @@ export const updateOrderStatus = async (req, res) => {
         }
       }
 
-      if (status === "delivered" && currentStatus !== "delivered") {
+      if (status === "delivered" && previousStatus !== "delivered") {
         order.deliveredAt = new Date();
         if (!paymentStatus && order.paymentStatus === "pending") {
           order.paymentStatus = "paid";
         }
-      } else if (status !== "delivered" && currentStatus === "delivered") {
+      } else if (status !== "delivered" && previousStatus === "delivered") {
         order.deliveredAt = null;
       }
       order.status = status;
@@ -750,7 +751,7 @@ export const updateOrderStatus = async (req, res) => {
       };
 
       const [evType, evDesc, perfBy] = eventMap[status] || [`Status Updated to ${status}`, `Status advanced to ${status}.`, "Admin"];
-      addTimelineEvent(order, evType, evDesc, perfBy, { oldStatus: currentStatus, newStatus: status, trackingNumber: trackingNumber || order.trackingNumber });
+      addTimelineEvent(order, evType, evDesc, perfBy, { oldStatus: previousStatus, newStatus: status, trackingNumber: trackingNumber || order.trackingNumber });
     }
 
     if (paymentStatus) order.paymentStatus = paymentStatus;
@@ -759,7 +760,7 @@ export const updateOrderStatus = async (req, res) => {
     await order.save();
 
     // Send user notification if status changed
-    if (status && status !== currentStatus) {
+    if (status && status !== previousStatus) {
       const statusTitles = {
         processing: "Order Processing",
         packed: "Order Packed!",

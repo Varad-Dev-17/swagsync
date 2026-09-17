@@ -186,7 +186,7 @@ const Reviews = () => {
                   const productImg =
                     rev.variant?.mainImage?.url ||
                     rev.product?.images?.[0]?.url ||
-                    "https://via.placeholder.com/80";
+                    "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'><rect fill='%23f1f5f9' width='80' height='80'/><path fill='%23cbd5e1' d='M25 35a8 8 0 1016 0 8 8 0 00-16 0zm35 28H20a4 4 0 01-3-6l12-16a4 4 0 016 0l5 7 8-10a4 4 0 016 0l12 16a4 4 0 01-3 9z'/></svg>";
                   const prodSlugOrId = rev.product?.slug || rev.product?._id || rev.product;
 
                   // Score Styling

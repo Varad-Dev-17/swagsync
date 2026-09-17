@@ -17,9 +17,10 @@ const ProductView = () => {
   const getVariantGroupId = (variant) => {
     let pOptId = 'default';
     if (variant.attributes && variant.attributes.length > 0) {
-      const colorAttr = variant.attributes.find(a => 
-        a.attribute?.name?.toLowerCase() === 'color' || a.attribute?.name?.toLowerCase() === 'colour'
-      );
+      const colorAttr = variant.attributes.find(a => {
+        const name = a.attribute?.name?.toLowerCase();
+        return name === 'color' || name === 'colour' || name === 'color / shade' || name === 'shade' || a.attribute?.fieldType === 'color';
+      });
       if (colorAttr) {
         pOptId = colorAttr.option?._id?.toString() || colorAttr.option || 'default';
       } else {

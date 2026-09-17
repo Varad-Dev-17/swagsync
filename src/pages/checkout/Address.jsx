@@ -72,13 +72,15 @@ const Address = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f9f9fb] pt-24 sm:pt-[100px] pb-12 sm:pb-24">
-      <div className="w-full px-4 sm:px-6 lg:px-12 xl:px-24 mx-auto max-w-5xl">
-        <CheckoutTracker currentStep="address" />
-
-        <div className="mt-8 flex flex-col lg:flex-row gap-8">
+    <div className="min-h-screen bg-[#f9f9fb] pt-[76px] sm:pt-[82px] pb-12 sm:pb-24">
+      <div className="w-full px-4 sm:px-6 lg:px-8 mx-auto max-w-[1360px]">
+        <div className="flex flex-col lg:flex-row gap-8 lg:gap-10 mt-0 items-start">
           {/* Main Content Area */}
-          <div className="flex-grow">
+          <div className="flex-grow lg:flex-1 min-w-0 space-y-4 w-full">
+            <div className="pb-1">
+              <CheckoutTracker currentStep="address" />
+            </div>
+
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-slate-700">Select Delivery Address</h2>
               <button 
@@ -168,8 +170,8 @@ const Address = () => {
           </div>
 
           {/* Right Column (Proceed Button Block) */}
-          <div className="lg:w-1/3 mt-6 lg:mt-0">
-             <div className="bg-white rounded-xl shadow-[0_2px_20px_-4px_rgba(0,0,0,0.05)] p-6 sticky top-32">
+          <div className="w-full lg:w-[440px] xl:w-[460px] shrink-0 lg:sticky lg:top-[76px] sm:lg:top-[82px] lg:self-start">
+             <div className="bg-white rounded-xl shadow-[0_2px_20px_-4px_rgba(0,0,0,0.05)] p-6">
                 <p className="text-[#535766] text-[13px] mb-6">
                   Please select a delivery address to proceed to the next step.
                 </p>

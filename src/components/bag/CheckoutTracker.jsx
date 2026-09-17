@@ -12,8 +12,8 @@ const CheckoutTracker = ({ currentStep }) => {
   const currentIndex = getStepIndex(currentStep);
 
   return (
-    <div className="w-full flex justify-center items-center py-6">
-      <div className="flex items-center gap-4 sm:gap-6 lg:gap-8">
+    <div className="w-full flex justify-center items-center py-1 sm:py-2">
+      <div className="flex items-center gap-3 sm:gap-4 md:gap-6">
         {steps.map((step, index) => {
           const isActive = index === currentIndex;
           const isPast = index < currentIndex;
@@ -26,7 +26,7 @@ const CheckoutTracker = ({ currentStep }) => {
                 {isClickable ? (
                   <Link
                     to={step.path}
-                    className={`text-[13px] sm:text-[15px] font-bold tracking-widest pb-1 border-b-2 ${
+                    className={`text-[12px] sm:text-[14px] font-bold tracking-widest pb-1 border-b-2 transition-colors ${
                       isActive
                         ? 'text-[#03a685] border-[#03a685]'
                         : 'text-[#535766] border-transparent hover:text-[#03a685]'
@@ -36,7 +36,7 @@ const CheckoutTracker = ({ currentStep }) => {
                   </Link>
                 ) : (
                   <span
-                    className={`text-[13px] sm:text-[15px] font-bold tracking-widest pb-1 border-b-2 border-transparent text-[#7e818c]`}
+                    className={`text-[12px] sm:text-[14px] font-bold tracking-widest pb-1 border-b-2 border-transparent text-[#7e818c]`}
                   >
                     {step.label}
                   </span>
@@ -46,7 +46,7 @@ const CheckoutTracker = ({ currentStep }) => {
               {/* Dotted Divider */}
               {index < steps.length - 1 && (
                 <div
-                  className={`w-12 sm:w-16 md:w-24 border-t-2 border-dashed ${
+                  className={`w-8 sm:w-12 md:w-16 border-t-2 border-dashed ${
                     index < currentIndex ? 'border-[#03a685]' : 'border-gray-300'
                   }`}
                 />

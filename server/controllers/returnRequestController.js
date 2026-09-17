@@ -1,3 +1,5 @@
+import crypto from "crypto";
+import Razorpay from "razorpay";
 import ReturnRequest from "../models/returnRequest.js";
 import Order from "../models/order.js";
 import Product from "../models/product.js";
@@ -8,6 +10,71 @@ import { RETURN_REQUEST_POPULATE_CONFIG, formatAndFilterNotes } from "../utils/p
 import { validateQcTransition, validateRefundTransition, validateReturnStatusTransition } from "../utils/returnValidationHelper.js";
 import { createNotification } from "../utils/notificationHelper.js";
 
+// INIT RAZORPAY PAYMENT FOR EXCHANGE DIFFERENCE
+export const initRazorpayExchangePayment = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { orderId, productId, requestedExchangeVariantId, quantity = 1 } = req.body;
+
+    const order = await Order.findOne({ _id: orderId, user: userId });
+    if (!order) {
+      return res.status(404).json({ success: false, message: "Order not found" });
+    }
+
+    const orderItem = order.items.find((item) => {
+      const pId = typeof item.product === 'object' ? item.product?._id : item.product;
+      return String(pId) === String(productId) || String(item._id) === String(productId);
+    });
+
+    if (!orderItem) {
+      return res.status(404).json({ success: false, message: "Item not found in this order" });
+    }
+
+    const reqVariant = await Variant.findById(requestedExchangeVariantId);
+    if (!reqVariant || reqVariant.product.toString() !== String(orderItem.product?._id || orderItem.product)) {
+      return res.status(400).json({ success: false, message: "Invalid exchange variant selected" });
+    }
+
+    const originalPrice = (orderItem.price || orderItem.sellingPrice || 0) * quantity;
+    const exchangePrice = (reqVariant.price || 0) * quantity;
+    const priceDifference = exchangePrice - originalPrice;
+
+    if (priceDifference <= 0) {
+      return res.status(400).json({ success: false, message: "No extra payment required for this exchange" });
+    }
+
+    const razorpay = new Razorpay({
+      key_id: process.env.RAZORPAY_KEY_ID,
+      key_secret: process.env.RAZORPAY_KEY_SECRET,
+    });
+
+    const options = {
+      amount: Math.round(priceDifference * 100),
+      currency: "INR",
+      receipt: `exc_${userId.toString().slice(-6)}_${Date.now()}`,
+    };
+
+    const razorpayOrder = await razorpay.orders.create(options);
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        order_id: razorpayOrder.id,
+        amount: razorpayOrder.amount,
+        currency: razorpayOrder.currency,
+        key_id: process.env.RAZORPAY_KEY_ID,
+        priceDifference,
+      },
+    });
+  } catch (error) {
+    console.error("Init Razorpay Exchange Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to initialize exchange payment gateway",
+    });
+  }
+};
+
 // CREATE RETURN/EXCHANGE REQUEST
 export const createReturnRequest = async (req, res) => {
   try {
@@ -16,11 +83,16 @@ export const createReturnRequest = async (req, res) => {
       orderId, // Order _id
       productId,
       variantId,
+      quantity = 1,
       type,
       reason,
       additionalDetails,
       images,
       requestedExchangeVariantId,
+      paymentMethod = "cod",
+      razorpayOrderId,
+      razorpayPaymentId,
+      razorpaySignature,
     } = req.body;
 
     // Validate Order exists and belongs to user
@@ -38,9 +110,11 @@ export const createReturnRequest = async (req, res) => {
       const pId = typeof item.product === 'object' ? item.product?._id : item.product;
       const pMatch = String(pId) === String(productId) || String(item._id) === String(productId);
       if (!pMatch) return false;
-      if (!variantId) return true;
-      const vId = typeof item.variant === 'object' ? item.variant?._id : item.variant;
-      return !vId || String(vId) === String(variantId);
+      if (variantId) {
+        const vId = typeof item.variant === 'object' ? item.variant?._id : item.variant;
+        return String(vId) === String(variantId);
+      }
+      return true;
     });
 
     if (!orderItem) {
@@ -51,51 +125,31 @@ export const createReturnRequest = async (req, res) => {
       });
     }
 
-    // Validate Order or Item is Delivered
-    const itemStatus = (orderItem.status || order.status || "").toLowerCase();
-    if (itemStatus !== "delivered") {
+    // Check order delivery status
+    if (order.status !== "delivered") {
       return res.status(400).json({
         success: false,
-        message: "Can only request return/exchange for delivered items",
+        message: "Returns and exchanges can only be requested for delivered orders",
         data: null,
       });
     }
 
-    // Validate Product is returnable & window
-    const product = await Product.findById(productId);
-    if (!product) {
-      return res.status(404).json({
-        success: false,
-        message: "Product not found",
-        data: null,
-      });
-    }
+    // Check return window
+    const returnWindowDays = 7;
+    const deliveryDate = order.deliveredAt || order.updatedAt;
+    const daysSinceDelivery = Math.floor(
+      (new Date() - new Date(deliveryDate)) / (1000 * 60 * 60 * 24)
+    );
 
-    const policy = product.returnPolicy;
-    const isReturnable = policy?.returnable ?? true;
-    const returnDays = policy?.returnDays ?? 7;
-
-    if (!isReturnable) {
+    if (daysSinceDelivery > returnWindowDays) {
       return res.status(400).json({
         success: false,
-        message: "This product is not eligible for return or exchange",
+        message: `Return window expired. Requests must be submitted within ${returnWindowDays} days of delivery`,
         data: null,
       });
     }
 
-    const deliveryDate = order.deliveredAt ? new Date(order.deliveredAt) : new Date(order.updatedAt || Date.now());
-    const expiryDate = new Date(deliveryDate);
-    expiryDate.setDate(expiryDate.getDate() + returnDays);
-
-    if (new Date() > expiryDate) {
-      return res.status(400).json({
-        success: false,
-        message: "Return window has closed",
-        data: null,
-      });
-    }
-
-    // Validate existing active request
+    // Check for existing active return request for this order & product
     const existingRequest = await ReturnRequest.findOne({
       order: orderId,
       product: productId,
@@ -111,11 +165,12 @@ export const createReturnRequest = async (req, res) => {
     }
 
     // Validate exchange logic & Price Calc
-    let originalPrice = orderItem.price || orderItem.sellingPrice || 0;
+    let originalPrice = (orderItem.price || orderItem.sellingPrice || 0) * (quantity || 1);
     let exchangePrice = undefined;
     let priceDifference = undefined;
     let settlementType = undefined;
     let refundAmount = undefined;
+    let paymentStatus = "not_required";
 
     if (type === "exchange") {
       if (!requestedExchangeVariantId) {
@@ -143,15 +198,44 @@ export const createReturnRequest = async (req, res) => {
         });
       }
 
-      exchangePrice = reqVariant.price || 0;
+      exchangePrice = (reqVariant.price || 0) * (quantity || 1);
       priceDifference = exchangePrice - originalPrice;
 
-      if (priceDifference > 0) settlementType = "additional_payment";
-      else if (priceDifference < 0) {
+      if (priceDifference > 0) {
+        settlementType = "additional_payment";
+        if (paymentMethod === "razorpay") {
+          if (!razorpayOrderId || !razorpayPaymentId || !razorpaySignature) {
+            return res.status(400).json({
+              success: false,
+              message: "Razorpay payment details are missing for extra amount",
+              data: null,
+            });
+          }
+
+          const body = razorpayOrderId + "|" + razorpayPaymentId;
+          const expectedSignature = crypto
+            .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+            .update(body.toString())
+            .digest("hex");
+
+          if (expectedSignature !== razorpaySignature) {
+            return res.status(400).json({
+              success: false,
+              message: "Invalid payment verification signature",
+              data: null,
+            });
+          }
+
+          paymentStatus = "paid";
+        } else {
+          paymentStatus = "pending"; // COD - collect on delivery
+        }
+      } else if (priceDifference < 0) {
         settlementType = "refund";
         refundAmount = Math.abs(priceDifference);
+      } else {
+        settlementType = "no_difference";
       }
-      else settlementType = "no_difference";
     } else if (type === "return") {
       settlementType = "refund";
       refundAmount = originalPrice;
@@ -159,7 +243,7 @@ export const createReturnRequest = async (req, res) => {
 
     const origVariantId = (typeof orderItem.variant === 'object' ? orderItem.variant?._id : orderItem.variant) || variantId || undefined;
 
-    // Create request with initial QC and Refund states
+    // Create request with initial states
     const returnRequest = new ReturnRequest({
       order: orderId,
       product: productId,
@@ -175,17 +259,31 @@ export const createReturnRequest = async (req, res) => {
       priceDifference,
       settlementType,
       refundAmount,
+      paymentMethod: settlementType === "additional_payment" ? paymentMethod : undefined,
+      paymentStatus,
+      razorpayOrderId: paymentMethod === "razorpay" ? razorpayOrderId : undefined,
+      razorpayPaymentId: paymentMethod === "razorpay" ? razorpayPaymentId : undefined,
+      razorpaySignature: paymentMethod === "razorpay" ? razorpaySignature : undefined,
       qcStatus: "pending",
-      refundStatus: "not_required",
+      refundStatus: refundAmount && refundAmount > 0 ? "initiated" : "not_required",
     });
 
     // Automatically generate audit timeline event
+    let eventDesc = `Customer submitted request. Reason: ${reason}`;
+    if (type === "exchange") {
+      if (settlementType === "additional_payment") {
+        eventDesc += ` | Extra ₹${priceDifference} paid via ${paymentMethod.toUpperCase()} (${paymentStatus === "paid" ? "Online Paid" : "Collect on Delivery"})`;
+      } else if (settlementType === "refund") {
+        eventDesc += ` | Price Difference Refund of ₹${refundAmount} due to customer`;
+      }
+    }
+
     addTimelineEvent(
       returnRequest,
       type === "exchange" ? "Exchange Requested" : "Return Requested",
-      `Customer submitted request. Reason: ${reason}`,
+      eventDesc,
       "Customer",
-      { reason, type, settlementType }
+      { reason, type, settlementType, priceDifference, paymentMethod, paymentStatus }
     );
 
     await returnRequest.save();
@@ -511,15 +609,36 @@ export const updateReturnRequestStatusAdmin = async (req, res) => {
     if (refundTransactionId !== undefined) request.refundTransactionId = refundTransactionId;
     if (refundFailureReason !== undefined) request.refundFailureReason = refundFailureReason;
 
+    const previousStatus = request.status;
+    const previousRefundStatus = request.refundStatus;
+
     // Handle Return Status mutations & timeline generation
-    if (status && status !== request.status) {
-      // Stock update rules if exchanged / completed
-      if ((status === "exchanged" || status === "completed") && request.status !== "exchanged" && request.status !== "completed" && request.type === "exchange") {
+    if (status && status !== previousStatus) {
+      // Stock update rules if completed / exchanged
+      if ((status === "exchanged" || status === "completed") && previousStatus !== "exchanged" && previousStatus !== "completed") {
         const Variant = (await import("../models/variant.js")).default;
-        if (request.requestedExchangeVariant) {
-          await Variant.findByIdAndUpdate(request.requestedExchangeVariant, {
-            $inc: { stock: -1 },
-          });
+        const qty = Number(request.quantity) || 1;
+
+        if (request.type === "exchange") {
+          // 1. Decrement replacement variant stock (dispatched to customer)
+          if (request.requestedExchangeVariant) {
+            await Variant.findByIdAndUpdate(request.requestedExchangeVariant, {
+              $inc: { stock: -qty },
+            });
+          }
+          // 2. Increment returning original variant stock (returned back to warehouse)
+          if (request.originalVariant) {
+            await Variant.findByIdAndUpdate(request.originalVariant, {
+              $inc: { stock: qty },
+            });
+          }
+        } else if (request.type === "return") {
+          // Increment returned item stock back into warehouse inventory
+          if (request.originalVariant) {
+            await Variant.findByIdAndUpdate(request.originalVariant, {
+              $inc: { stock: qty },
+            });
+          }
         }
       }
 
@@ -550,7 +669,7 @@ export const updateReturnRequestStatusAdmin = async (req, res) => {
       };
 
       const [evType, evDesc, perfBy] = eventMap[status] || [`Status Changed to ${status}`, `Status updated to ${status}.`, "Admin"];
-      addTimelineEvent(request, evType, evDesc, perfBy, { oldStatus: request.status, newStatus: status });
+      addTimelineEvent(request, evType, evDesc, perfBy, { oldStatus: previousStatus, newStatus: status });
 
       request.status = status;
     }
@@ -558,7 +677,7 @@ export const updateReturnRequestStatusAdmin = async (req, res) => {
     await request.save();
 
     // Send user notification if status changed
-    if (status && status !== request.status) {
+    if (status && status !== previousStatus) {
       const displayStatus = status === "pickup_replace" 
         ? "Pickup & Replace" 
         : status === "completed" 
@@ -603,6 +722,80 @@ export const updateReturnRequestStatusAdmin = async (req, res) => {
       success: false,
       message: "Failed to update request",
       data: null,
+    });
+  }
+};
+
+// 1-CLICK AUTOMATED RAZORPAY REFUND (Admin)
+export const processRazorpayRefundAdmin = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const request = await ReturnRequest.findById(id).populate("order");
+    if (!request) {
+      return res.status(404).json({ success: false, message: "Return request not found" });
+    }
+
+    const order = request.order;
+    const paymentId = order?.razorpayPaymentId || request.razorpayPaymentId;
+    if (!paymentId) {
+      return res.status(400).json({
+        success: false,
+        message: "No Razorpay payment ID found on this order to refund against.",
+      });
+    }
+
+    const refundAmount = Number(request.refundAmount || request.originalPrice || 0);
+    if (refundAmount <= 0) {
+      return res.status(400).json({ success: false, message: "Refund amount must be greater than 0" });
+    }
+
+    const razorpay = new Razorpay({
+      key_id: process.env.RAZORPAY_KEY_ID,
+      key_secret: process.env.RAZORPAY_KEY_SECRET,
+    });
+
+    const refund = await razorpay.payments.refund(paymentId, {
+      amount: Math.round(refundAmount * 100),
+      notes: {
+        returnRequestId: request._id.toString(),
+        orderId: order.orderId || order._id.toString(),
+      },
+    });
+
+    request.refundStatus = "completed";
+    request.refundMethod = "RAZORPAY";
+    request.refundTransactionId = refund.id;
+    request.refundProcessedAt = new Date();
+
+    addTimelineEvent(
+      request,
+      "Refund Completed",
+      `₹${refundAmount.toLocaleString("en-IN")} refunded automatically via Razorpay (Refund ID: ${refund.id}).`,
+      "Finance",
+      { refundId: refund.id, amount: refundAmount, gateway: "Razorpay" }
+    );
+
+    await request.save();
+
+    // Synchronize order payment status
+    if (order && request.type === "return") {
+      await Order.findByIdAndUpdate(order._id, { paymentStatus: "refunded" });
+    }
+
+    const populatedRequest = await ReturnRequest.findById(id)
+      .populate(RETURN_REQUEST_POPULATE_CONFIG)
+      .lean();
+
+    return res.status(200).json({
+      success: true,
+      message: `₹${refundAmount.toLocaleString("en-IN")} refunded successfully via Razorpay!`,
+      data: formatAndFilterNotes(populatedRequest, false),
+    });
+  } catch (error) {
+    console.error("Razorpay Refund Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.error?.description || error.message || "Failed to process Razorpay refund",
     });
   }
 };

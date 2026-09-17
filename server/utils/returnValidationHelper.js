@@ -28,16 +28,6 @@ export const validateRefundTransition = (currentRefundStatus, targetRefundStatus
     return { isValid: false, message: `Invalid refund status: ${targetRefundStatus}` };
   }
 
-  // Rule: Refund cannot become processing before initiated (unless existing status is initiated, processing, or failed retry)
-  if (targetRefundStatus === "processing") {
-    if (!["initiated", "processing", "failed"].includes(currentRefundStatus)) {
-      return {
-        isValid: false,
-        message: "Refund cannot transition to processing before it has been initiated."
-      };
-    }
-  }
-
   return { isValid: true };
 };
 

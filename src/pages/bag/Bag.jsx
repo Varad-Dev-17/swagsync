@@ -194,14 +194,16 @@ const Bag = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#f9f9fb] pt-24 sm:pt-[100px] pb-12 sm:pb-24">
-      <div className="w-full px-4 sm:px-6 lg:px-12 xl:px-24 mx-auto">
-        <CheckoutTracker currentStep="bag" />
-
-        <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 mt-6">
+    <div className="min-h-screen bg-[#f9f9fb] pt-[76px] sm:pt-[82px] pb-12 sm:pb-24">
+      <div className="w-full px-4 sm:px-6 lg:px-8 mx-auto max-w-[1360px]">
+        <div className="flex flex-col lg:flex-row gap-8 lg:gap-10 mt-0 items-start">
           {/* Left Column - Cart Items */}
-          <div className="flex-grow lg:w-2/3">
-            <div className="bg-white rounded-xl shadow-[0_2px_20px_-4px_rgba(0,0,0,0.05)] p-4 sm:p-6 lg:p-10 min-h-[300px] lg:min-h-[600px]">
+          <div className="flex-grow lg:flex-1 min-w-0 space-y-4 w-full">
+            <div className="pb-1">
+              <CheckoutTracker currentStep="bag" />
+            </div>
+
+            <div className="bg-white rounded-xl shadow-[0_2px_20px_-4px_rgba(0,0,0,0.05)] p-4 sm:p-6 lg:p-8 min-h-[300px] lg:min-h-[500px]">
               <div className="border-b border-[#eaeaec] pb-4 sm:pb-5 mb-6 sm:mb-8 flex justify-between items-center">
                 <div className="flex items-center gap-3 sm:gap-4">
                   <button
@@ -251,119 +253,10 @@ const Bag = () => {
                 </AnimatePresence>
               </div>
             </div>
-
-            {/* Trust Badges */}
-            <div className="bg-white rounded-xl shadow-[0_2px_20px_-4px_rgba(0,0,0,0.05)] p-6 mt-6 flex justify-between items-center flex-wrap gap-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-[#FD7100]/10 flex items-center justify-center text-[#FD7100]">
-                  <svg
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                    <polyline points="9 12 11 14 15 10"></polyline>
-                  </svg>
-                </div>
-                <div>
-                  <div className="text-[13px] font-bold text-[#282c3f]">
-                    100% Original
-                  </div>
-                  <div className="text-[11px] text-[#7e818c]">
-                    Genuine Products
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-[#03a685]/10 flex items-center justify-center text-[#03a685]">
-                  <svg
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <polyline points="1 4 1 10 7 10"></polyline>
-                    <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
-                  </svg>
-                </div>
-                <div>
-                  <div className="text-[13px] font-bold text-[#282c3f]">
-                    Easy Returns
-                  </div>
-                  <div className="text-[11px] text-[#7e818c]">
-                    15-Day Return Policy
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-[#FD7100]/10 flex items-center justify-center text-[#FD7100]">
-                  <svg
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <rect x="1" y="3" width="15" height="13"></rect>
-                    <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
-                    <circle cx="5.5" cy="18.5" r="2.5"></circle>
-                    <circle cx="18.5" cy="18.5" r="2.5"></circle>
-                  </svg>
-                </div>
-                <div>
-                  <div className="text-[13px] font-bold text-[#282c3f]">
-                    Fast Delivery
-                  </div>
-                  <div className="text-[11px] text-[#7e818c]">
-                    Quick & Reliable
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-yellow-500/10 flex items-center justify-center text-yellow-600">
-                  <svg
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                  </svg>
-                </div>
-                <div>
-                  <div className="text-[13px] font-bold text-[#282c3f]">
-                    Secure Payments
-                  </div>
-                  <div className="text-[11px] text-[#7e818c]">
-                    100% Protected
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
 
           {/* Order Summary */}
-          <div className="w-full lg:w-1/3">
+          <div className="w-full lg:w-[440px] xl:w-[460px] shrink-0 lg:sticky lg:top-[76px] sm:lg:top-[82px] lg:self-start">
             <BagSummary
               totals={totals}
               appliedCoupon={appliedCoupon}

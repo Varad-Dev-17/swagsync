@@ -45,8 +45,12 @@ const ProductDetailsPage = () => {
               setActiveVariant(matchedVariant || prodData.variants[0]);
             } else if (colorQuery) {
               const matchedVariant = prodData.variants.find(v => {
-                const colorAttr = v.attributes?.find(attr => attr.attribute?.name?.toLowerCase() === 'color');
-                return colorAttr?.option?.displayName?.toLowerCase() === colorQuery.toLowerCase();
+                const colorAttr = v.attributes?.find(attr => {
+                  const name = attr.attribute?.name?.toLowerCase();
+                  return name === 'color' || name === 'colour' || name === 'color / shade' || name === 'shade' || attr.attribute?.fieldType === 'color';
+                });
+                return colorAttr?.option?.displayName?.toLowerCase() === colorQuery.toLowerCase() ||
+                       colorAttr?.option?.storedValue?.toLowerCase() === colorQuery.toLowerCase();
               });
               setActiveVariant(matchedVariant || prodData.variants[0]);
             } else {

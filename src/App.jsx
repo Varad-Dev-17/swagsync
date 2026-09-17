@@ -46,6 +46,7 @@ const WishlistPage = lazy(() => import("./pages/wishlist/WishlistPage"));
 const MyAccount = lazy(() => import("./pages/account/MyAccount"));
 const OrderDetails = lazy(() => import("./components/account/orders/orderdetails/OrderDetails"));
 const ReturnExchangeRequest = lazy(() => import("./components/account/orders/returnexchange/ReturnExchangeRequest"));
+const ExchangePayment = lazy(() => import("./pages/account/orders/ExchangePayment"));
 
 // Admin Layout & Pages
 const AdminLayout = lazy(() => import("./layouts/AdminLayout"));
@@ -245,6 +246,17 @@ const AppRoutes = () => {
           <ProtectedRoute>
             <UserLayout>
               <ReturnExchangeRequest />
+            </UserLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/account/orders/:orderId/exchange-payment"
+        element={
+          <ProtectedRoute>
+            <UserLayout>
+              <ExchangePayment />
             </UserLayout>
           </ProtectedRoute>
         }

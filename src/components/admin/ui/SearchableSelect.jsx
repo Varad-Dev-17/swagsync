@@ -135,16 +135,10 @@ const SearchableSelect = ({
   };
 
   // Determine styles based on size
-  const heightClass = size === 'sm' ? 'h-10' : 'h-12';
-  const paddingClass = size === 'sm' ? 'px-3 py-2 text-[13px]' : 'px-4 py-3 text-[14px]';
+  const heightClass = size === 'sm' ? 'h-9.5' : 'h-11';
+  const paddingClass = size === 'sm' ? 'px-3 py-1.5 text-xs sm:text-[13px]' : 'px-4 py-2.5 text-sm';
   
-  let triggerClass = `w-full flex items-center justify-between ${heightClass} ${paddingClass} bg-white border outline-none transition-all cursor-pointer select-none`;
-  
-  if (size === 'md') {
-    triggerClass += ' rounded-xl';
-  } else {
-    triggerClass += ' rounded-lg'; // slightly smaller radius for small size
-  }
+  let triggerClass = `w-full flex items-center justify-between ${heightClass} ${paddingClass} bg-white border outline-none transition-all cursor-pointer select-none rounded-xl`;
 
   if (disabled || loading) {
     triggerClass += ' bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed';

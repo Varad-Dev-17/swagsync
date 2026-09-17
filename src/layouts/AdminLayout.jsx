@@ -9,7 +9,7 @@ const AdminLayout = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   return (
-    <div className="min-h-screen bg-white text-[13px] font-admin">
+    <div className="min-h-screen bg-slate-50/50 text-[13px] font-admin">
       {/* Mobile Sidebar Overlay */}
       <AnimatePresence>
         {sidebarOpen && (
@@ -64,7 +64,7 @@ const AdminLayout = () => {
         </div>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-x-hidden p-4 lg:p-0 flex flex-col">
+        <main className="flex-1 overflow-x-hidden flex flex-col">
           <Outlet />
         </main>
       </div>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CreditCard, Smartphone, Banknote, Building2, Loader2, ShieldCheck } from 'lucide-react';
+import { Banknote, Loader2, ShieldCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
@@ -56,34 +56,16 @@ const Payment = () => {
 
   const paymentMethods = [
     {
-      id: 'upi',
-      title: 'UPI / QR',
-      description: 'Pay directly from your bank account using any UPI app.',
-      icon: <Smartphone size={24} className="text-[#FD7100]" />
-    },
-    {
-      id: 'card',
-      title: 'Credit / Debit Card',
-      description: 'Pay securely with your Visa, Mastercard, or RuPay card.',
-      icon: <CreditCard size={24} className="text-[#FD7100]" />
-    },
-    {
-      id: 'netbanking',
-      title: 'Net Banking',
-      description: 'Pay using your bank\'s internet banking portal.',
-      icon: <Building2 size={24} className="text-[#FD7100]" />
+      id: 'cod',
+      title: 'Cash on Delivery',
+      description: 'Pay in cash when your order is delivered to your doorstep.',
+      icon: <Banknote size={24} className="text-[#FD7100]" />
     },
     {
       id: 'razorpay',
       title: 'Pay with Razorpay',
       description: 'Pay securely using UPI, cards, net banking, and other Razorpay payment options.',
       icon: <ShieldCheck size={24} className="text-[#FD7100]" />
-    },
-    {
-      id: 'cod',
-      title: 'Cash on Delivery',
-      description: 'Pay in cash when your order is delivered to your doorstep.',
-      icon: <Banknote size={24} className="text-[#FD7100]" />
     }
   ];
 
@@ -197,13 +179,15 @@ const Payment = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f9f9fb] pt-24 sm:pt-[100px] pb-12 sm:pb-24">
-      <div className="w-full px-4 sm:px-6 lg:px-12 xl:px-24 mx-auto max-w-5xl">
-        <CheckoutTracker currentStep="payment" />
-
-        <div className="mt-8 flex flex-col lg:flex-row gap-8">
+    <div className="min-h-screen bg-[#f9f9fb] pt-[76px] sm:pt-[82px] pb-12 sm:pb-24">
+      <div className="w-full px-4 sm:px-6 lg:px-8 mx-auto max-w-[1360px]">
+        <div className="flex flex-col lg:flex-row gap-8 lg:gap-10 mt-0 items-start">
           {/* Main Content Area */}
-          <div className="flex-grow">
+          <div className="flex-grow lg:flex-1 min-w-0 space-y-4 w-full">
+            <div className="pb-1">
+              <CheckoutTracker currentStep="payment" />
+            </div>
+
             <h2 className="text-2xl font-bold text-[#111827] mb-6">How would you like to pay?</h2>
             
             <div className="bg-white rounded-xl shadow-[0_2px_20px_-4px_rgba(0,0,0,0.05)] border border-gray-100 overflow-hidden">
@@ -247,8 +231,8 @@ const Payment = () => {
           </div>
 
           {/* Right Column (Proceed Button Block) */}
-          <div className="lg:w-1/3 mt-6 lg:mt-0">
-             <div className="bg-white rounded-xl shadow-[0_2px_20px_-4px_rgba(0,0,0,0.05)] p-6 sticky top-32 border border-gray-100">
+          <div className="w-full lg:w-[440px] xl:w-[460px] shrink-0 lg:sticky lg:top-[76px] sm:lg:top-[82px] lg:self-start">
+             <div className="bg-white rounded-xl shadow-[0_2px_20px_-4px_rgba(0,0,0,0.05)] p-6 border border-gray-100">
                 <h3 className="font-bold text-[16px] text-[#111827] mb-4">Payment Summary</h3>
                 <p className="text-[#535766] text-[13px] mb-6">
                   {selectedMethod === 'razorpay' ? (

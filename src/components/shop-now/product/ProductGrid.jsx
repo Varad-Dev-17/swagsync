@@ -15,8 +15,11 @@ const ProductGrid = ({ paginatedProducts, activeColors = [], priceRange = { min:
         product.variants.forEach(v => {
           if (v.status === 'Inactive') return;
 
-          const colorAttr = v.attributes?.find(attr => attr.attribute?.name?.toLowerCase() === 'color');
-          const colorName = colorAttr?.option?.displayName || 'default';
+          const colorAttr = v.attributes?.find(attr => {
+            const name = attr.attribute?.name?.toLowerCase();
+            return name === 'color' || name === 'colour' || name === 'color / shade' || name === 'shade' || attr.attribute?.fieldType === 'color';
+          });
+          const colorName = colorAttr?.option?.displayName || colorAttr?.option?.storedValue || 'default';
           
           if (!colorGroups.has(colorName)) {
             colorGroups.set(colorName, []);
@@ -179,12 +182,30 @@ const ProductGrid = ({ paginatedProducts, activeColors = [], priceRange = { min:
             }
           }
 
+          // Extract processor for electronics / tech products
+          let processor = '';
+          if (Array.isArray(product.attributes)) {
+            const procAttr = product.attributes.find(a => a.attribute?.name?.toLowerCase() === 'processor');
+            if (procAttr?.values?.[0]) {
+              processor = procAttr.values[0];
+            }
+          }
+          if (!processor && defaultVariant?.attributes) {
+            const varProcAttr = defaultVariant.attributes.find(a => a.attribute?.name?.toLowerCase()?.includes('processor'));
+            if (varProcAttr?.option?.displayName || varProcAttr?.option?.storedValue) {
+              processor = varProcAttr.option.displayName || varProcAttr.option.storedValue;
+            }
+          }
+
           const formattedProduct = {
             _id: `${product._id}-${colorName}`,
             slug: product.slug,
             brand: product.brand?.name || product.brand || "SwagSync",
             title: product.title,
             productName: product.title,
+            processor,
+            department: product.department?.name || product.department,
+            category: product.category?.name || product.category,
             price,
             mrp,
             discountPercentage,

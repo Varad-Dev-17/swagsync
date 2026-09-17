@@ -72,6 +72,19 @@ const ReturnRequestSchema = new mongoose.Schema(
       type: String,
       enum: ["additional_payment", "refund", "no_difference"],
     },
+    paymentMethod: {
+      type: String,
+      enum: ["cod", "razorpay", "upi", "card", "netbanking", "store_credit"],
+      default: "cod",
+    },
+    paymentStatus: {
+      type: String,
+      enum: ["pending", "paid", "failed", "not_required"],
+      default: "not_required",
+    },
+    razorpayOrderId: { type: String },
+    razorpayPaymentId: { type: String },
+    razorpaySignature: { type: String },
     status: {
       type: String,
       enum: [

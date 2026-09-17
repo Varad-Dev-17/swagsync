@@ -160,6 +160,8 @@ const OrdersSection = () => {
     {
       header: 'Order ID',
       accessor: 'orderId',
+      align: 'center',
+      headerAlign: 'center',
       render: (row) => (
         <span className="font-bold text-[#4648d4]">
           {row.orderId || row._id.slice(-8).toUpperCase()}
@@ -169,6 +171,8 @@ const OrdersSection = () => {
     {
       header: 'Product',
       accessor: 'product',
+      align: 'left',
+      headerAlign: 'left',
       render: (row) => {
         const item = row.items && row.items.length > 0 ? row.items[0] : null;
         if (!item) return <span>N/A</span>;
@@ -188,7 +192,7 @@ const OrdersSection = () => {
         const variantText = [color ? `Color: ${color}` : '', size ? `Size: ${size}` : ''].filter(Boolean).join(" | ");
         
         return (
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 py-0.5">
             <div className="w-10 h-10 rounded-md overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-200">
               {productImage ? (
                 <img src={productImage} alt={productName} className="w-full h-full object-cover"  loading="lazy" decoding="async" />
@@ -210,6 +214,8 @@ const OrdersSection = () => {
     {
       header: 'Customer',
       accessor: 'customer',
+      align: 'center',
+      headerAlign: 'center',
       render: (row) => (
         <span className="font-semibold text-gray-900">{row.user?.username || "Unknown"}</span>
       )
@@ -217,6 +223,8 @@ const OrdersSection = () => {
     {
       header: 'Date',
       accessor: 'createdAt',
+      align: 'center',
+      headerAlign: 'center',
       render: (row) => {
         const d = new Date(row.createdAt);
         return (
@@ -234,6 +242,8 @@ const OrdersSection = () => {
     {
       header: 'Payment Method',
       accessor: 'paymentMethod',
+      align: 'center',
+      headerAlign: 'center',
       render: (row) => {
         const method = row.paymentMethod || 'cod';
         let longText = 'Cash on Delivery';
@@ -249,6 +259,8 @@ const OrdersSection = () => {
     {
       header: 'Status',
       accessor: 'status',
+      align: 'center',
+      headerAlign: 'center',
       render: (row) => (
         <div className="flex items-center justify-center">
            {getStatusBadge(row.status, row._id)}
@@ -258,11 +270,12 @@ const OrdersSection = () => {
     {
       header: 'Actions',
       align: 'center',
+      headerAlign: 'center',
       render: (row) => (
         <div className="flex items-center justify-center">
           <button
             onClick={() => navigate(`/admin/orders/${row._id}`)}
-            className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-[13px] font-semibold text-[#4648d4] bg-indigo-50 hover:bg-indigo-100 rounded-md transition-colors border border-indigo-100 shadow-sm"
+            className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-[13px] font-semibold text-[#4648d4] bg-indigo-50 hover:bg-indigo-100 rounded-md transition-colors border border-indigo-100 shadow-sm cursor-pointer"
           >
             <Eye size={14} />
             View
@@ -275,72 +288,53 @@ const OrdersSection = () => {
   return (
     <div className="flex flex-col gap-6 p-6">
       
-      {/* Top Stats Row */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      {/* Top Stats Row - Compact & Left-Aligned */}
+      <div className="flex flex-wrap items-center gap-3.5 sm:gap-4">
         {/* All Orders */}
-        <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm flex flex-col gap-2">
-          <div className="flex items-center gap-3">
-             <div className="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center text-[#4648d4] shrink-0 border border-indigo-100">
-               <Box size={20} />
-             </div>
-             <div className="flex flex-col">
-               <p className="text-[11px] text-gray-500 font-semibold uppercase tracking-wide">All Orders</p>
-             </div>
+        <div className="bg-white rounded-xl px-5 py-3.5 border border-slate-200/90 shadow-2xs flex items-center gap-3.5 hover:border-slate-300 transition-colors w-full sm:w-auto sm:min-w-[185px]">
+          <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-[#4648d4] shrink-0">
+            <Box size={19} className="stroke-[2.2]" />
           </div>
-          <div className="flex items-end justify-between mt-1">
-             <h3 className="text-2xl font-bold text-gray-900 leading-none">{stats.total}</h3>
-             <p className="text-[10px] text-gray-400 font-medium">All Time</p>
+          <div className="min-w-0">
+            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider truncate">All Orders</p>
+            <h3 className="text-xl font-extrabold text-slate-900 tracking-tight leading-tight mt-0.5">{stats.total}</h3>
+            <p className="text-[11px] text-slate-400 font-medium truncate">All Time</p>
           </div>
         </div>
-        
-
 
         {/* Shipped */}
-        <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm flex flex-col gap-2">
-          <div className="flex items-center gap-3">
-             <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center text-green-500 shrink-0 border border-green-100">
-               <Truck size={20} />
-             </div>
-             <div className="flex flex-col">
-               <p className="text-[11px] text-gray-500 font-semibold uppercase tracking-wide">Shipped</p>
-             </div>
+        <div className="bg-white rounded-xl px-5 py-3.5 border border-slate-200/90 shadow-2xs flex items-center gap-3.5 hover:border-slate-300 transition-colors w-full sm:w-auto sm:min-w-[185px]">
+          <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 shrink-0">
+            <Truck size={19} className="stroke-[2.2]" />
           </div>
-          <div className="flex items-end justify-between mt-1">
-             <h3 className="text-2xl font-bold text-gray-900 leading-none">{stats.shipped || 0}</h3>
-             <p className="text-[10px] text-gray-400 font-medium">Orders</p>
+          <div className="min-w-0">
+            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider truncate">Shipped</p>
+            <h3 className="text-xl font-extrabold text-blue-600 tracking-tight leading-tight mt-0.5">{stats.shipped || 0}</h3>
+            <p className="text-[11px] text-slate-400 font-medium truncate">Orders</p>
           </div>
         </div>
 
-
         {/* Delivered */}
-        <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm flex flex-col gap-2">
-          <div className="flex items-center gap-3">
-             <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-500 shrink-0 border border-emerald-100">
-               <CheckCircle2 size={20} />
-             </div>
-             <div className="flex flex-col">
-               <p className="text-[11px] text-gray-500 font-semibold uppercase tracking-wide">Delivered</p>
-             </div>
+        <div className="bg-white rounded-xl px-5 py-3.5 border border-slate-200/90 shadow-2xs flex items-center gap-3.5 hover:border-slate-300 transition-colors w-full sm:w-auto sm:min-w-[185px]">
+          <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
+            <CheckCircle2 size={19} className="stroke-[2.2]" />
           </div>
-          <div className="flex items-end justify-between mt-1">
-             <h3 className="text-2xl font-bold text-gray-900 leading-none">{stats.delivered}</h3>
-             <p className="text-[10px] text-gray-400 font-medium">Orders</p>
+          <div className="min-w-0">
+            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider truncate">Delivered</p>
+            <h3 className="text-xl font-extrabold text-emerald-600 tracking-tight leading-tight mt-0.5">{stats.delivered}</h3>
+            <p className="text-[11px] text-slate-400 font-medium truncate">Orders</p>
           </div>
         </div>
 
         {/* Cancelled */}
-        <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm flex flex-col gap-2">
-          <div className="flex items-center gap-3">
-             <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center text-red-500 shrink-0 border border-red-100">
-               <XCircle size={20} />
-             </div>
-             <div className="flex flex-col">
-               <p className="text-[11px] text-gray-500 font-semibold uppercase tracking-wide">Cancelled</p>
-             </div>
+        <div className="bg-white rounded-xl px-5 py-3.5 border border-slate-200/90 shadow-2xs flex items-center gap-3.5 hover:border-slate-300 transition-colors w-full sm:w-auto sm:min-w-[185px]">
+          <div className="w-10 h-10 rounded-xl bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-600 shrink-0">
+            <XCircle size={19} className="stroke-[2.2]" />
           </div>
-          <div className="flex items-end justify-between mt-1">
-             <h3 className="text-2xl font-bold text-gray-900 leading-none">{stats.cancelled}</h3>
-             <p className="text-[10px] text-gray-400 font-medium">Orders</p>
+          <div className="min-w-0">
+            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider truncate">Cancelled</p>
+            <h3 className="text-xl font-extrabold text-rose-600 tracking-tight leading-tight mt-0.5">{stats.cancelled}</h3>
+            <p className="text-[11px] text-slate-400 font-medium truncate">Orders</p>
           </div>
         </div>
       </div>

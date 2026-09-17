@@ -307,12 +307,25 @@ const ProductForm = forwardRef(({ isEdit = false, isUnifiedMode = false, onFormC
             });
 
             const existingVal = fetchedAttributesRef.current?.find(a =>
-              (a.attribute?._id || a.attribute) === attr._id
+              (a.attribute?._id || a.attribute)?.toString() === attr._id.toString()
             );
+
+            let initialValues = [];
+            if (existingVal && Array.isArray(existingVal.values) && existingVal.values.length > 0) {
+              initialValues = existingVal.values.map(v => {
+                const matchedOpt = options.find(o => 
+                  o.storedValue === v || 
+                  o.displayName === v || 
+                  o.displayName?.toLowerCase() === v?.toString().toLowerCase() ||
+                  o.storedValue?.toLowerCase() === v?.toString().toLowerCase()
+                );
+                return matchedOpt ? matchedOpt.storedValue : v;
+              });
+            }
 
             initialData.push({
               attribute: attr._id,
-              values: existingVal ? existingVal.values : []
+              values: initialValues
             });
           }
 
@@ -520,9 +533,16 @@ const ProductForm = forwardRef(({ isEdit = false, isUnifiedMode = false, onFormC
         );
       case 'select':
       case 'multiselect':
+        const matchedOpt = config.options.find(
+          o => o.storedValue === currentValue || 
+               o.displayName === currentValue || 
+               o.displayName?.toLowerCase() === currentValue?.toString().toLowerCase() ||
+               o.storedValue?.toLowerCase() === currentValue?.toString().toLowerCase()
+        );
+        const resolvedVal = matchedOpt ? matchedOpt.storedValue : currentValue;
         return (
           <select
-            value={currentValue}
+            value={resolvedVal}
             onChange={(e) => handleValueChange(e.target.value)}
             className={`w-full px-4 h-12 border ${borderClass} rounded-lg outline-none focus:ring-1 transition-colors bg-white cursor-pointer`}
           >

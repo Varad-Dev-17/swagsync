@@ -15,11 +15,17 @@ const WishlistCard = ({ item }) => {
 
   if (!product || !variant) return null;
 
-  const colorAttr = variant.attributes?.find(attr => attr.attribute?.name?.toLowerCase() === 'color');
-  const colorName = colorAttr?.option?.displayName || 'default';
+  const colorAttr = variant.attributes?.find(attr => {
+    const name = attr.attribute?.name?.toLowerCase();
+    return name === 'color' || name === 'colour' || name === 'color / shade' || name === 'shade' || attr.attribute?.fieldType === 'color';
+  });
+  const colorName = colorAttr?.option?.displayName || colorAttr?.option?.storedValue || 'default';
   
-  const sizeAttr = variant.attributes?.find(attr => attr.attribute?.name?.toLowerCase() === 'size');
-  const sizeName = sizeAttr?.option?.displayName || '';
+  const sizeAttr = variant.attributes?.find(attr => {
+    const name = attr.attribute?.name?.toLowerCase();
+    return name === 'size' || name === 'size / net quantity';
+  });
+  const sizeName = sizeAttr?.option?.displayName || sizeAttr?.option?.storedValue || '';
 
   const price = variant.price || product.price || 0;
   const mrp = variant.mrp || product.mrp || price;

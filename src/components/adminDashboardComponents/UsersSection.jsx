@@ -205,54 +205,54 @@ const UsersSection = () => {
         </button>
       </div>
 
-      {/* 2. Stat Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
+      {/* 2. Stat Cards - Compact & Left-Aligned */}
+      <div className="flex flex-wrap items-center gap-3.5 sm:gap-4">
         
         {/* Total Users */}
-        <div className="bg-white rounded-xl p-4 sm:p-4.5 border border-slate-200 shadow-2xs flex items-center gap-3.5 hover:border-slate-300 transition-colors">
-          <div className="w-12 h-12 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center shrink-0 text-[#4F46E5]">
-            <Users size={22} className="stroke-[2.2]" />
+        <div className="bg-white rounded-xl px-5 py-3.5 border border-slate-200/90 shadow-2xs flex items-center gap-3.5 hover:border-slate-300 transition-colors w-full sm:w-auto sm:min-w-[205px]">
+          <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center shrink-0 text-[#4F46E5]">
+            <Users size={19} className="stroke-[2.2]" />
           </div>
           <div className="min-w-0">
-            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider truncate">Total Users</p>
-            <h3 className="text-2xl sm:text-[26px] font-bold text-slate-900 tracking-tight leading-tight mt-0.5">{stats.total}</h3>
-            <p className="text-xs text-slate-400 font-medium mt-0.5 truncate">All registered users</p>
+            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider truncate">Total Users</p>
+            <h3 className="text-xl font-extrabold text-slate-900 tracking-tight leading-tight mt-0.5">{stats.total}</h3>
+            <p className="text-[11px] text-slate-400 font-medium truncate">All registered users</p>
           </div>
         </div>
 
         {/* Active Users */}
-        <div className="bg-white rounded-xl p-4 sm:p-4.5 border border-slate-200 shadow-2xs flex items-center gap-3.5 hover:border-slate-300 transition-colors">
-          <div className="w-12 h-12 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center shrink-0 text-emerald-600">
-            <CheckCircle2 size={22} className="stroke-[2.2]" />
+        <div className="bg-white rounded-xl px-5 py-3.5 border border-slate-200/90 shadow-2xs flex items-center gap-3.5 hover:border-slate-300 transition-colors w-full sm:w-auto sm:min-w-[205px]">
+          <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center shrink-0 text-emerald-600">
+            <CheckCircle2 size={19} className="stroke-[2.2]" />
           </div>
           <div className="min-w-0">
-            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider truncate">Active Users</p>
-            <h3 className="text-2xl sm:text-[26px] font-bold text-slate-900 tracking-tight leading-tight mt-0.5">{stats.active}</h3>
-            <p className="text-xs text-slate-400 font-medium mt-0.5 truncate">Verified & active</p>
+            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider truncate">Active Users</p>
+            <h3 className="text-xl font-extrabold text-emerald-600 tracking-tight leading-tight mt-0.5">{stats.active}</h3>
+            <p className="text-[11px] text-slate-400 font-medium truncate">Verified & active</p>
           </div>
         </div>
 
         {/* Admins */}
-        <div className="bg-white rounded-xl p-4 sm:p-4.5 border border-slate-200 shadow-2xs flex items-center gap-3.5 hover:border-slate-300 transition-colors">
-          <div className="w-12 h-12 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center shrink-0 text-purple-600">
-            <Shield size={22} className="stroke-[2.2]" />
+        <div className="bg-white rounded-xl px-5 py-3.5 border border-slate-200/90 shadow-2xs flex items-center gap-3.5 hover:border-slate-300 transition-colors w-full sm:w-auto sm:min-w-[205px]">
+          <div className="w-10 h-10 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center shrink-0 text-purple-600">
+            <Shield size={19} className="stroke-[2.2]" />
           </div>
           <div className="min-w-0">
-            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider truncate">Admins</p>
-            <h3 className="text-2xl sm:text-[26px] font-bold text-slate-900 tracking-tight leading-tight mt-0.5">{stats.admins}</h3>
-            <p className="text-xs text-slate-400 font-medium mt-0.5 truncate">Administrators</p>
+            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider truncate">Admins</p>
+            <h3 className="text-xl font-extrabold text-purple-600 tracking-tight leading-tight mt-0.5">{stats.admins}</h3>
+            <p className="text-[11px] text-slate-400 font-medium truncate">Administrators</p>
           </div>
         </div>
 
         {/* Restricted Users */}
-        <div className="bg-white rounded-xl p-4 sm:p-4.5 border border-slate-200 shadow-2xs flex items-center gap-3.5 hover:border-slate-300 transition-colors">
-          <div className="w-12 h-12 rounded-xl bg-rose-50 border border-rose-100 flex items-center justify-center shrink-0 text-rose-600">
-            <ShieldAlert size={22} className="stroke-[2.2]" />
+        <div className="bg-white rounded-xl px-5 py-3.5 border border-slate-200/90 shadow-2xs flex items-center gap-3.5 hover:border-slate-300 transition-colors w-full sm:w-auto sm:min-w-[205px]">
+          <div className="w-10 h-10 rounded-xl bg-rose-50 border border-rose-100 flex items-center justify-center shrink-0 text-rose-600">
+            <ShieldAlert size={19} className="stroke-[2.2]" />
           </div>
           <div className="min-w-0">
-            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider truncate">Restricted Users</p>
-            <h3 className="text-2xl sm:text-[26px] font-bold text-slate-900 tracking-tight leading-tight mt-0.5">{stats.restricted}</h3>
-            <p className="text-xs text-slate-400 font-medium mt-0.5 truncate">Blocked or restricted</p>
+            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider truncate">Restricted Users</p>
+            <h3 className="text-xl font-extrabold text-rose-600 tracking-tight leading-tight mt-0.5">{stats.restricted}</h3>
+            <p className="text-[11px] text-slate-400 font-medium truncate">Blocked or restricted</p>
           </div>
         </div>
 
@@ -385,7 +385,7 @@ const UsersSection = () => {
                     <tr key={user._id} className="hover:bg-slate-50/60 transition-colors">
                       
                       {/* 1. User Info */}
-                      <td className="px-5 py-4">
+                      <td className="px-5 py-2.5">
                         <div className="flex items-center gap-3.5 pl-8 sm:pl-12 lg:pl-16">
                           <UserAvatar user={user} initial={initial} />
                           <div className="min-w-0">
@@ -400,14 +400,14 @@ const UsersSection = () => {
                       </td>
 
                       {/* 2. Status */}
-                      <td className="px-4 py-4 text-center">
+                      <td className="px-4 py-2.5 text-center">
                         <div className="flex justify-center">
                           {statusBadge}
                         </div>
                       </td>
 
                       {/* 3. Role Dropdown */}
-                      <td className="px-4 py-4 text-center">
+                      <td className="px-4 py-2.5 text-center">
                         <div className="relative inline-block">
                           <select
                             value={user.isAdmin ? "admin" : "user"}
@@ -432,12 +432,12 @@ const UsersSection = () => {
                       </td>
 
                       {/* 4. Joined Date */}
-                      <td className="px-4 py-4 text-center text-slate-700 font-medium text-sm">
+                      <td className="px-4 py-2.5 text-center text-slate-700 font-medium text-xs sm:text-sm">
                         {dateStr}
                       </td>
 
                       {/* 5. Actions */}
-                      <td className="px-5 py-4 text-center">
+                      <td className="px-5 py-2.5 text-center">
                         <div className="inline-flex items-center justify-center gap-1.5 sm:gap-2 flex-wrap sm:flex-nowrap">
                           
                           {/* View Button */}

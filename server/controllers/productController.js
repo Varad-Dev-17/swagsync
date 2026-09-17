@@ -70,7 +70,7 @@ export const getAllVariantGroups = async (req, res) => {
     let colorOptionIds = [];
     if (colors) {
       const colorNames = colors.split(',').map(s => s.trim());
-      const colorAttr = await Attribute.findOne({ name: { $regex: /^color$/i } }).lean();
+      const colorAttr = await Attribute.findOne({ name: { $regex: /^(color|color \/ shade|shade)$/i } }).lean();
       if (colorAttr) {
         const opts = await AttributeOption.find({
           attribute: colorAttr._id,
@@ -162,7 +162,7 @@ export const getAllVariantGroups = async (req, res) => {
       const firstVariant = product.variants[0];
       if (firstVariant && firstVariant.attributes) {
         const colorAttr = firstVariant.attributes.find(
-          a => a.attribute && a.attribute.name && a.attribute.name.toLowerCase() === 'color'
+          a => a.attribute && ((a.attribute.name && /^(color|color \/ shade|shade)$/i.test(a.attribute.name)) || a.attribute.fieldType === 'color')
         );
         if (colorAttr && colorAttr.attribute) {
           primaryAttrId = colorAttr.attribute._id;
@@ -336,7 +336,7 @@ export const getAllProducts = async (req, res) => {
     let colorOptionIds = [];
     if (colors) {
       const colorNames = colors.split(',').map(s => s.trim());
-      const colorAttr = await Attribute.findOne({ name: { $regex: /^color$/i } }).lean();
+      const colorAttr = await Attribute.findOne({ name: { $regex: /^(color|color \/ shade|shade)$/i } }).lean();
       if (colorAttr) {
         const opts = await AttributeOption.find({
           attribute: colorAttr._id,
@@ -470,6 +470,7 @@ export const getAllProducts = async (req, res) => {
     // Populate variant attributes safely on returned docs
     if (products.length > 0) {
       await Product.populate(products, [
+        { path: "attributes.attribute", model: "Attribute", select: "name fieldType" },
         { path: "variants.attributes.attribute", model: "Attribute", select: "name fieldType" },
         { path: "variants.attributes.option", model: "AttributeOption", select: "displayName storedValue" }
       ]);

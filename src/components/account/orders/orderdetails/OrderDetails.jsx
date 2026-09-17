@@ -179,7 +179,7 @@ const OrderDetails = () => {
                     <div className="flex items-start sm:items-center gap-4 flex-1 min-w-0">
                       <div className="w-14 h-16 sm:w-16 sm:h-20 bg-gray-100 rounded-none overflow-hidden border border-gray-200 shrink-0 shadow-2xs">
                         <img 
-                          src={item.variant?.mainImage?.url || item.product?.images?.[0]?.url || "https://via.placeholder.com/150"} 
+                          src={item.variant?.mainImage?.url || item.product?.images?.[0]?.url || 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="150" height="150" viewBox="0 0 150 150"><rect fill="%23f1f5f9" width="150" height="150"/><path fill="%23cbd5e1" d="M45 60a15 15 0 1030 0 15 15 0 00-30 0zm67 52H38a7 7 0 01-6-11l22-29a7 7 0 0111 0l10 13 15-19a7 7 0 0111 0l22 29a7 7 0 01-6 17z"/></svg>'} 
                           alt={item.product?.title || "Product"} 
                           className="w-full h-full object-cover"
                          loading="lazy" decoding="async" />

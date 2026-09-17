@@ -163,15 +163,15 @@ const Coupons = () => {
   const columns = [
     {
       header: "COUPON CODE",
-      align: "left",
+      align: "center",
       render: (row) => (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-center gap-2">
           <span className="font-mono font-bold text-sm tracking-wider text-gray-900 bg-gray-100 px-2.5 py-1 rounded-md border border-gray-200">
             {row.code}
           </span>
           <button
             onClick={() => copyCode(row.code)}
-            className="text-gray-400 hover:text-[#4648d4] p-1 transition-colors"
+            className="text-gray-400 hover:text-[#4648d4] p-1 transition-colors cursor-pointer"
             title="Copy Code"
           >
             <Copy size={13} />
@@ -272,9 +272,9 @@ const Coupons = () => {
     },
     {
       header: "ACTIONS",
-      align: "right",
+      align: "center",
       render: (row) => (
-        <div className="flex items-center justify-end gap-2">
+        <div className="flex items-center justify-center gap-2">
           <button
             onClick={() => {
               setCouponToEdit(row);
@@ -326,41 +326,41 @@ const Coupons = () => {
           </button>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="bg-white rounded-xl border border-slate-200/90 p-5 shadow-2xs flex items-center gap-4 hover:border-slate-300 transition-colors">
-            <div className="w-12 h-12 rounded-xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center shrink-0">
-              <Ticket size={24} />
+        {/* Stats Cards - Compact & Left-Aligned */}
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="bg-white rounded-xl border border-slate-200/90 px-6 py-4.5 shadow-2xs flex items-center gap-4 hover:border-slate-300 transition-colors w-full sm:w-auto sm:min-w-[220px]">
+            <div className="w-11 h-11 rounded-xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+              <Ticket size={21} />
             </div>
             <div>
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+              <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                 Total Coupons
               </p>
-              <h3 className="text-2xl font-bold text-slate-900 mt-0.5">{stats.total}</h3>
+              <h3 className="text-xl font-extrabold text-slate-900 leading-tight mt-0.5">{stats.total}</h3>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl border border-slate-200/90 p-5 shadow-2xs flex items-center gap-4 hover:border-slate-300 transition-colors">
-            <div className="w-12 h-12 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
-              <CheckCircle2 size={24} />
+          <div className="bg-white rounded-xl border border-slate-200/90 px-6 py-4.5 shadow-2xs flex items-center gap-4 hover:border-slate-300 transition-colors w-full sm:w-auto sm:min-w-[220px]">
+            <div className="w-11 h-11 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+              <CheckCircle2 size={21} />
             </div>
             <div>
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+              <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                 Active Vouchers
               </p>
-              <h3 className="text-2xl font-bold text-emerald-600 mt-0.5">{stats.active}</h3>
+              <h3 className="text-xl font-extrabold text-emerald-600 leading-tight mt-0.5">{stats.active}</h3>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl border border-slate-200/90 p-5 shadow-2xs flex items-center gap-4 hover:border-slate-300 transition-colors">
-            <div className="w-12 h-12 rounded-xl bg-red-50 border border-red-100 text-red-600 flex items-center justify-center shrink-0">
-              <Clock size={24} />
+          <div className="bg-white rounded-xl border border-slate-200/90 px-6 py-4.5 shadow-2xs flex items-center gap-4 hover:border-slate-300 transition-colors w-full sm:w-auto sm:min-w-[220px]">
+            <div className="w-11 h-11 rounded-xl bg-red-50 border border-red-100 text-red-600 flex items-center justify-center shrink-0">
+              <Clock size={21} />
             </div>
             <div>
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+              <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                 Expired Coupons
               </p>
-              <h3 className="text-2xl font-bold text-red-500 mt-0.5">{stats.expired}</h3>
+              <h3 className="text-xl font-extrabold text-red-500 leading-tight mt-0.5">{stats.expired}</h3>
             </div>
           </div>
         </div>

@@ -177,6 +177,8 @@ const ReturnsSection = () => {
     {
       header: 'Product',
       accessor: 'product',
+      align: 'left',
+      headerAlign: 'left',
       render: (row) => {
         const product = row.product;
         const variant = row.originalVariant;
@@ -196,7 +198,7 @@ const ReturnsSection = () => {
         const variantText = [color ? `Color: ${color}` : '', size ? `Size: ${size}` : ''].filter(Boolean).join(" | ");
 
         return (
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2.5 py-0.5">
             <div className="w-8 h-8 rounded overflow-hidden bg-gray-100 shrink-0 border border-gray-200">
               {productImage ? (
                 <img src={productImage} alt={productName} className="w-full h-full object-cover"  loading="lazy" decoding="async" />
@@ -299,90 +301,66 @@ const ReturnsSection = () => {
   return (
     <div className="flex flex-col gap-6 p-6">
       
-      {/* Top Stats Row */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+      {/* Top Stats Row - Compact & Left-Aligned */}
+      <div className="flex flex-wrap items-center gap-3.5 sm:gap-4">
         
         {/* Pending */}
-        <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm flex flex-col gap-2 relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-1 h-full bg-orange-400"></div>
-          <div className="flex items-center justify-between">
-             <div className="flex flex-col">
-               <p className="text-[12px] text-gray-500 font-bold tracking-wide">Pending</p>
-             </div>
-             <div className="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center text-orange-500 shrink-0">
-               <Clock size={20} />
-             </div>
+        <div className="bg-white rounded-xl px-5 py-3.5 border border-slate-200/90 shadow-2xs flex items-center gap-3.5 hover:border-slate-300 transition-colors w-full sm:w-auto sm:min-w-[185px]">
+          <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center shrink-0 text-amber-600">
+            <Clock size={19} className="stroke-[2.2]" />
           </div>
-          <div className="flex items-end justify-between mt-1">
-             <h3 className="text-2xl font-bold text-gray-900 leading-none">{stats.pending}</h3>
-             <p className="text-[11px] text-gray-400 font-medium">Requests</p>
+          <div className="min-w-0">
+            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider truncate">Pending</p>
+            <h3 className="text-xl font-extrabold text-slate-900 tracking-tight leading-tight mt-0.5">{stats.pending}</h3>
+            <p className="text-[11px] text-slate-400 font-medium truncate">Requests</p>
           </div>
         </div>
 
         {/* Approved */}
-        <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm flex flex-col gap-2 relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-1 h-full bg-emerald-400"></div>
-          <div className="flex items-center justify-between">
-             <div className="flex flex-col">
-               <p className="text-[12px] text-gray-500 font-bold tracking-wide">Approved</p>
-             </div>
-             <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-500 shrink-0">
-               <CheckCircle2 size={20} />
-             </div>
+        <div className="bg-white rounded-xl px-5 py-3.5 border border-slate-200/90 shadow-2xs flex items-center gap-3.5 hover:border-slate-300 transition-colors w-full sm:w-auto sm:min-w-[185px]">
+          <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center shrink-0 text-emerald-600">
+            <CheckCircle2 size={19} className="stroke-[2.2]" />
           </div>
-          <div className="flex items-end justify-between mt-1">
-             <h3 className="text-2xl font-bold text-gray-900 leading-none">{stats.approved}</h3>
-             <p className="text-[11px] text-gray-400 font-medium">Requests</p>
+          <div className="min-w-0">
+            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider truncate">Approved</p>
+            <h3 className="text-xl font-extrabold text-emerald-600 tracking-tight leading-tight mt-0.5">{stats.approved}</h3>
+            <p className="text-[11px] text-slate-400 font-medium truncate">Requests</p>
           </div>
         </div>
 
         {/* Rejected */}
-        <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm flex flex-col gap-2 relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-1 h-full bg-rose-400"></div>
-          <div className="flex items-center justify-between">
-             <div className="flex flex-col">
-               <p className="text-[12px] text-gray-500 font-bold tracking-wide">Rejected</p>
-             </div>
-             <div className="w-10 h-10 rounded-full bg-rose-50 flex items-center justify-center text-rose-500 shrink-0">
-               <XCircle size={20} />
-             </div>
+        <div className="bg-white rounded-xl px-5 py-3.5 border border-slate-200/90 shadow-2xs flex items-center gap-3.5 hover:border-slate-300 transition-colors w-full sm:w-auto sm:min-w-[185px]">
+          <div className="w-10 h-10 rounded-xl bg-rose-50 border border-rose-100 flex items-center justify-center shrink-0 text-rose-600">
+            <XCircle size={19} className="stroke-[2.2]" />
           </div>
-          <div className="flex items-end justify-between mt-1">
-             <h3 className="text-2xl font-bold text-gray-900 leading-none">{stats.rejected}</h3>
-             <p className="text-[11px] text-gray-400 font-medium">Requests</p>
+          <div className="min-w-0">
+            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider truncate">Rejected</p>
+            <h3 className="text-xl font-extrabold text-rose-600 tracking-tight leading-tight mt-0.5">{stats.rejected}</h3>
+            <p className="text-[11px] text-slate-400 font-medium truncate">Requests</p>
           </div>
         </div>
 
         {/* Completed */}
-        <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm flex flex-col gap-2 relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-1 h-full bg-blue-400"></div>
-          <div className="flex items-center justify-between">
-             <div className="flex flex-col">
-               <p className="text-[12px] text-gray-500 font-bold tracking-wide">Completed</p>
-             </div>
-             <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-500 shrink-0">
-               <Box size={20} />
-             </div>
+        <div className="bg-white rounded-xl px-5 py-3.5 border border-slate-200/90 shadow-2xs flex items-center gap-3.5 hover:border-slate-300 transition-colors w-full sm:w-auto sm:min-w-[185px]">
+          <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0 text-blue-600">
+            <Box size={19} className="stroke-[2.2]" />
           </div>
-          <div className="flex items-end justify-between mt-1">
-             <h3 className="text-2xl font-bold text-gray-900 leading-none">{stats.completed}</h3>
-             <p className="text-[11px] text-gray-400 font-medium">Requests</p>
+          <div className="min-w-0">
+            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider truncate">Completed</p>
+            <h3 className="text-xl font-extrabold text-blue-600 tracking-tight leading-tight mt-0.5">{stats.completed}</h3>
+            <p className="text-[11px] text-slate-400 font-medium truncate">Requests</p>
           </div>
         </div>
 
-        {/* Total */}
-        <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm flex flex-col gap-2">
-          <div className="flex items-center justify-between">
-             <div className="flex flex-col">
-               <p className="text-[12px] text-gray-500 font-bold tracking-wide">Total Requests</p>
-             </div>
-             <div className="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center text-purple-500 shrink-0 border border-purple-100">
-               <RefreshCcw size={18} />
-             </div>
+        {/* Total Requests */}
+        <div className="bg-white rounded-xl px-5 py-3.5 border border-slate-200/90 shadow-2xs flex items-center gap-3.5 hover:border-slate-300 transition-colors w-full sm:w-auto sm:min-w-[185px]">
+          <div className="w-10 h-10 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center shrink-0 text-purple-600">
+            <RefreshCcw size={18} className="stroke-[2.2]" />
           </div>
-          <div className="flex items-end justify-between mt-1">
-             <h3 className="text-2xl font-bold text-gray-900 leading-none">{stats.total}</h3>
-             <p className="text-[11px] text-gray-400 font-medium">All Time</p>
+          <div className="min-w-0">
+            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider truncate">Total Requests</p>
+            <h3 className="text-xl font-extrabold text-slate-900 tracking-tight leading-tight mt-0.5">{stats.total}</h3>
+            <p className="text-[11px] text-slate-400 font-medium truncate">All Time</p>
           </div>
         </div>
 
