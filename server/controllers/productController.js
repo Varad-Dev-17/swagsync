@@ -57,8 +57,24 @@ export const getAllVariantGroups = async (req, res) => {
     );
 
     const matchStage2 = {};
-    if (departments) matchStage2["departmentDoc.name"] = { $in: departments.split(",").map(d => d.trim()) };
-    if (categories) matchStage2["categoryDoc.name"] = { $in: categories.split(",").map(c => c.trim()) };
+    if (departments) {
+      const deptList = departments.split(",").map(d => d.trim()).filter(Boolean);
+      matchStage2["departmentDoc.name"] = {
+        $in: deptList.flatMap(d => [
+          new RegExp(`^${d.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, "i"),
+          ...(d.toLowerCase() === "beauty" ? [new RegExp("beauty", "i")] : [])
+        ])
+      };
+    }
+    if (categories) {
+      const catList = categories.split(",").map(c => c.trim()).filter(Boolean);
+      matchStage2["categoryDoc.name"] = {
+        $in: catList.flatMap(c => [
+          new RegExp(`^${c.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, "i"),
+          new RegExp(c.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), "i")
+        ])
+      };
+    }
     if (brands) matchStage2["brandDoc.name"] = { $in: brands.split(",").map(b => b.trim()) };
     
     if (Object.keys(matchStage2).length > 0) pipeline.push({ $match: matchStage2 });
@@ -314,10 +330,22 @@ export const getAllProducts = async (req, res) => {
     // Name-based filters
     const matchStage2 = {};
     if (departments) {
-      matchStage2["departmentDoc.name"] = { $in: departments.split(",").map(d => d.trim()) };
+      const deptList = departments.split(",").map(d => d.trim()).filter(Boolean);
+      matchStage2["departmentDoc.name"] = {
+        $in: deptList.flatMap(d => [
+          new RegExp(`^${d.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, "i"),
+          ...(d.toLowerCase() === "beauty" ? [new RegExp("beauty", "i")] : [])
+        ])
+      };
     }
     if (categories) {
-      matchStage2["categoryDoc.name"] = { $in: categories.split(",").map(c => c.trim()) };
+      const catList = categories.split(",").map(c => c.trim()).filter(Boolean);
+      matchStage2["categoryDoc.name"] = {
+        $in: catList.flatMap(c => [
+          new RegExp(`^${c.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, "i"),
+          new RegExp(c.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), "i")
+        ])
+      };
     }
     if (brands) {
       matchStage2["brandDoc.name"] = { $in: brands.split(",").map(b => b.trim()) };

@@ -77,6 +77,105 @@ const getCategorySection = (catName, deptName = "") => {
   return "Collection";
 };
 
+const BEAUTY_COLUMNS_CONFIG = [
+  {
+    title: "MAKEUP",
+    test: (name) => /foundation|concealer|lipstick|lip|eyeshadow|eyeliner|eye|nail|compact|blush|mascara|makeup|primer|kajal/i.test(name),
+  },
+  {
+    title: "SKINCARE",
+    test: (name) => !/hair/i.test(name) && /cleanser|face wash|moisturizer|face serum|serum|sunscreen|toner|face cream|night cream|sheet mask|face scrub|anti-aging|hand cream|hand/i.test(name),
+  },
+  {
+    title: "HAIRCARE",
+    test: (name) => /shampoo|conditioner|hair oil|hair serum|hair gel|hair mask|hair spray|hair color|hair cream|hair wax|hair|scalp/i.test(name),
+  },
+  {
+    title: "MEN'S GROOMING",
+    test: (name) => /beard|razor|shav|trimmer|aftershave|men|grooming/i.test(name),
+  },
+  {
+    title: "FRAGRANCE",
+    test: (name) => /perfume|deodorant|fragrance|cologne|mist|body spray|eau de/i.test(name),
+  },
+];
+
+const formatCategoryDisplayName = (name) => {
+  if (!name) return "";
+  return name.replace(/\s*&\s*/g, " and ");
+};
+
+const organizeBeautyCategories = (categories = []) => {
+  const result = BEAUTY_COLUMNS_CONFIG.map((col) => ({
+    title: col.title,
+    items: [],
+  }));
+
+  const unassigned = [];
+
+  categories.forEach((cat) => {
+    if (cat.name.includes("&")) {
+      const parts = cat.name.split("&").map(p => p.trim()).filter(Boolean);
+      parts.forEach((subName) => {
+        const itemObj = {
+          displayName: subName,
+          queryCategory: subName,
+          originalCategory: cat.name,
+          _id: `${cat._id}-${subName}`
+        };
+        const matchedCol = result.find((col, index) => BEAUTY_COLUMNS_CONFIG[index].test(subName) || BEAUTY_COLUMNS_CONFIG[index].test(cat.name));
+        if (matchedCol) {
+          matchedCol.items.push(itemObj);
+        } else {
+          unassigned.push(itemObj);
+        }
+      });
+    } else {
+      const itemObj = {
+        displayName: cat.name,
+        queryCategory: cat.name,
+        originalCategory: cat.name,
+        _id: cat._id
+      };
+      const matchedCol = result.find((col, index) => BEAUTY_COLUMNS_CONFIG[index].test(cat.name));
+      if (matchedCol) {
+        matchedCol.items.push(itemObj);
+      } else {
+        unassigned.push(itemObj);
+      }
+    }
+  });
+
+  if (unassigned.length > 0) {
+    unassigned.forEach((item) => {
+      result[result.length - 1].items.push(item);
+    });
+  }
+
+  result.forEach((col) => {
+    const uniqueItems = [];
+    const seen = new Set();
+    col.items.forEach(item => {
+      const key = item.displayName.toLowerCase();
+      if (!seen.has(key)) {
+        seen.add(key);
+        uniqueItems.push(item);
+      }
+    });
+    uniqueItems.sort((a, b) => a.displayName.localeCompare(b.displayName));
+    col.items = uniqueItems;
+  });
+
+  return result;
+};
+
+const getDisplayDeptName = (name) => {
+  if (!name) return "";
+  const lower = name.toLowerCase();
+  if (lower.includes("beauty") || lower.includes("personal care")) return "BEAUTY";
+  return name.toUpperCase();
+};
+
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -333,6 +432,7 @@ const Navbar = () => {
                   <div className="flex items-center gap-8 xl:gap-10 h-full">
 
                     {departments.map((dept) => {
+                      const isBeautyDept = dept.name?.toLowerCase().includes("beauty") || dept.slug?.includes("beauty");
                       const isCurrent = location.pathname === "/products" && currentDeptParam === dept.name;
                       const isHovered = activeHoverDept === dept.name;
                       const deptCategories = categoriesByDept[dept.name] || [];
@@ -354,115 +454,158 @@ const Navbar = () => {
                               color: isCurrent || isHovered ? "#FD7100" : (isNavSolid ? "#111827" : "white"),
                             }}
                           >
-                            {dept.name}
+                            {getDisplayDeptName(dept.name)}
                             {(isCurrent || isHovered) && (
                               <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#FD7100] rounded-full transition-all duration-200" />
                             )}
                           </Link>
 
-                          {/* Desktop Mega-Menu Dropdown (Anchored directly below category tab) */}
-                          {!isAdmin && isHovered && (() => {
-                            // Group categories by smart section header
-                            const sectionGroups = {};
-                            deptCategories.forEach((cat) => {
-                              const section = getCategorySection(cat.name, dept.name);
-                              if (!sectionGroups[section]) sectionGroups[section] = [];
-                              sectionGroups[section].push(cat);
-                            });
-                            const sectionNames = Object.keys(sectionGroups);
-
-                            // Determine dynamic columns based on section count and items
-                            const sectionCount = Math.max(1, sectionNames.length);
-                            const numCols = Math.min(5, Math.max(1, sectionCount));
-
-                            // Distribute section headers into columns
-                            const columns = Array.from({ length: numCols }, () => []);
-                            if (deptCategories.length === 0) {
-                              columns[0] = [];
-                            } else {
-                              sectionNames.forEach((secName, idx) => {
-                                columns[idx % numCols].push({ title: secName, items: sectionGroups[secName] });
-                              });
-                            }
-
-                            // Dynamic width styling based on column count - snug and compact to minimize excess whitespace
-                            const getWidthClass = (cols) => {
-                              if (cols === 1) return "w-[220px]";
-                              if (cols === 2) return "w-[420px]";
-                              if (cols === 3) return "w-[580px]";
-                              if (cols === 4) return "w-[760px]";
-                              return "w-[920px]";
-                            };
-
-                            // Center the dropdown horizontally right beneath its corresponding parent department tab
-                            const getPositionClass = (cols) => {
-                              return "left-1/2 -translate-x-1/2";
-                            };
-
-                            const getGridColsClass = (cols) => {
-                              if (cols === 1) return "grid-cols-1";
-                              if (cols === 2) return "grid-cols-2";
-                              if (cols === 3) return "grid-cols-3";
-                              if (cols === 4) return "grid-cols-4";
-                              return "grid-cols-5";
-                            };
-
-                            return (
-                              <div
-                                className={`hidden lg:block absolute top-full ${getPositionClass(numCols)} ${getWidthClass(numCols)} max-w-[95vw] bg-white rounded-none border border-[#E5E7EB] shadow-[0_25px_50px_-12px_rgba(17,24,39,0.18)] transition-all duration-200 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150`}
-                              >
-                                {/* Dynamic Height Grid with Vertical Column Dividers */}
-                                <div className={`grid ${getGridColsClass(numCols)} divide-x divide-[#E5E7EB] h-auto max-h-[75vh] overflow-y-auto`}>
-                                  {deptCategories.length > 0 ? (
-                                    columns.map((colSections, colIdx) => (
-                                      <div key={colIdx} className="py-5 px-4 flex flex-col items-center">
-                                        <div className="w-fit flex flex-col items-start gap-4 text-left">
-                                          {colSections.map((sec, secIdx) => (
-                                            <div key={sec.title} className={`flex flex-col items-start text-left ${secIdx > 0 ? "border-t border-[#E5E7EB]/70 pt-4 w-full" : ""}`}>
-                                              {/* Section Header */}
-                                              <h4
-                                                className="text-[12px] font-extrabold tracking-wider uppercase text-[#FD7100] mb-2.5 select-none text-left whitespace-nowrap"
-                                                style={{ fontFamily: "'Poppins', sans-serif" }}
-                                              >
-                                                {sec.title}
-                                              </h4>
-
-                                              {/* Category Links List */}
-                                              <ul className="space-y-1.5 flex flex-col items-start text-left w-full">
-                                                {sec.items.map((cat) => {
-                                                  const isCatSelected = location.pathname === "/products" && currentDeptParam === dept.name && searchParams.get("category") === cat.name;
-                                                  return (
-                                                    <li key={cat._id} className="w-full text-left">
-                                                      <Link
-                                                        to={`/products?department=${encodeURIComponent(dept.name)}&category=${encodeURIComponent(cat.name)}`}
-                                                        onClick={() => setActiveHoverDept(null)}
-                                                        className={`text-[13px] transition-all block duration-150 py-0.5 truncate text-left ${isCatSelected
-                                                          ? "text-[#FD7100] font-bold"
-                                                          : "text-[#4B5563] font-medium hover:text-[#111827] hover:font-semibold hover:translate-x-0.5"
-                                                          }`}
-                                                        style={{ fontFamily: "'Poppins', sans-serif" }}
-                                                      >
-                                                        {cat.name}
-                                                      </Link>
-                                                    </li>
-                                                  );
-                                                })}
-                                              </ul>
-                                            </div>
-                                          ))}
-                                        </div>
+                          {/* Desktop Mega-Menu Dropdown */}
+                          {!isAdmin && isHovered && (
+                            isBeautyDept ? (() => {
+                              const beautyColumns = organizeBeautyCategories(deptCategories);
+                              return (
+                                <div
+                                  className="hidden lg:block absolute top-full left-1/2 -translate-x-1/2 w-[980px] max-w-[95vw] bg-white rounded-b-2xl border border-gray-100 shadow-[0_20px_45px_-10px_rgba(0,0,0,0.12)] transition-all duration-200 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150"
+                                >
+                                  <div className="grid grid-cols-5 divide-x divide-gray-100">
+                                    {beautyColumns.map((col, idx) => (
+                                      <div key={col.title || idx} className="py-7 px-7 flex flex-col items-start text-left">
+                                        <h4
+                                          className="text-[13px] font-bold tracking-wider uppercase text-[#FD7100] mb-4 select-none"
+                                          style={{ fontFamily: "'Poppins', sans-serif" }}
+                                        >
+                                          {col.title}
+                                        </h4>
+                                        <ul className="space-y-3 flex flex-col items-start text-left w-full">
+                                          {col.items.map((item) => {
+                                            const queryVal = item.queryCategory || item.displayName || item.name;
+                                            const isCatSelected = location.pathname === "/products" && currentDeptParam === dept.name && (searchParams.get("category") === queryVal || searchParams.get("category") === item.originalCategory);
+                                            return (
+                                              <li key={item._id || item.displayName} className="w-full text-left">
+                                                <Link
+                                                  to={`/products?department=${encodeURIComponent(dept.name)}&category=${encodeURIComponent(queryVal)}`}
+                                                  onClick={() => setActiveHoverDept(null)}
+                                                  className={`text-[14px] transition-all block duration-150 py-0.5 text-left ${isCatSelected
+                                                    ? "text-[#FD7100] font-bold"
+                                                    : "text-[#4B5563] font-medium hover:text-[#111827] hover:font-semibold"
+                                                    }`}
+                                                  style={{ fontFamily: "'Poppins', sans-serif" }}
+                                                >
+                                                  {item.displayName || item.name}
+                                                </Link>
+                                              </li>
+                                            );
+                                          })}
+                                        </ul>
                                       </div>
-                                    ))
-                                  ) : (
-                                    <div className="col-span-full p-8 flex flex-col items-center justify-center text-center text-[#6B7280]">
-                                      <p className="text-sm font-semibold text-[#374151]">No categories added under {dept.name} yet</p>
-                                      <p className="text-xs text-gray-400 mt-1">Check back soon for upcoming arrivals!</p>
-                                    </div>
-                                  )}
+                                    ))}
+                                  </div>
                                 </div>
-                              </div>
-                            );
-                          })()}
+                              );
+                            })() : (() => {
+                              // Group categories by smart section header
+                              const sectionGroups = {};
+                              deptCategories.forEach((cat) => {
+                                const section = getCategorySection(cat.name, dept.name);
+                                if (!sectionGroups[section]) sectionGroups[section] = [];
+                                sectionGroups[section].push(cat);
+                              });
+                              const sectionNames = Object.keys(sectionGroups);
+
+                              // Determine dynamic columns based on section count and items
+                              const sectionCount = Math.max(1, sectionNames.length);
+                              const numCols = Math.min(5, Math.max(1, sectionCount));
+
+                              // Distribute section headers into columns
+                              const columns = Array.from({ length: numCols }, () => []);
+                              if (deptCategories.length === 0) {
+                                columns[0] = [];
+                              } else {
+                                sectionNames.forEach((secName, idx) => {
+                                  columns[idx % numCols].push({ title: secName, items: sectionGroups[secName] });
+                                });
+                              }
+
+                              // Dynamic width styling based on column count - snug and compact to minimize excess whitespace
+                              const getWidthClass = (cols) => {
+                                if (cols === 1) return "w-[220px]";
+                                if (cols === 2) return "w-[420px]";
+                                if (cols === 3) return "w-[580px]";
+                                if (cols === 4) return "w-[760px]";
+                                return "w-[920px]";
+                              };
+
+                              // Center the dropdown horizontally right beneath its corresponding parent department tab
+                              const getPositionClass = (cols) => {
+                                return "left-1/2 -translate-x-1/2";
+                              };
+
+                              const getGridColsClass = (cols) => {
+                                if (cols === 1) return "grid-cols-1";
+                                if (cols === 2) return "grid-cols-2";
+                                if (cols === 3) return "grid-cols-3";
+                                if (cols === 4) return "grid-cols-4";
+                                return "grid-cols-5";
+                              };
+
+                              return (
+                                <div
+                                  className={`hidden lg:block absolute top-full ${getPositionClass(numCols)} ${getWidthClass(numCols)} max-w-[95vw] bg-white rounded-b-2xl border border-gray-100 shadow-[0_20px_45px_-10px_rgba(0,0,0,0.12)] transition-all duration-200 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150`}
+                                >
+                                  {/* Dynamic Height Grid with Vertical Column Dividers */}
+                                  <div className={`grid ${getGridColsClass(numCols)} divide-x divide-gray-100 h-auto max-h-[75vh] overflow-y-auto`}>
+                                    {deptCategories.length > 0 ? (
+                                      columns.map((colSections, colIdx) => (
+                                        <div key={colIdx} className="py-6 px-6 flex flex-col items-center">
+                                          <div className="w-fit flex flex-col items-start gap-4 text-left">
+                                            {colSections.map((sec, secIdx) => (
+                                              <div key={sec.title} className={`flex flex-col items-start text-left ${secIdx > 0 ? "border-t border-gray-100 pt-4 w-full" : ""}`}>
+                                                {/* Section Header */}
+                                                <h4
+                                                  className="text-[13px] font-bold tracking-wider uppercase text-[#FD7100] mb-3 select-none text-left whitespace-nowrap"
+                                                  style={{ fontFamily: "'Poppins', sans-serif" }}
+                                                >
+                                                  {sec.title}
+                                                </h4>
+
+                                                {/* Category Links List */}
+                                                <ul className="space-y-2.5 flex flex-col items-start text-left w-full">
+                                                  {sec.items.map((cat) => {
+                                                    const isCatSelected = location.pathname === "/products" && currentDeptParam === dept.name && searchParams.get("category") === cat.name;
+                                                    return (
+                                                      <li key={cat._id} className="w-full text-left">
+                                                        <Link
+                                                          to={`/products?department=${encodeURIComponent(dept.name)}&category=${encodeURIComponent(cat.name)}`}
+                                                          onClick={() => setActiveHoverDept(null)}
+                                                          className={`text-[13.5px] transition-all block duration-150 py-0.5 truncate text-left ${isCatSelected
+                                                            ? "text-[#FD7100] font-bold"
+                                                            : "text-[#4B5563] font-medium hover:text-[#111827] hover:font-semibold"
+                                                            }`}
+                                                          style={{ fontFamily: "'Poppins', sans-serif" }}
+                                                        >
+                                                          {cat.name}
+                                                        </Link>
+                                                      </li>
+                                                    );
+                                                  })}
+                                                </ul>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      ))
+                                    ) : (
+                                      <div className="col-span-full p-8 flex flex-col items-center justify-center text-center text-[#6B7280]">
+                                        <p className="text-sm font-semibold text-[#374151]">No categories added under {dept.name} yet</p>
+                                        <p className="text-xs text-gray-400 mt-1">Check back soon for upcoming arrivals!</p>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })()
+                          )}
                         </div>
                       );
                     })}
@@ -678,6 +821,7 @@ const Navbar = () => {
                 ) : (
                   <div className="flex flex-col space-y-1">
                     {departments.map((dept) => {
+                      const isBeautyDept = dept.name?.toLowerCase().includes("beauty") || dept.slug?.includes("beauty");
                       const isDeptSelected = location.pathname === "/products" && currentDeptParam === dept.name;
                       const isExpanded = mobileExpandedDept === dept.name;
                       const deptCats = categoriesByDept[dept.name] || [];
@@ -686,7 +830,7 @@ const Navbar = () => {
                         <div key={dept._id} className="flex flex-col border-b border-[#E5E7EB]/60 last:border-0 py-1">
                           <div
                             onClick={() => {
-                              if (deptCats.length > 0) {
+                              if (deptCats.length > 0 || isBeautyDept) {
                                 setMobileExpandedDept(isExpanded ? null : dept.name);
                               } else {
                                 navigate(`/products?department=${encodeURIComponent(dept.name)}`);
@@ -705,10 +849,10 @@ const Navbar = () => {
                                 isDeptSelected ? "text-[#FD7100]" : "text-[#111827] hover:text-[#FD7100]"
                               }`}
                             >
-                              {dept.name}
+                              {getDisplayDeptName(dept.name)}
                             </Link>
 
-                            {deptCats.length > 0 && (
+                            {(deptCats.length > 0 || isBeautyDept) && (
                               <button
                                 type="button"
                                 onClick={(e) => {
@@ -727,54 +871,100 @@ const Navbar = () => {
                           </div>
 
                           {/* Expandable Categories Accordion Grouped by Section */}
-                          {isExpanded && deptCats.length > 0 && (() => {
-                            const sectionGroups = {};
-                            deptCats.forEach((cat) => {
-                              const section = getCategorySection(cat.name, dept.name);
-                              if (!sectionGroups[section]) sectionGroups[section] = [];
-                              sectionGroups[section].push(cat);
-                            });
+                          {isExpanded && (
+                            isBeautyDept ? (() => {
+                              const beautyColumns = organizeBeautyCategories(deptCats);
+                              return (
+                                <div className="pl-3 pr-2 py-3 space-y-3 bg-gray-50/70 rounded-xl my-1.5 border-l-2 border-[#FD7100] ml-2 animate-in fade-in duration-200">
+                                  <Link
+                                    to={`/products?department=${encodeURIComponent(dept.name)}`}
+                                    onClick={() => setIsMenuOpen(false)}
+                                    className="inline-flex items-center gap-1.5 text-xs font-bold text-[#FD7100] hover:text-[#E06400] px-2 py-1 uppercase tracking-wider"
+                                  >
+                                    <span>Explore All Beauty</span>
+                                    <span>→</span>
+                                  </Link>
 
-                            return (
-                              <div className="pl-3 pr-2 py-3 space-y-3 bg-gray-50/70 rounded-xl my-1.5 border-l-2 border-[#FD7100] ml-2 animate-in fade-in duration-200">
-                                <Link
-                                  to={`/products?department=${encodeURIComponent(dept.name)}`}
-                                  onClick={() => setIsMenuOpen(false)}
-                                  className="inline-flex items-center gap-1.5 text-xs font-bold text-[#FD7100] hover:text-[#E06400] px-2 py-1 uppercase tracking-wider"
-                                >
-                                  <span>Explore All {dept.name}</span>
-                                  <span>→</span>
-                                </Link>
-
-                                {Object.entries(sectionGroups).map(([sectionTitle, items]) => (
-                                  <div key={sectionTitle} className="space-y-1.5 pt-1">
-                                    <span className="block text-[11px] font-extrabold uppercase tracking-wider text-gray-400 px-2 select-none">
-                                      {sectionTitle}
-                                    </span>
-                                    <div className="grid grid-cols-2 gap-1 px-1">
-                                      {items.map((cat) => {
-                                        const isCatSelected = isDeptSelected && searchParams.get("category") === cat.name;
-                                        return (
-                                          <Link
-                                            key={cat._id}
-                                            to={`/products?department=${encodeURIComponent(dept.name)}&category=${encodeURIComponent(cat.name)}`}
-                                            onClick={() => setIsMenuOpen(false)}
-                                            className={`py-2 px-2.5 text-[13px] rounded-lg transition-colors truncate ${
-                                              isCatSelected
-                                                ? "text-[#FD7100] font-bold bg-[#FD7100]/10"
-                                                : "text-gray-700 hover:text-[#FD7100] hover:bg-white active:bg-gray-100 font-medium"
-                                            }`}
-                                          >
-                                            {cat.name}
-                                          </Link>
-                                        );
-                                      })}
+                                  {beautyColumns.map((sec) => (
+                                    <div key={sec.title} className="space-y-1.5 pt-1">
+                                      <span className="block text-[11px] font-extrabold uppercase tracking-wider text-[#FD7100] px-2 select-none">
+                                        {sec.title}
+                                      </span>
+                                      <div className="grid grid-cols-2 gap-1 px-1">
+                                        {sec.items.map((item) => {
+                                          const queryVal = item.queryCategory || item.displayName || item.name;
+                                          const isCatSelected = isDeptSelected && (searchParams.get("category") === queryVal || searchParams.get("category") === item.originalCategory);
+                                          return (
+                                            <Link
+                                              key={item._id || item.displayName}
+                                              to={`/products?department=${encodeURIComponent(dept.name)}&category=${encodeURIComponent(queryVal)}`}
+                                              onClick={() => setIsMenuOpen(false)}
+                                              className={`py-2 px-2.5 text-[13px] rounded-lg transition-colors truncate ${
+                                                isCatSelected
+                                                  ? "text-[#FD7100] font-bold bg-[#FD7100]/10"
+                                                  : "text-gray-700 hover:text-[#FD7100] hover:bg-white active:bg-gray-100 font-medium"
+                                              }`}
+                                            >
+                                              {item.displayName || item.name}
+                                            </Link>
+                                          );
+                                        })}
+                                      </div>
                                     </div>
+                                  ))}
+                                </div>
+                              );
+                            })() : (
+                              deptCats.length > 0 && (() => {
+                                const sectionGroups = {};
+                                deptCats.forEach((cat) => {
+                                  const section = getCategorySection(cat.name, dept.name);
+                                  if (!sectionGroups[section]) sectionGroups[section] = [];
+                                  sectionGroups[section].push(cat);
+                                });
+
+                                return (
+                                  <div className="pl-3 pr-2 py-3 space-y-3 bg-gray-50/70 rounded-xl my-1.5 border-l-2 border-[#FD7100] ml-2 animate-in fade-in duration-200">
+                                    <Link
+                                      to={`/products?department=${encodeURIComponent(dept.name)}`}
+                                      onClick={() => setIsMenuOpen(false)}
+                                      className="inline-flex items-center gap-1.5 text-xs font-bold text-[#FD7100] hover:text-[#E06400] px-2 py-1 uppercase tracking-wider"
+                                    >
+                                      <span>Explore All {dept.name}</span>
+                                      <span>→</span>
+                                    </Link>
+
+                                    {Object.entries(sectionGroups).map(([sectionTitle, items]) => (
+                                      <div key={sectionTitle} className="space-y-1.5 pt-1">
+                                        <span className="block text-[11px] font-extrabold uppercase tracking-wider text-gray-400 px-2 select-none">
+                                          {sectionTitle}
+                                        </span>
+                                        <div className="grid grid-cols-2 gap-1 px-1">
+                                          {items.map((cat) => {
+                                            const isCatSelected = isDeptSelected && searchParams.get("category") === cat.name;
+                                            return (
+                                              <Link
+                                                key={cat._id}
+                                                to={`/products?department=${encodeURIComponent(dept.name)}&category=${encodeURIComponent(cat.name)}`}
+                                                onClick={() => setIsMenuOpen(false)}
+                                                className={`py-2 px-2.5 text-[13px] rounded-lg transition-colors truncate ${
+                                                  isCatSelected
+                                                    ? "text-[#FD7100] font-bold bg-[#FD7100]/10"
+                                                    : "text-gray-700 hover:text-[#FD7100] hover:bg-white active:bg-gray-100 font-medium"
+                                                }`}
+                                              >
+                                                {cat.name}
+                                              </Link>
+                                            );
+                                          })}
+                                        </div>
+                                      </div>
+                                    ))}
                                   </div>
-                                ))}
-                              </div>
-                            );
-                          })()}
+                                );
+                              })()
+                            )
+                          )}
                         </div>
                       );
                     })}
