@@ -118,7 +118,11 @@ export const AuthProvider = ({ children }) => {
       const response = await api.patch("/auth/send-forgot-password-code", {
         email,
       });
-      return { success: true, message: response.data.message };
+      return {
+        success: true,
+        message: response.data.message,
+        code: response.data.code,
+      };
     } catch (err) {
       return {
         success: false,

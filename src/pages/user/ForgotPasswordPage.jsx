@@ -26,7 +26,10 @@ const ForgotPasswordPage = () => {
     const result = await sendForgotPasswordCode(email);
 
     if (result.success) {
-      setSuccess("Verification code sent to your email!");
+      setSuccess(result.message || "Verification code sent to your email!");
+      if (result.code) {
+        setProvidedCode(result.code);
+      }
       setStep("code");
     } else {
       setError(result.message);

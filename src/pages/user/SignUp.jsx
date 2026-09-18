@@ -30,6 +30,7 @@ const SignUp = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState("form");
   const [verificationCode, setVerificationCode] = useState("");
+  const [infoNotice, setInfoNotice] = useState("");
 
   const navigate = useNavigate();
 
@@ -41,6 +42,7 @@ const SignUp = () => {
     e.preventDefault();
     console.log("Signup started");
     setError("");
+    setInfoNotice("");
     setIsLoading(true);
 
     try {
@@ -50,6 +52,12 @@ const SignUp = () => {
 
       if (response.data.success) {
         console.log("Navigating to OTP verification");
+        if (response.data.verificationCode) {
+          setVerificationCode(response.data.verificationCode);
+        }
+        if (response.data.message) {
+          setInfoNotice(response.data.message);
+        }
         setStep("verify");
       } else {
         setError(response.data.message || "Sign up failed");
@@ -356,6 +364,11 @@ const SignUp = () => {
                       {formData.email}
                     </span>
                   </p>
+                  {infoNotice && (
+                    <div className="mt-3 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs leading-relaxed text-center font-medium shadow-xs">
+                      {infoNotice}
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-2">

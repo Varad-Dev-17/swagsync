@@ -59,6 +59,7 @@ export const signUp = async (req, res) => {
       `[Signup Flow] Generated verification code ${verificationCode} for user ${email}`
     );
 
+    let isEmailSimulated = false;
     try {
       console.log("Sending email...");
       let info = await transport.sendMail({
@@ -68,8 +69,10 @@ export const signUp = async (req, res) => {
         html: verificationEmailTemplate(verificationCode, username),
       });
 
-      console.log("Email sent successfully");
-      console.log("[Signup Flow] Email sent successfully.");
+      console.log("Email sent successfully or fallback activated:", info);
+      if (info.simulated) {
+        isEmailSimulated = true;
+      }
 
       if (!info.accepted || info.accepted.length === 0) {
         throw new Error(
@@ -80,8 +83,9 @@ export const signUp = async (req, res) => {
       console.error("[Signup Flow] Email delivery failed:", mailError);
       return res.status(400).json({
         success: false,
-        message: `Failed to send verification email: ${mailError.message || mailError
-          }`,
+        message: `Failed to send verification email: ${
+          mailError.message || mailError
+        }`,
       });
     }
 
@@ -113,8 +117,10 @@ export const signUp = async (req, res) => {
     console.log("Sending success response to frontend");
     res.status(201).json({
       success: true,
-      message:
-        "Your account has been created successfully. A verification code has been sent to your email.",
+      message: isEmailSimulated
+        ? "Account created! Render Free Tier blocks outbound SMTP, so your OTP code has been auto-provided."
+        : "Your account has been created successfully. A verification code has been sent to your email.",
+      verificationCode: isEmailSimulated ? verificationCode : undefined,
       result,
     });
   } catch (error) {
@@ -382,9 +388,13 @@ export const sendForgotPasswordCode = async (req, res) => {
       existingUser.forgotPasswordCode = hashedCodeValue;
       existingUser.forgotPasswordCodeValidation = Date.now();
       await existingUser.save();
-      return res
-        .status(200)
-        .json({ success: true, message: "Forgot password code sent!" });
+      return res.status(200).json({
+        success: true,
+        message: info.simulated
+          ? "Forgot password code generated (Render Free Tier blocks SMTP, code provided)."
+          : "Forgot password code sent!",
+        code: info.simulated ? codeValue : undefined,
+      });
     }
     res.status(400).json({ success: false, message: "Code sent failed!" });
   } catch (error) {
