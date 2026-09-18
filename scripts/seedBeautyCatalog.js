@@ -172,7 +172,8 @@ async function seedBeautyCatalog() {
     const categoryDefinitions = [
       { name: "Face Moisturizer", slug: "face-moisturizer", image: BEAUTY_IMAGES.skincare.moisturizer },
       { name: "Face Serum", slug: "face-serum", image: BEAUTY_IMAGES.skincare.serum },
-      { name: "Face Wash & Cleanser", slug: "face-wash-cleanser", image: BEAUTY_IMAGES.skincare.facewash },
+      { name: "Face Wash", slug: "face-wash", image: BEAUTY_IMAGES.skincare.facewash },
+      { name: "Cleanser", slug: "cleanser", image: BEAUTY_IMAGES.skincare.facewash },
       { name: "Hand Cream", slug: "hand-cream", image: BEAUTY_IMAGES.skincare.handcream },
       { name: "Sunscreen", slug: "sunscreen", image: BEAUTY_IMAGES.skincare.sunscreen },
       { name: "Shampoo", slug: "shampoo", image: BEAUTY_IMAGES.haircare.shampoo },
@@ -181,9 +182,10 @@ async function seedBeautyCatalog() {
       { name: "Hair Serum", slug: "hair-serum", image: BEAUTY_IMAGES.haircare.hairserum },
       { name: "Hair Gel", slug: "hair-gel", image: BEAUTY_IMAGES.haircare.hairgel },
       { name: "Lipstick", slug: "lipstick", image: BEAUTY_IMAGES.makeup.lipstick },
-      { name: "Liquid Lipstick", slug: "liquid-lipstick", image: BEAUTY_IMAGES.makeup.liquidlipstick },
-      { name: "Foundation & Concealer", slug: "foundation-concealer", image: BEAUTY_IMAGES.makeup.foundation },
-      { name: "Eyeshadow & Eyeliner", slug: "eyeshadow-eyeliner", image: BEAUTY_IMAGES.makeup.lipstick },
+      { name: "Foundation", slug: "foundation", image: BEAUTY_IMAGES.makeup.foundation },
+      { name: "Primer", slug: "primer", image: BEAUTY_IMAGES.makeup.foundation },
+      { name: "Eyeshadow", slug: "eyeshadow", image: BEAUTY_IMAGES.makeup.lipstick },
+      { name: "Eyeliner", slug: "eyeliner", image: BEAUTY_IMAGES.makeup.lipstick },
       { name: "Nail Polish", slug: "nail-polish", image: BEAUTY_IMAGES.makeup.nailpolish },
       { name: "Deodorants", slug: "deodorants", image: BEAUTY_IMAGES.fragrance.deodorant },
       { name: "Perfumes", slug: "perfumes", image: BEAUTY_IMAGES.fragrance.perfume },
@@ -641,9 +643,6 @@ async function seedBeautyCatalog() {
         "Hair Type", "Product Type", "Formulation", "Hair Concern", "Specialty / Claims", "Size / Net Quantity"
       ],
       "Lipstick": [
-        "Product Type", "Formulation", "Finish", "Coverage", "Specialty / Claims", "Color / Shade", "Size / Net Quantity"
-      ],
-      "Liquid Lipstick": [
         "Product Type", "Formulation", "Finish", "Coverage", "Specialty / Claims", "Color / Shade", "Size / Net Quantity"
       ],
       "Foundation & Concealer": [
@@ -1965,7 +1964,7 @@ async function seedBeautyCatalog() {
       },
       {
         title: "Lakmé Liquid Lipstick",
-        category: "Liquid Lipstick",
+        category: "Lipstick",
         brand: "Lakmé",
         shortDescription: "Weightless velvety matte liquid lipstick with 16-hour transfer-proof wear.",
         longDescription: "Glides on like liquid velvet and sets into a non-drying, comfortable matte finish with intense color saturation.",
