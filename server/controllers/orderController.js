@@ -607,30 +607,22 @@ export const createOrder = async (req, res) => {
     await cart.save();
 
     const populatedOrder = await Order.findById(order._id)
-      .populate("items.product", "title images price")
-      .populate({
-        path: "items.variant",
-        populate: [
-          { path: "attributes.attribute" },
-          { path: "attributes.option" }
-        ]
-      })
-      .populate("user", "username email")
+      .populate(ORDER_POPULATE_CONFIG)
       .lean();
 
     try {
       if (populatedOrder.user && populatedOrder.user.email) {
-        transport.sendMail({
+        console.log(`[Order Flow] Dispatching order confirmation email for order ${orderId} to ${populatedOrder.user.email}...`);
+        await transport.sendMail({
           from: `"SwagSync Orders" <${process.env.NODE_CODE_SENDING_EMAIL_ADDRESS}>`,
           to: populatedOrder.user.email,
-          subject: `Order Confirmation - ${orderId}`,
+          subject: `Order Confirmed #${orderId} - SwagSync`,
           html: orderEmailTemplate(populatedOrder, populatedOrder.user),
-        }).catch(emailError => {
-          console.error("Failed to send order confirmation email:", emailError);
         });
+        console.log(`[Order Flow] Order confirmation email dispatched for ${orderId}`);
       }
     } catch (emailError) {
-      console.error("Failed to send order confirmation email:", emailError);
+      console.error("[Order Flow] Failed to send order confirmation email:", emailError);
     }
 
     return res.status(201).json({
@@ -974,17 +966,17 @@ export const cancelOrder = async (req, res) => {
 
     try {
       if (populatedOrder.user && populatedOrder.user.email) {
-        transport.sendMail({
+        console.log(`[Order Flow] Dispatching order cancellation email for order ${populatedOrder.orderId} to ${populatedOrder.user.email}...`);
+        await transport.sendMail({
           from: `"SwagSync Orders" <${process.env.NODE_CODE_SENDING_EMAIL_ADDRESS}>`,
           to: populatedOrder.user.email,
-          subject: `Order Cancelled - ${populatedOrder.orderId}`,
+          subject: `Order Cancelled #${populatedOrder.orderId} - SwagSync`,
           html: cancelEmailTemplate(populatedOrder, populatedOrder.user),
-        }).catch(emailError => {
-          console.error("Failed to send order cancellation email:", emailError);
         });
+        console.log(`[Order Flow] Order cancellation email dispatched for ${populatedOrder.orderId}`);
       }
     } catch (emailError) {
-      console.error("Failed to send order cancellation email:", emailError);
+      console.error("[Order Flow] Failed to send order cancellation email:", emailError);
     }
 
     return res.status(200).json({

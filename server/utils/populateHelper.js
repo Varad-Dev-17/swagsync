@@ -20,7 +20,7 @@ export const ORDER_POPULATE_CONFIG = [
   },
   {
     path: "items.variant",
-    select: "mainImage attributes sku price stock mrp gstRate",
+    select: "mainImage galleryImages attributes sku price stock mrp gstRate",
     populate: [
       { path: "attributes.attribute" },
       { path: "attributes.option" }
