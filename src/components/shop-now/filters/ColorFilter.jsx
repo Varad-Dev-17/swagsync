@@ -6,6 +6,10 @@ const ColorFilter = ({ colors = [], activeColors = [], onChange }) => {
   const [isOpen, setIsOpen] = useState(true);
   const [showAll, setShowAll] = useState(false);
 
+  if (!colors || colors.length === 0) {
+    return null;
+  }
+
   const displayedColors = showAll ? colors : colors.slice(0, 12);
 
   return (

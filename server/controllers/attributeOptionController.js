@@ -1,9 +1,130 @@
+import mongoose from "mongoose";
 import Attribute from "../models/attribute.js";
 import AttributeOption from "../models/attributeOption.js";
+import Category from "../models/category.js";
+import Department from "../models/department.js";
+import Product from "../models/product.js";
+import Variant from "../models/variant.js";
+import AttributeMapping from "../models/attributeMapping.js";
 
-// GET All Attribute Options
+// GET All Attribute Options (supports optional department & category scoping)
 export const getAttributeOptions = async (req, res) => {
   try {
+    const { department, category } = req.query;
+
+    const hasDeptFilter = department && department !== "all";
+    const hasCatFilter = category && category !== "all";
+
+    if (hasDeptFilter || hasCatFilter) {
+      // Find color attributes
+      const colorAttrs = await Attribute.find({
+        name: { $regex: /^(color|color \/ shade|shade)$/i }
+      }).lean();
+      const colorAttrIds = colorAttrs.map(a => a._id);
+
+      let catDoc = null;
+      if (hasCatFilter) {
+        const isCatId = mongoose.Types.ObjectId.isValid(category);
+        catDoc = await Category.findOne({
+          $or: [
+            ...(isCatId ? [{ _id: category }] : []),
+            { name: new RegExp(`^${category.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, "i") },
+            { slug: category.toLowerCase().trim() }
+          ]
+        }).lean();
+      }
+
+      let deptDoc = null;
+      if (hasDeptFilter) {
+        const isDeptId = mongoose.Types.ObjectId.isValid(department);
+        deptDoc = await Department.findOne({
+          $or: [
+            ...(isDeptId ? [{ _id: department }] : []),
+            { name: new RegExp(`^${department.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, "i") },
+            ...(department.toLowerCase() === "beauty" ? [{ name: /beauty/i }] : [])
+          ]
+        }).lean();
+      }
+
+      // If category is specified, verify if this category supports colors
+      if (catDoc) {
+        const colorMapping = await AttributeMapping.findOne({
+          category: catDoc._id,
+          attribute: { $in: colorAttrIds }
+        }).lean();
+
+        // Also check if any variants of products in this category have color options
+        const prodIds = await Product.find({ category: catDoc._id }).distinct("_id");
+        const hasVariantColors = await Variant.exists({
+          product: { $in: prodIds },
+          "attributes.attribute": { $in: colorAttrIds }
+        });
+
+        if (!colorMapping && !hasVariantColors) {
+          return res.status(200).json({
+            success: true,
+            count: 0,
+            options: []
+          });
+        }
+
+        // Find the variant options actually used by products in this category
+        const variants = await Variant.find({
+          product: { $in: prodIds },
+          status: "Active"
+        }).populate({
+          path: "attributes.option",
+          populate: { path: "attribute", select: "name fieldType" }
+        }).lean();
+
+        const optionsMap = new Map();
+        variants.forEach(v => {
+          (v.attributes || []).forEach(a => {
+            const opt = a.option;
+            if (opt && opt.attribute && /^(color|color \/ shade|shade)$/i.test(opt.attribute.name)) {
+              optionsMap.set(opt._id.toString(), opt);
+            }
+          });
+        });
+
+        const options = Array.from(optionsMap.values());
+        return res.status(200).json({
+          success: true,
+          count: options.length,
+          options
+        });
+      }
+
+      // If only department is specified
+      if (deptDoc) {
+        const prodIds = await Product.find({ department: deptDoc._id }).distinct("_id");
+        const variants = await Variant.find({
+          product: { $in: prodIds },
+          status: "Active"
+        }).populate({
+          path: "attributes.option",
+          populate: { path: "attribute", select: "name fieldType" }
+        }).lean();
+
+        const optionsMap = new Map();
+        variants.forEach(v => {
+          (v.attributes || []).forEach(a => {
+            const opt = a.option;
+            if (opt && opt.attribute && /^(color|color \/ shade|shade)$/i.test(opt.attribute.name)) {
+              optionsMap.set(opt._id.toString(), opt);
+            }
+          });
+        });
+
+        const options = Array.from(optionsMap.values());
+        return res.status(200).json({
+          success: true,
+          count: options.length,
+          options
+        });
+      }
+    }
+
     const options = await AttributeOption.find()
       .populate("attribute", "name fieldType")
       .sort({ createdAt: -1 });

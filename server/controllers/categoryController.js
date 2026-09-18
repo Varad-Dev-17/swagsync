@@ -1,7 +1,30 @@
 import Department from "../models/department.js";
 import Category from "../models/category.js";
 import Product from "../models/product.js";
+import Attribute from "../models/attribute.js";
 import AttributeMapping from "../models/attributeMapping.js";
+
+const attachColorMetadata = async (categories) => {
+  if (!categories || categories.length === 0) return [];
+  const colorAttrs = await Attribute.find({
+    name: { $regex: /^(color|color \/ shade|shade)$/i }
+  }).select("_id");
+  const colorAttrIds = colorAttrs.map(a => a._id);
+
+  const catIds = categories.map(c => c._id);
+  const colorMappings = await AttributeMapping.find({
+    category: { $in: catIds },
+    attribute: { $in: colorAttrIds }
+  }).select("category");
+
+  const colorCatIdSet = new Set(colorMappings.map(m => m.category.toString()));
+
+  return categories.map(c => {
+    const doc = c.toObject ? c.toObject() : { ...c };
+    doc.hasColors = colorCatIdSet.has(c._id.toString());
+    return doc;
+  });
+};
 
 // GET ALL CATEGORIES (with search, sort, filter, pagination)
 export const getCategories = async (req, res) => {
@@ -35,6 +58,7 @@ export const getCategories = async (req, res) => {
       .limit(parseInt(limit));
 
     const total = await Category.countDocuments(query);
+    const categoriesWithMeta = await attachColorMetadata(categories);
 
     res.status(200).json({
       success: true,
@@ -42,7 +66,7 @@ export const getCategories = async (req, res) => {
       total,
       totalPages: Math.ceil(total / parseInt(limit)),
       currentPage: parseInt(page),
-      categories,
+      categories: categoriesWithMeta,
     });
   } catch (error) {
     console.error("Error fetching categories:", error);
@@ -66,9 +90,11 @@ export const getCategory = async (req, res) => {
       });
     }
 
+    const [categoryWithMeta] = await attachColorMetadata([category]);
+
     res.status(200).json({
       success: true,
-      category,
+      category: categoryWithMeta,
     });
   } catch (error) {
     console.error("Error fetching category:", error);
@@ -89,10 +115,12 @@ export const getCategoriesByDepartment = async (req, res) => {
       status: "Active",
     }).sort({ createdAt: 1 });
 
+    const categoriesWithMeta = await attachColorMetadata(categories);
+
     res.status(200).json({
       success: true,
       count: categories.length,
-      categories,
+      categories: categoriesWithMeta,
     });
   } catch (error) {
     console.error("Error fetching categories by department:", error);

@@ -45,8 +45,13 @@ const ProductsPage = () => {
   const [activeCategory, setActiveCategory] = useState(searchParams.get("category") || "all");
 
   useEffect(() => {
-    setActiveDepartment(searchParams.get("department") || "all");
-    setActiveCategory(searchParams.get("category") || "all");
+    const newDept = searchParams.get("department") || "all";
+    const newCat = searchParams.get("category") || "all";
+    if (newCat !== activeCategory) {
+      setActiveColors([]);
+    }
+    setActiveDepartment(newDept);
+    setActiveCategory(newCat);
   }, [searchParams]);
   const [activeBrands, setActiveBrands] = useState([]);
   const [activeColors, setActiveColors] = useState([]);
@@ -60,7 +65,6 @@ const ProductsPage = () => {
 
   useEffect(() => {
     fetchDepartments();
-    fetchColors();
     fetchCartCount();
   }, []);
 
@@ -68,6 +72,10 @@ const ProductsPage = () => {
     fetchCategories();
     fetchBrands();
   }, [activeDepartment, departmentsList]);
+
+  useEffect(() => {
+    fetchColors();
+  }, [activeDepartment, activeCategory]);
 
   useEffect(() => {
     fetchProducts();
@@ -129,17 +137,27 @@ const ProductsPage = () => {
 
   const fetchColors = async () => {
     try {
-      const res = await api.get("/attribute-options");
+      const params = new URLSearchParams();
+      if (activeDepartment && activeDepartment !== "all") {
+        params.append("department", activeDepartment);
+      }
+      if (activeCategory && activeCategory !== "all") {
+        params.append("category", activeCategory);
+      }
+      const res = await api.get(`/attribute-options?${params.toString()}`);
       if (res.data.success) {
         const allOptions = res.data.options || [];
         const colorOpts = allOptions.filter(opt =>
           opt.attribute?.name?.toLowerCase() === "color" ||
+          opt.attribute?.name?.toLowerCase() === "color / shade" ||
+          opt.attribute?.name?.toLowerCase() === "shade" ||
           opt.hex !== undefined
         );
         setColorsList(colorOpts);
       }
     } catch (err) {
       console.error("Failed to load colors");
+      setColorsList([]);
     }
   };
 
@@ -201,6 +219,7 @@ const ProductsPage = () => {
     setActiveDepartment(deptName);
     setActiveCategory("all");
     setActiveBrands([]);
+    setActiveColors([]);
     setCurrentPage(1);
 
     const newParams = new URLSearchParams(searchParams);
@@ -215,6 +234,7 @@ const ProductsPage = () => {
 
   const handleCategoryChange = (catName) => {
     setActiveCategory(catName);
+    setActiveColors([]);
     setCurrentPage(1);
 
     const newParams = new URLSearchParams(searchParams);
@@ -252,6 +272,14 @@ const ProductsPage = () => {
     setSearchParams({});
   };
 
+  const activeCategoryDoc = categoriesList.find(c => 
+    c.name?.toLowerCase() === activeCategory.toLowerCase() || 
+    c.slug?.toLowerCase() === activeCategory.toLowerCase()
+  );
+  const isColorFilterVisible = activeCategory === "all" 
+    ? colorsList.length > 0 
+    : (activeCategoryDoc ? activeCategoryDoc.hasColors && colorsList.length > 0 : colorsList.length > 0);
+
   return (
     <ShopLayout
       isMobileFilterOpen={isMobileFilterOpen}
@@ -274,8 +302,8 @@ const ProductsPage = () => {
             priceRange={priceRange}
             onPriceChange={handlePriceChange}
 
-            colors={colorsList}
-            activeColors={activeColors}
+            colors={isColorFilterVisible ? colorsList : []}
+            activeColors={isColorFilterVisible ? activeColors : []}
             onColorChange={handleColorChange}
 
             onClearAll={handleClearAll}
@@ -303,7 +331,7 @@ const ProductsPage = () => {
             <>
               <ProductGrid
                 paginatedProducts={products}
-                activeColors={activeColors}
+                activeColors={isColorFilterVisible ? activeColors : []}
                 priceRange={priceRange}
                 sort={sort}
               />

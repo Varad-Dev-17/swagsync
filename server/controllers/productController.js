@@ -86,10 +86,11 @@ export const getAllVariantGroups = async (req, res) => {
     let colorOptionIds = [];
     if (colors) {
       const colorNames = colors.split(',').map(s => s.trim());
-      const colorAttr = await Attribute.findOne({ name: { $regex: /^(color|color \/ shade|shade)$/i } }).lean();
-      if (colorAttr) {
+      const colorAttrs = await Attribute.find({ name: { $regex: /^(color|color \/ shade|shade)$/i } }).lean();
+      const colorAttrIds = colorAttrs.map(a => a._id);
+      if (colorAttrIds.length > 0) {
         const opts = await AttributeOption.find({
-          attribute: colorAttr._id,
+          attribute: { $in: colorAttrIds },
           $or: [
             { storedValue: { $in: colorNames } },
             { displayName: { $in: colorNames } }
