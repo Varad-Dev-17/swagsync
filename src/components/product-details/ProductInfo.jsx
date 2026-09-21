@@ -97,12 +97,15 @@ const ProductInfo = ({ product, activeVariant, onVariantChange }) => {
   const colorVariantsMap = new Map();
   product.variants?.forEach(v => {
     const colorAttr = v.attributes?.find(isColorAttribute);
-    const colorName = colorAttr?.option?.displayName || colorAttr?.option?.storedValue || 'default';
-    if (!colorVariantsMap.has(colorName)) {
-      colorVariantsMap.set(colorName, v);
+    if (colorAttr) {
+      const colorName = colorAttr?.option?.displayName || colorAttr?.option?.storedValue;
+      if (colorName && !colorVariantsMap.has(colorName)) {
+        colorVariantsMap.set(colorName, v);
+      }
     }
   });
   const uniqueColorVariants = Array.from(colorVariantsMap.values());
+  const hasColorAttribute = uniqueColorVariants.length > 0;
 
   // Helper to construct return policy display text from DB
   const getReturnPolicyText = () => {
@@ -123,18 +126,19 @@ const ProductInfo = ({ product, activeVariant, onVariantChange }) => {
     { icon: ShieldCheck, title: "Secure Transaction" },
   ];
 
-  const activeColorAttr = activeVariant.attributes?.find(isColorAttribute);
-  const activeColorName = activeColorAttr?.option?.displayName || activeColorAttr?.option?.storedValue || 'default';
+  const activeColorAttr = activeVariant.attributes?.find(isColorAttribute) || uniqueColorVariants[0]?.attributes?.find(isColorAttribute);
+  const activeColorName = activeColorAttr?.option?.displayName || activeColorAttr?.option?.storedValue || '';
 
   // Variants Mapping for the Active Color (or all variants if product has no color attribute)
   const variantsOfActiveColor = useMemo(() => {
+    if (!hasColorAttribute) return product.variants || [];
     return product.variants?.filter(v => {
       const cAttr = v.attributes?.find(isColorAttribute);
-      if (!cAttr) return true;
-      const cName = cAttr?.option?.displayName || cAttr?.option?.storedValue || 'default';
+      if (!cAttr) return false;
+      const cName = cAttr?.option?.displayName || cAttr?.option?.storedValue;
       return cName === activeColorName;
     }) || [];
-  }, [product.variants, activeColorName]);
+  }, [product.variants, hasColorAttribute, activeColorName]);
 
   // Group all non-color attributes dynamically (e.g. RAM, Storage, Size, etc.)
   const secondaryAttributeGroups = useMemo(() => {
@@ -211,6 +215,50 @@ const ProductInfo = ({ product, activeVariant, onVariantChange }) => {
     if (bestMatch) {
       onVariantChange(bestMatch._id);
     }
+  };
+
+  // Handler for selecting a color / shade dynamically (preserving secondary attributes if possible)
+  const handleColorChange = (targetVariant) => {
+    const targetColorAttr = targetVariant.attributes?.find(isColorAttribute);
+    const targetColorName = targetColorAttr?.option?.displayName || targetColorAttr?.option?.storedValue;
+
+    if (!targetColorName) {
+      onVariantChange(targetVariant._id);
+      return;
+    }
+
+    const variantsWithColor = product.variants?.filter(v => {
+      const cAttr = v.attributes?.find(isColorAttribute);
+      const cName = cAttr?.option?.displayName || cAttr?.option?.storedValue;
+      return cName === targetColorName;
+    }) || [];
+
+    if (variantsWithColor.length === 0) {
+      onVariantChange(targetVariant._id);
+      return;
+    }
+
+    const bestMatch = variantsWithColor.sort((a, b) => {
+      const scoreA = a.attributes?.filter(attrA => 
+        !isColorAttribute(attrA) &&
+        activeVariant.attributes?.some(act => 
+          act.attribute?.name === attrA.attribute?.name && 
+          (act.option?._id === attrA.option?._id || act.option?.displayName === attrA.option?.displayName || act.option?.storedValue === attrA.option?.storedValue)
+        )
+      ).length || 0;
+
+      const scoreB = b.attributes?.filter(attrB => 
+        !isColorAttribute(attrB) &&
+        activeVariant.attributes?.some(act => 
+          act.attribute?.name === attrB.attribute?.name && 
+          (act.option?._id === attrB.option?._id || act.option?.displayName === attrB.option?.displayName || act.option?.storedValue === attrB.option?.storedValue)
+        )
+      ).length || 0;
+
+      return scoreB - scoreA;
+    })[0];
+
+    onVariantChange(bestMatch ? bestMatch._id : targetVariant._id);
   };
 
   // Combine product-level attributes and active variant attributes for Specifications
@@ -326,10 +374,10 @@ const ProductInfo = ({ product, activeVariant, onVariantChange }) => {
       </div>
 
       {/* Select Color / Shade */}
-      {uniqueColorVariants.length > 1 && (
+      {hasColorAttribute && (
         <div className="mb-6">
           <h4 className="text-[13px] font-bold text-[#282c3f] uppercase tracking-wide mb-2.5">
-            Select {activeColorAttr?.attribute?.name || 'Color'}
+            Select {activeColorAttr?.attribute?.name || uniqueColorVariants[0]?.attributes?.find(isColorAttribute)?.attribute?.name || 'Color'}
           </h4>
           <div className="flex flex-wrap gap-4">
             {uniqueColorVariants.map((v) => {
@@ -339,12 +387,19 @@ const ProductInfo = ({ product, activeVariant, onVariantChange }) => {
               return (
                 <button
                   key={v._id}
-                  onClick={() => onVariantChange(v._id)}
-                  className="flex flex-col items-center gap-1.5 focus:outline-none group"
+                  type="button"
+                  onClick={() => handleColorChange(v)}
+                  className="flex flex-col items-center gap-1.5 focus:outline-none group cursor-pointer"
                   title={cName}
                 >
                   <div className={`relative w-14 h-18 rounded overflow-hidden border-2 transition-all ${isSelected ? 'border-[#FD7100]' : 'border-transparent group-hover:border-[#d4d5d9]'}`}>
-                    <img src={v.mainImage?.url} alt={cName} className="w-full h-full object-cover" loading="lazy" decoding="async" />
+                    <img 
+                      src={v.mainImage?.url || product.images?.[0]?.url} 
+                      alt={cName} 
+                      className="w-full h-full object-cover" 
+                      loading="lazy" 
+                      decoding="async" 
+                    />
                   </div>
                   <span className={`text-[11px] font-semibold transition-colors ${isSelected ? 'text-[#FD7100]' : 'text-gray-500 group-hover:text-gray-800'}`}>
                     {cName}
