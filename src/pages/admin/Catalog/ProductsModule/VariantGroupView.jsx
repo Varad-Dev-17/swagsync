@@ -43,14 +43,21 @@ const VariantGroupView = () => {
           const filtered = allVariants.filter(variant => {
             let pOptId = 'default';
             if (variant.attributes && variant.attributes.length > 0) {
-              const colorAttr = variant.attributes.find(a => {
+              const visualAttr = variant.attributes.find(a => {
                 const name = a.attribute?.name?.toLowerCase();
                 return name === 'color' || name === 'colour' || name === 'color / shade' || name === 'shade' || a.attribute?.fieldType === 'color';
               });
-              if (colorAttr) {
-                pOptId = colorAttr.option?._id?.toString() || 'default';
-              } else {
-                pOptId = variant.attributes[0]?.option?._id?.toString() || 'default';
+              const fragranceAttr = variant.attributes.find(a => {
+                const name = a.attribute?.name?.toLowerCase();
+                return name === 'fragrance' || name === 'fragrance / scent' || name === 'scent';
+              });
+              const sizeAttr = variant.attributes.find(a => {
+                const name = a.attribute?.name?.toLowerCase();
+                return name === 'size / net quantity' || name === 'net quantity' || name === 'size';
+              });
+              const primaryAttr = visualAttr || fragranceAttr || sizeAttr || variant.attributes[0];
+              if (primaryAttr) {
+                pOptId = primaryAttr.option?._id?.toString() || 'default';
               }
             }
             return pOptId === primaryOptionId;
@@ -75,19 +82,30 @@ const VariantGroupView = () => {
   const groupDetails = useMemo(() => {
     if (variants.length === 0) return null;
     let groupName = 'Standard';
+    let groupLabel = 'Option';
     const firstVariant = variants[0];
     if (primaryOptionId !== 'default') {
-      const colorAttr = firstVariant.attributes?.find(a => {
+      const visualAttr = firstVariant.attributes?.find(a => {
         const name = a.attribute?.name?.toLowerCase();
         return name === 'color' || name === 'colour' || name === 'color / shade' || name === 'shade' || a.attribute?.fieldType === 'color';
-      }) || firstVariant.attributes?.[0];
-      if (colorAttr && colorAttr.option) {
-        groupName = colorAttr.option.displayName || colorAttr.option.storedValue;
+      });
+      const fragranceAttr = firstVariant.attributes?.find(a => {
+        const name = a.attribute?.name?.toLowerCase();
+        return name === 'fragrance' || name === 'fragrance / scent' || name === 'scent';
+      });
+      const sizeAttr = firstVariant.attributes?.find(a => {
+        const name = a.attribute?.name?.toLowerCase();
+        return name === 'size / net quantity' || name === 'net quantity' || name === 'size';
+      });
+      const primaryAttr = visualAttr || fragranceAttr || sizeAttr || firstVariant.attributes?.[0];
+      if (primaryAttr && primaryAttr.option) {
+        groupName = primaryAttr.option.displayName || primaryAttr.option.storedValue;
+        groupLabel = primaryAttr.attribute?.name || 'Option';
       }
     }
     const mainImage = firstVariant.mainImage?.url || null;
     const galleryImages = firstVariant.galleryImages?.map(img => img.url).filter(Boolean) || [];
-    return { groupName, mainImage, galleryImages, firstVariant };
+    return { groupName, groupLabel, mainImage, galleryImages, firstVariant };
   }, [variants, primaryOptionId]);
 
   if (isLoading) {

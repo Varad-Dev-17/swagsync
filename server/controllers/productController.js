@@ -178,11 +178,22 @@ export const getAllVariantGroups = async (req, res) => {
       let primaryAttrId = null;
       const firstVariant = product.variants[0];
       if (firstVariant && firstVariant.attributes) {
-        const colorAttr = firstVariant.attributes.find(
+        const visualAttr = firstVariant.attributes.find(
           a => a.attribute && ((a.attribute.name && /^(color|color \/ shade|shade)$/i.test(a.attribute.name)) || a.attribute.fieldType === 'color')
         );
-        if (colorAttr && colorAttr.attribute) {
-          primaryAttrId = colorAttr.attribute._id;
+        const fragranceAttr = firstVariant.attributes.find(
+          a => a.attribute && a.attribute.name && /^(fragrance|fragrance \/ scent|scent)$/i.test(a.attribute.name)
+        );
+        const sizeAttr = firstVariant.attributes.find(
+          a => a.attribute && a.attribute.name && /^(size \/ net quantity|net quantity|size)$/i.test(a.attribute.name)
+        );
+
+        if (visualAttr && visualAttr.attribute) {
+          primaryAttrId = visualAttr.attribute._id;
+        } else if (fragranceAttr && fragranceAttr.attribute) {
+          primaryAttrId = fragranceAttr.attribute._id;
+        } else if (sizeAttr && sizeAttr.attribute) {
+          primaryAttrId = sizeAttr.attribute._id;
         } else if (firstVariant.attributes[0] && firstVariant.attributes[0].attribute) {
           primaryAttrId = firstVariant.attributes[0].attribute._id;
         }

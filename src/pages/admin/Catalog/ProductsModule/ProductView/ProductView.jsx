@@ -17,14 +17,21 @@ const ProductView = () => {
   const getVariantGroupId = (variant) => {
     let pOptId = 'default';
     if (variant.attributes && variant.attributes.length > 0) {
-      const colorAttr = variant.attributes.find(a => {
+      const visualAttr = variant.attributes.find(a => {
         const name = a.attribute?.name?.toLowerCase();
         return name === 'color' || name === 'colour' || name === 'color / shade' || name === 'shade' || a.attribute?.fieldType === 'color';
       });
-      if (colorAttr) {
-        pOptId = colorAttr.option?._id?.toString() || colorAttr.option || 'default';
-      } else {
-        pOptId = variant.attributes[0]?.option?._id?.toString() || variant.attributes[0]?.option || 'default';
+      const fragranceAttr = variant.attributes.find(a => {
+        const name = a.attribute?.name?.toLowerCase();
+        return name === 'fragrance' || name === 'fragrance / scent' || name === 'scent';
+      });
+      const sizeAttr = variant.attributes.find(a => {
+        const name = a.attribute?.name?.toLowerCase();
+        return name === 'size / net quantity' || name === 'net quantity' || name === 'size';
+      });
+      const primaryAttr = visualAttr || fragranceAttr || sizeAttr || variant.attributes[0];
+      if (primaryAttr) {
+        pOptId = primaryAttr.option?._id?.toString() || primaryAttr.option?.toString() || 'default';
       }
     }
     return pOptId;
