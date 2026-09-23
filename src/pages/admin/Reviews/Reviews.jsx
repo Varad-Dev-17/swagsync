@@ -188,6 +188,30 @@ const Reviews = () => {
                     rev.product?.images?.[0]?.url ||
                     "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'><rect fill='%23f1f5f9' width='80' height='80'/><path fill='%23cbd5e1' d='M25 35a8 8 0 1016 0 8 8 0 00-16 0zm35 28H20a4 4 0 01-3-6l12-16a4 4 0 016 0l5 7 8-10a4 4 0 016 0l12 16a4 4 0 01-3 9z'/></svg>";
                   const prodSlugOrId = rev.product?.slug || rev.product?._id || rev.product;
+                  const variantId = rev.variant?._id || (typeof rev.variant === "string" ? rev.variant : null);
+                  const productVariantUrl = prodSlugOrId
+                    ? `/product/${prodSlugOrId}${variantId ? `?variant=${variantId}` : ""}`
+                    : "#";
+
+                  // Extract human-readable variant attributes (e.g. Color: Green, Size: M)
+                  const variantDetails = [];
+                  if (rev.variant && Array.isArray(rev.variant.attributes)) {
+                    rev.variant.attributes.forEach((attr) => {
+                      const attrName = attr.attribute?.name || attr.name;
+                      const optVal = attr.option?.displayName || attr.option?.storedValue || attr.value;
+                      if (optVal) {
+                        variantDetails.push(attrName ? `${attrName}: ${optVal}` : optVal);
+                      }
+                    });
+                  }
+                  const variantLabel =
+                    variantDetails.length > 0
+                      ? variantDetails.join(" • ")
+                      : rev.variant?.sku
+                      ? `SKU: ${rev.variant.sku}`
+                      : rev.variant
+                      ? "Reviewed Variant"
+                      : null;
 
                   // Score Styling
                   let scoreBadgeBg = "bg-emerald-600";
@@ -199,25 +223,48 @@ const Reviews = () => {
                       {/* Product Column */}
                       <td className="py-4 px-4 align-top">
                         <div className="flex items-start gap-3">
-                          <div className="w-14 h-18 rounded-none border border-slate-200 overflow-hidden shrink-0 bg-white shadow-2xs">
+                          <Link
+                            to={productVariantUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-14 h-18 rounded-none border border-slate-200 overflow-hidden shrink-0 bg-white shadow-2xs block relative group/thumb hover:border-[#4F46E5] hover:shadow-sm transition-all cursor-pointer"
+                            title="Click to view reviewed variant"
+                          >
                             <img
                               src={productImg}
                               alt="Product thumbnail"
-                              className="w-full h-full object-cover"
-                             loading="lazy" decoding="async" />
-                          </div>
+                              className="w-full h-full object-cover group-hover/thumb:scale-105 transition-transform duration-300"
+                              loading="lazy"
+                              decoding="async"
+                            />
+                            <div className="absolute inset-0 bg-black/0 group-hover/thumb:bg-black/10 transition-colors" />
+                          </Link>
                           <div className="min-w-0">
                             <Link
-                              to={prodSlugOrId ? `/product/${prodSlugOrId}` : "#"}
+                              to={productVariantUrl}
                               target="_blank"
+                              rel="noopener noreferrer"
                               className="font-bold text-slate-900 hover:text-[#4F46E5] line-clamp-2 transition-colors inline-flex items-center gap-1 group/link"
+                              title="Click to view reviewed variant"
                             >
                               <span>{rev.product?.title || "Deleted Product"}</span>
                               <ExternalLink size={12} className="opacity-0 group-hover/link:opacity-100 transition-opacity text-[#4F46E5] shrink-0" />
                             </Link>
-                            <span className="text-xs font-mono text-slate-400 block mt-1">
+                            <span className="text-xs font-mono text-slate-400 block mt-0.5">
                               ID: {rev.product?.productId || String(rev.product?._id || rev.product || "")}
                             </span>
+                            {variantLabel && (
+                              <Link
+                                to={productVariantUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 mt-1.5 px-2 py-0.5 text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 hover:border-indigo-300 transition-colors w-fit group/var cursor-pointer"
+                                title="Click to view this reviewed variant"
+                              >
+                                <span>{variantLabel}</span>
+                                <ExternalLink size={10} className="text-indigo-500 opacity-70 group-hover/var:opacity-100 shrink-0" />
+                              </Link>
+                            )}
                           </div>
                         </div>
                       </td>
@@ -230,7 +277,7 @@ const Reviews = () => {
                         <div className="text-xs text-slate-500 mt-0.5 mb-1.5 truncate max-w-[160px]">
                           {rev.user?.email || "No Email"}
                         </div>
-                        {rev.verifiedBuyer ? (
+                        {/* {rev.verifiedBuyer ? (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-none text-[11px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">
                             <ShieldCheck size={13} className="text-emerald-600" />
                             Verified Buyer
@@ -239,7 +286,7 @@ const Reviews = () => {
                           <span className="inline-flex items-center px-2 py-0.5 rounded-none text-[11px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
                             Unverified Order
                           </span>
-                        )}
+                        )} */}
                         <div className="text-[11px] text-slate-400 mt-1.5">
                           {new Date(rev.createdAt).toLocaleDateString("en-GB", {
                             day: "2-digit",

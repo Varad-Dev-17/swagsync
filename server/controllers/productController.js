@@ -590,7 +590,10 @@ export const getProductBySlug = async (req, res) => {
   try {
     const { slug } = req.params;
 
-    const product = await Product.findOne({ slug })
+    const isObjectId = mongoose.isValidObjectId(slug);
+    const query = isObjectId ? { $or: [{ slug }, { _id: slug }] } : { slug };
+
+    const product = await Product.findOne(query)
       .populate("department", "name")
       .populate("category", "name")
       .populate("brand", "name")
@@ -614,6 +617,14 @@ export const getProductBySlug = async (req, res) => {
 
     const reviews = await ProductReview.find({ product: product._id })
       .populate("user", "username email")
+      .populate({
+        path: "variant",
+        select: "attributes mainImage sku",
+        populate: [
+          { path: "attributes.attribute", select: "name fieldType" },
+          { path: "attributes.option", select: "displayName storedValue" },
+        ],
+      })
       .sort({ createdAt: -1 })
       .lean();
 

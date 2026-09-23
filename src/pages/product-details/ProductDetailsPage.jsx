@@ -19,7 +19,7 @@ api.interceptors.request.use((config) => {
 
 const ProductDetailsPage = () => {
   const { slug } = useParams();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const colorQuery = searchParams.get("color");
   const variantQuery = searchParams.get("variant");
 
@@ -41,7 +41,7 @@ const ProductDetailsPage = () => {
           setProduct(prodData);
           if (prodData.variants && prodData.variants.length > 0) {
             if (variantQuery) {
-              const matchedVariant = prodData.variants.find(v => v._id === variantQuery);
+              const matchedVariant = prodData.variants.find(v => String(v._id) === String(variantQuery));
               setActiveVariant(matchedVariant || prodData.variants[0]);
             } else if (colorQuery) {
               const matchedVariant = prodData.variants.find(v => {
@@ -69,12 +69,22 @@ const ProductDetailsPage = () => {
     };
 
     fetchProduct();
-  }, [slug, variantQuery, colorQuery]);
+  }, [slug]);
+
+  // Synchronize active variant when variantQuery changes in URL
+  useEffect(() => {
+    if (!product?.variants?.length || !variantQuery) return;
+    const matched = product.variants.find(v => String(v._id) === String(variantQuery));
+    if (matched && matched._id !== activeVariant?._id) {
+      setActiveVariant(matched);
+    }
+  }, [variantQuery, product]);
 
   const handleVariantChange = (variantId) => {
-    const variant = product.variants.find((v) => v._id === variantId);
+    const variant = product?.variants?.find((v) => String(v._id) === String(variantId));
     if (variant) {
       setActiveVariant(variant);
+      setSearchParams({ variant: variantId }, { replace: true });
     }
   };
 

@@ -26,8 +26,11 @@ export const getReviews = async (req, res) => {
         .populate("user", "username email")
         .populate({
           path: "variant",
-          select: "attributes mainImage",
-          populate: { path: "attributes.attribute", select: "name" },
+          select: "attributes mainImage sku",
+          populate: [
+            { path: "attributes.attribute", select: "name fieldType" },
+            { path: "attributes.option", select: "displayName storedValue" },
+          ],
         })
         .sort(sort)
         .skip(skip)
@@ -352,8 +355,15 @@ export const getAllAdminReviews = async (req, res) => {
     const [reviews, total] = await Promise.all([
       ProductReview.find(query)
         .populate("user", "username email")
-        .populate("product", "title slug productId")
-        .populate("variant", "mainImage attributes")
+        .populate("product", "title slug productId images")
+        .populate({
+          path: "variant",
+          select: "mainImage attributes sku price mrp",
+          populate: [
+            { path: "attributes.attribute", select: "name fieldType" },
+            { path: "attributes.option", select: "displayName storedValue" },
+          ],
+        })
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limitNum)

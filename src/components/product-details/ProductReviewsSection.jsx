@@ -5,7 +5,7 @@ import toast from "react-hot-toast";
 import { useAuth } from "../../context/AuthContext";
 import WriteReviewModal from "./WriteReviewModal";
 
-const ProductReviewsSection = ({ product, onReviewsUpdate }) => {
+const ProductReviewsSection = ({ product, onReviewsUpdate, onVariantChange }) => {
   const { user, getAuthHeaders } = useAuth();
   const [reviews, setReviews] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -209,12 +209,22 @@ const ProductReviewsSection = ({ product, onReviewsUpdate }) => {
             {reviews.map((rev) => {
               const isOwner = myUserId && ((rev.user?._id || rev.user || "") === myUserId || rev.user?.id === myUserId);
               let colorName = "";
+              let variantParts = [];
               if (rev.variant && Array.isArray(rev.variant.attributes)) {
-                const colAttr = rev.variant.attributes.find(
-                  (a) => a?.attribute?.name?.toLowerCase() === "color" || a?.name?.toLowerCase() === "color"
-                );
-                if (colAttr) colorName = colAttr.option?.displayName || colAttr.value || colAttr.name || "";
+                rev.variant.attributes.forEach((a) => {
+                  const optName = a?.option?.displayName || a?.option?.storedValue || a?.value;
+                  const attrName = a?.attribute?.name || a?.name;
+                  if (optName) {
+                    if (attrName?.toLowerCase() === "color") {
+                      colorName = optName;
+                    }
+                    variantParts.push(attrName ? `${attrName}: ${optName}` : optName);
+                  }
+                });
               }
+              const displayVariant = colorName ? `Color: ${colorName}` : (variantParts.join(" • ") || (rev.variant?.sku ? `SKU: ${rev.variant.sku}` : null));
+              const reviewVariantId = rev.variant?._id || (typeof rev.variant === "string" ? rev.variant : null);
+
               return (
                 <div
                   key={rev._id}
@@ -237,10 +247,24 @@ const ProductReviewsSection = ({ product, onReviewsUpdate }) => {
                               Verified Buyer
                             </span>
                           )}
-                          {colorName && (
-                            <span className="inline-flex items-center gap-1 bg-gray-100 text-gray-700 text-[11px] font-semibold px-2.5 py-0.5 rounded-full border border-gray-200">
-                              Color: {colorName}
-                            </span>
+                          {displayVariant && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (reviewVariantId && onVariantChange) {
+                                  onVariantChange(reviewVariantId);
+                                  window.scrollTo({ top: 0, behavior: "smooth" });
+                                }
+                              }}
+                              className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full border transition-all ${
+                                reviewVariantId && onVariantChange
+                                  ? "bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100 hover:border-indigo-300 cursor-pointer"
+                                  : "bg-gray-100 text-gray-700 border-gray-200"
+                              }`}
+                              title={reviewVariantId && onVariantChange ? "Click to view this reviewed variant" : undefined}
+                            >
+                              <span>{displayVariant}</span>
+                            </button>
                           )}
                         </div>
                         <span className="text-[12px] text-[#7e818c]">

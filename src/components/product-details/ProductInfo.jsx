@@ -537,7 +537,7 @@ const ProductInfo = ({ product, activeVariant, onVariantChange }) => {
       )}
 
       {/* Customer Reviews & Ratings Section */}
-      <ProductReviewsSection product={product} />
+      <ProductReviewsSection product={product} onVariantChange={onVariantChange} />
 
       {/* Size Chart Modal */}
       <SizeChartModal
