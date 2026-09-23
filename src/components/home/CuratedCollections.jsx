@@ -1,7 +1,6 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
-import TiltCard from "../../animations/TiltCard";
 import MagneticButton from "../../animations/MagneticButton";
 
 const bentoItems = [
@@ -89,84 +88,68 @@ const CuratedCollections = () => {
         >
           {bentoItems.map((item) => (
             <motion.div variants={itemVariants} key={item.id} className={`${item.className} h-full`}>
-              <TiltCard
-                className="w-full h-full"
-                maxTilt={8}
-                scaleOnHover={1.015}
-                borderRadius="rounded-[24px]"
+              <Link
+                to={item.link}
+                className="group relative w-full h-full rounded-[24px] overflow-hidden shadow-sm hover:shadow-2xl transition-shadow duration-500 block cursor-pointer select-none bg-gray-100"
               >
-                <Link
-                  to={item.link}
-                  className="group relative w-full h-full rounded-[24px] block cursor-pointer select-none"
-                  style={{ transformStyle: "preserve-3d" }}
-                >
-                  {/* Clipped Background Container */}
-                  <div className="absolute inset-0 rounded-[24px] overflow-hidden shadow-sm group-hover:shadow-2xl transition-shadow duration-500 bg-gray-100 z-0">
-                    {/* Image Background */}
-                    <img
-                      src={item.image}
-                      alt={item.title || "Explore Collection"}
-                      className={`w-full h-full object-cover ${item.objectPosition} transition-transform duration-[800ms] ease-out group-hover:scale-105`}
-                      loading="lazy"
-                      decoding="async"
-                    />
+                {/* Image Background */}
+                <div className="absolute inset-0 z-0 bg-gray-100">
+                  <img
+                    src={item.image}
+                    alt={item.title || "Explore Collection"}
+                    className={`w-full h-full object-cover ${item.objectPosition} transition-transform duration-[800ms] ease-out group-hover:scale-105`}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </div>
 
-                    {/* Subtle Dark Gradient Overlay (Default) */}
-                    <div
-                      className="absolute inset-0 z-10 transition-opacity duration-[400ms] ease-in-out opacity-100 group-hover:opacity-0"
-                      style={{
-                        background: item.overlayDefault
-                      }}
-                    />
+                {/* Subtle Dark Gradient Overlay (Default) */}
+                <div
+                  className="absolute inset-0 z-10 transition-opacity duration-[400ms] ease-in-out opacity-100 group-hover:opacity-0"
+                  style={{
+                    background: item.overlayDefault
+                  }}
+                />
 
-                    {/* Darker Gradient Overlay (Hover) */}
-                    <div
-                      className="absolute inset-0 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-[400ms] ease-in-out"
-                      style={{
-                        background: item.overlayHover
-                      }}
-                    />
+                {/* Darker Gradient Overlay (Hover) */}
+                <div
+                  className="absolute inset-0 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-[400ms] ease-in-out"
+                  style={{
+                    background: item.overlayHover
+                  }}
+                />
+
+                {/* Content Overlay */}
+                <div className={`absolute left-0 w-full px-4 sm:px-6 md:px-8 z-20 pointer-events-none flex flex-col ${item.verticalPosition === 'top' ? 'top-4 sm:top-6 md:top-10 justify-start' : (item.verticalPosition === 'center' ? 'top-1/2 -translate-y-1/2 justify-center' : 'bottom-3.5 min-[390px]:bottom-4 sm:bottom-5 md:bottom-8 justify-end')} ${item.blockAlign === 'center' ? 'items-center' : (item.blockAlign === 'right' ? 'items-end' : 'items-start')}`}>
+                  <div
+                    className={`pointer-events-auto flex flex-col ${item.textAlign === 'center' ? 'items-center text-center' : (item.textAlign === 'left' ? 'items-start text-left' : (item.blockAlign === 'right' ? 'items-end text-right' : 'items-start text-left'))} ${item.textWidth || (item.blockAlign === 'right' ? 'w-auto' : 'w-full')} ${item.innerClasses || ''}`}
+                  >
+                    {item.title && (
+                      <h3 className={`text-[18px] sm:text-[20px] md:text-[30px] font-bold mb-2 leading-tight ${item.textColor || 'text-white'}`}>
+                        {item.title}
+                      </h3>
+                    )}
+                    {item.subtitle && (
+                      <p className={`text-[13px] sm:text-[14px] md:text-[16px] mb-5 font-medium ${item.subtitleColor || 'text-white/90'}`}>
+                        {item.subtitle}
+                      </p>
+                    )}
+
+                    <MagneticButton strength={0.3} maxDistance={14}>
+                      <div
+                        className={`inline-flex items-center justify-center ${item.buttonSize || 'px-4 sm:px-6 py-2 sm:py-2.5 text-xs sm:text-[14px]'} font-bold w-max shadow-sm sm:shadow-md transition-colors duration-300 ${item.buttonStyle || 'rounded-full bg-white text-[#111827] group-hover:bg-[#111827] group-hover:text-white'}`}
+                      >
+                        {item.buttonText || "Explore"}
+                        {!item.hideButtonIcon && (
+                          <ArrowRight
+                            className="w-3 h-3 sm:w-4 sm:h-4 ml-1.5 sm:ml-2 transition-transform duration-300 group-hover:translate-x-1"
+                          />
+                        )}
+                      </div>
+                    </MagneticButton>
                   </div>
-
-                  {/* 3D Floating Content Overlay */}
-                  <div className={`absolute left-0 w-full px-4 sm:px-6 md:px-8 z-20 pointer-events-none flex flex-col ${item.verticalPosition === 'top' ? 'top-4 sm:top-6 md:top-10 justify-start' : (item.verticalPosition === 'center' ? 'top-1/2 -translate-y-1/2 justify-center' : 'bottom-3.5 min-[390px]:bottom-4 sm:bottom-5 md:bottom-8 justify-end')} ${item.blockAlign === 'center' ? 'items-center' : (item.blockAlign === 'right' ? 'items-end' : 'items-start')}`}>
-                    <div
-                      className={`pointer-events-auto flex flex-col ${item.textAlign === 'center' ? 'items-center text-center' : (item.textAlign === 'left' ? 'items-start text-left' : (item.blockAlign === 'right' ? 'items-end text-right' : 'items-start text-left'))} ${item.textWidth || (item.blockAlign === 'right' ? 'w-auto' : 'w-full')} ${item.innerClasses || ''}`}
-                      style={{
-                        transform: "translateZ(38px)",
-                        transformStyle: "preserve-3d",
-                      }}
-                    >
-                      {item.title && (
-                        <h3 className={`text-[18px] sm:text-[20px] md:text-[30px] font-bold mb-2 leading-tight ${item.textColor || 'text-white'}`}>
-                          {item.title}
-                        </h3>
-                      )}
-                      {item.subtitle && (
-                        <p className={`text-[13px] sm:text-[14px] md:text-[16px] mb-5 font-medium ${item.subtitleColor || 'text-white/90'}`}>
-                          {item.subtitle}
-                        </p>
-                      )}
-
-                      <MagneticButton strength={0.3} maxDistance={14}>
-                        <div
-                          className={`inline-flex items-center justify-center ${item.buttonSize || 'px-4 sm:px-6 py-2 sm:py-2.5 text-xs sm:text-[14px]'} font-bold w-max shadow-sm sm:shadow-md transition-colors duration-300 ${item.buttonStyle || 'rounded-full bg-white text-[#111827] group-hover:bg-[#111827] group-hover:text-white'}`}
-                          style={{
-                            transform: "translateZ(12px)",
-                          }}
-                        >
-                          {item.buttonText || "Explore"}
-                          {!item.hideButtonIcon && (
-                            <ArrowRight
-                              className="w-3 h-3 sm:w-4 sm:h-4 ml-1.5 sm:ml-2 transition-transform duration-300 group-hover:translate-x-1"
-                            />
-                          )}
-                        </div>
-                      </MagneticButton>
-                    </div>
-                  </div>
-                </Link>
-              </TiltCard>
+                </div>
+              </Link>
             </motion.div>
           ))}
         </motion.div>

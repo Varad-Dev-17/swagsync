@@ -58,10 +58,10 @@ const Sidebar = ({ onClose, isCollapsed, toggleCollapse }) => {
         {!isCollapsed && (
           <div className="flex items-center gap-2 overflow-hidden">
             <div className="w-8 h-8 rounded-xl bg-[#4648d4] flex items-center justify-center shrink-0 shadow-sm shadow-[#4648d4]/20">
-              <span className="text-white font-bold text-sm">V</span>
+              <span className="text-white font-bold text-sm">A</span>
             </div>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <h1 className="text-xl font-extrabold text-slate-900 mt-0.5 tracking-tight">SwagSync Admin</h1>
+              <h1 className="text-xl font-extrabold text-slate-900 mt-0.5 tracking-tight">SwagSync</h1>
             </motion.div>
           </div>
         )}
