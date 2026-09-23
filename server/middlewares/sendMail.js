@@ -30,51 +30,66 @@ if (shared.networkInterfaces) {
   shared.networkInterfaces = filterOutIpv6(shared.networkInterfaces);
 }
 
-// Enforce strict IPv4 resolution for Nodemailer sockets
+// Strict IPv4 DNS resolution for Nodemailer sockets
 const ipv4Lookup = (hostname, options, callback) => {
   dns.lookup(hostname, { family: 4 }, (err, address, family) => {
     callback(err, address, family);
   });
 };
 
-const emailUser = process.env.NODE_CODE_SENDING_EMAIL_ADDRESS;
-const emailPass = process.env.NODE_CODE_SENDING_EMAIL_PASSWORD;
+const emailUser = process.env.SMTP_USER || process.env.NODE_CODE_SENDING_EMAIL_ADDRESS;
+const emailPass = process.env.SMTP_PASS || process.env.NODE_CODE_SENDING_EMAIL_PASSWORD;
+const emailHost = process.env.SMTP_HOST || "smtp.gmail.com";
 
 if (!emailUser || !emailPass) {
   console.warn(
-    "[Mail] Warning: NODE_CODE_SENDING_EMAIL_ADDRESS or NODE_CODE_SENDING_EMAIL_PASSWORD environment variable is missing!"
+    "[Mail] Warning: SMTP user or password environment variable is missing!"
   );
 }
 
-// Primary Gmail SMTP: Direct TLS on port 465 (20s timeout)
-const transport465 = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 465,
-  secure: true,
-  auth: {
-    user: emailUser,
-    pass: emailPass,
-  },
-  lookup: ipv4Lookup,
-  connectionTimeout: 20000,
-  greetingTimeout: 20000,
-  socketTimeout: 20000,
-});
+// Dynamic transporter factory - no hardcoded fixed port objects
+const createSmtpTransport = (port, secure) => {
+  const isSecure = secure !== undefined ? secure : (Number(port) === 465);
 
-// Fallback Gmail SMTP: STARTTLS on port 587 (20s timeout)
-const transport587 = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 587,
-  secure: false,
-  auth: {
-    user: emailUser,
-    pass: emailPass,
-  },
-  lookup: ipv4Lookup,
-  connectionTimeout: 20000,
-  greetingTimeout: 20000,
-  socketTimeout: 20000,
-});
+  const options = {
+    host: emailHost,
+    port: Number(port),
+    secure: isSecure,
+    auth: {
+      user: emailUser,
+      pass: emailPass,
+    },
+    lookup: ipv4Lookup,
+    connectionTimeout: 8000,
+    greetingTimeout: 8000,
+    socketTimeout: 8000,
+  };
+
+  if (process.env.SMTP_SERVICE) {
+    options.service = process.env.SMTP_SERVICE;
+  }
+
+  return nodemailer.createTransport(options);
+};
+
+// Determine ports to use:
+// If process.env.SMTP_PORT is specified in env, use only that port.
+// Otherwise, try standard SMTP ports dynamically (465, 587, 25).
+const getPortsToTry = () => {
+  if (process.env.SMTP_PORT) {
+    const configuredPort = Number(process.env.SMTP_PORT);
+    const configuredSecure = process.env.SMTP_SECURE !== undefined
+      ? process.env.SMTP_SECURE === "true"
+      : (configuredPort === 465);
+    return [{ port: configuredPort, secure: configuredSecure }];
+  }
+
+  return [
+    { port: 465, secure: true },
+    { port: 587, secure: false },
+    { port: 25, secure: false },
+  ];
+};
 
 const transport = {
   sendMail: async (mailOptions) => {
@@ -83,45 +98,42 @@ const transport = {
       from: mailOptions.from || `"SwagSync" <${emailUser}>`,
     };
 
+    const portsToTry = getPortsToTry();
     let lastError = null;
 
-    // 1. Try primary Gmail SMTP (Port 465 SSL/TLS)
-    try {
-      console.log(`[Mail] Connecting to smtp.gmail.com:465 to send email to ${formattedMailOptions.to}...`);
-      const info = await transport465.sendMail(formattedMailOptions);
-      console.log(`[Mail] Email successfully sent via Gmail (Port 465). MessageId: ${info.messageId}`);
-      return info;
-    } catch (err465) {
-      lastError = err465;
-      console.warn(`[Mail] Port 465 failed (${err465.message}). Trying fallback Port 587...`);
-
-      // 2. Try fallback Gmail SMTP (Port 587 STARTTLS)
+    for (const { port, secure } of portsToTry) {
       try {
-        const info = await transport587.sendMail(formattedMailOptions);
-        console.log(`[Mail] Email successfully sent via Gmail (Port 587). MessageId: ${info.messageId}`);
+        console.log(`[Mail] Attempting SMTP delivery via ${emailHost}:${port} (secure: ${secure}) to ${formattedMailOptions.to}...`);
+        const dynamicTransporter = createSmtpTransport(port, secure);
+        const info = await dynamicTransporter.sendMail(formattedMailOptions);
+        console.log(`[Mail] Email successfully sent via SMTP port ${port}. MessageId: ${info.messageId}`);
         return info;
-      } catch (err587) {
-        lastError = err587;
-        console.error(`[Mail] Port 587 delivery also failed: ${err587.message}`);
+      } catch (err) {
+        lastError = err;
+        console.warn(`[Mail] Delivery failed on SMTP port ${port}: ${err.message}`);
       }
     }
 
-    // If both ports fail, throw the real error
-    console.error("[Mail] Gmail SMTP delivery failed:", lastError?.message || lastError);
+    console.error("[Mail] All configured SMTP ports failed:", lastError?.message || lastError);
     throw lastError;
   },
 
   verify: async () => {
-    try {
-      return await transport465.verify();
-    } catch (err) {
-      return await transport587.verify();
-    }
-  },
+    const portsToTry = getPortsToTry();
+    let lastError = null;
 
-  close: () => {
-    transport465.close();
-    transport587.close();
+    for (const { port, secure } of portsToTry) {
+      try {
+        const dynamicTransporter = createSmtpTransport(port, secure);
+        await dynamicTransporter.verify();
+        console.log(`[Mail] SMTP verification successful on port ${port}`);
+        return true;
+      } catch (err) {
+        lastError = err;
+      }
+    }
+
+    throw lastError;
   },
 };
 
