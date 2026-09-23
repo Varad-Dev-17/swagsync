@@ -35,6 +35,93 @@ export const orderEmailTemplate = (order, user) => {
     return `₹${num.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
+  // Dynamic order status determination
+  const rawStatus = (order?.status || "pending").toLowerCase();
+  
+  let currentStage = 1; // 1: Confirmed, 2: Processing, 3: Shipped, 4: Delivered
+  if (rawStatus === "processing" || rawStatus === "packed") {
+    currentStage = 2;
+  } else if (rawStatus === "shipped" || rawStatus === "on_the_way") {
+    currentStage = 3;
+  } else if (rawStatus === "delivered") {
+    currentStage = 4;
+  } else if (rawStatus === "cancelled") {
+    currentStage = -1;
+  }
+
+  // Header status badge
+  let badgeLabel = "✓ Confirmed";
+  let badgeBg = "rgba(253, 113, 0, 0.15)";
+  let badgeBorder = "rgba(253, 113, 0, 0.35)";
+  let badgeColor = "#FB923C";
+
+  if (rawStatus === "processing" || rawStatus === "packed") {
+    badgeLabel = "⚙ Processing";
+    badgeBg = "rgba(59, 130, 246, 0.15)";
+    badgeBorder = "rgba(59, 130, 246, 0.35)";
+    badgeColor = "#60A5FA";
+  } else if (rawStatus === "shipped" || rawStatus === "on_the_way") {
+    badgeLabel = "🚚 In Transit";
+    badgeBg = "rgba(168, 85, 247, 0.15)";
+    badgeBorder = "rgba(168, 85, 247, 0.35)";
+    badgeColor = "#C084FC";
+  } else if (rawStatus === "delivered") {
+    badgeLabel = "✓ Delivered";
+    badgeBg = "rgba(34, 197, 94, 0.15)";
+    badgeBorder = "rgba(34, 197, 94, 0.35)";
+    badgeColor = "#4ADE80";
+  } else if (rawStatus === "cancelled") {
+    badgeLabel = "✕ Cancelled";
+    badgeBg = "rgba(239, 68, 68, 0.15)";
+    badgeBorder = "rgba(239, 68, 68, 0.35)";
+    badgeColor = "#F87171";
+  }
+
+  // Stepper connector line colors
+  const line12 = currentStage >= 2 ? "#FD7100" : "#E2E8F0";
+  const line23 = currentStage >= 3 ? "#FD7100" : "#E2E8F0";
+  const line34 = currentStage >= 4 ? "#FD7100" : "#E2E8F0";
+
+  // Step 2 Styles
+  const step2Done = currentStage > 2;
+  const step2Active = currentStage === 2;
+  const step2CircleStyle = step2Done
+    ? "background-color: #FD7100; color: #FFFFFF; font-size: 13px; font-weight: bold; line-height: 26px;"
+    : step2Active
+    ? "background-color: #FED7AA; border: 2px solid #FD7100; color: #EA580C; font-size: 11px; font-weight: bold; line-height: 22px;"
+    : "background-color: #F1F5F9; border: 2px solid #CBD5E1; color: #94A3B8; font-size: 11px; font-weight: bold; line-height: 22px;";
+  const step2Content = step2Done ? "✓" : "2";
+  const step2LabelStyle = step2Done
+    ? "font-size: 11px; font-weight: 700; color: #FD7100; margin-top: 6px;"
+    : step2Active
+    ? "font-size: 11px; font-weight: 700; color: #EA580C; margin-top: 6px;"
+    : "font-size: 11px; font-weight: 500; color: #94A3B8; margin-top: 6px;";
+
+  // Step 3 Styles
+  const step3Done = currentStage > 3;
+  const step3Active = currentStage === 3;
+  const step3CircleStyle = step3Done
+    ? "background-color: #FD7100; color: #FFFFFF; font-size: 13px; font-weight: bold; line-height: 26px;"
+    : step3Active
+    ? "background-color: #FED7AA; border: 2px solid #FD7100; color: #EA580C; font-size: 11px; font-weight: bold; line-height: 22px;"
+    : "background-color: #F1F5F9; border: 2px solid #CBD5E1; color: #94A3B8; font-size: 11px; font-weight: bold; line-height: 22px;";
+  const step3Content = step3Done ? "✓" : "3";
+  const step3LabelStyle = step3Done
+    ? "font-size: 11px; font-weight: 700; color: #FD7100; margin-top: 6px;"
+    : step3Active
+    ? "font-size: 11px; font-weight: 700; color: #EA580C; margin-top: 6px;"
+    : "font-size: 11px; font-weight: 500; color: #94A3B8; margin-top: 6px;";
+
+  // Step 4 Styles
+  const step4Done = currentStage === 4;
+  const step4CircleStyle = step4Done
+    ? "background-color: #10B981; color: #FFFFFF; font-size: 13px; font-weight: bold; line-height: 26px;"
+    : "background-color: #F1F5F9; border: 2px solid #CBD5E1; color: #94A3B8; font-size: 11px; font-weight: bold; line-height: 22px;";
+  const step4Content = step4Done ? "✓" : "4";
+  const step4LabelStyle = step4Done
+    ? "font-size: 11px; font-weight: 700; color: #10B981; margin-top: 6px;"
+    : "font-size: 11px; font-weight: 500; color: #94A3B8; margin-top: 6px;";
+
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -67,8 +154,8 @@ export const orderEmailTemplate = (order, user) => {
                     </a>
                   </td>
                   <td align="right" style="vertical-align: middle;">
-                    <span style="display: inline-block; background-color: rgba(253, 113, 0, 0.15); border: 1px solid rgba(253, 113, 0, 0.35); color: #FB923C; padding: 6px 12px; border-radius: 9999px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
-                      ✓ Confirmed
+                    <span style="display: inline-block; background-color: ${badgeBg}; border: 1px solid ${badgeBorder}; color: ${badgeColor}; padding: 6px 12px; border-radius: 9999px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
+                      ${badgeLabel}
                     </span>
                   </td>
                 </tr>
@@ -101,7 +188,9 @@ export const orderEmailTemplate = (order, user) => {
                         <td width="26" align="center">
                           <div style="width: 26px; height: 26px; border-radius: 50%; background-color: #FD7100; color: #FFFFFF; font-size: 13px; font-weight: bold; line-height: 26px; text-align: center;">✓</div>
                         </td>
-                        <td width="50%" style="height: 3px; background-color: #FD7100;"></td>
+                        <td width="50%" style="vertical-align: middle; padding: 0; font-size: 0; line-height: 0;">
+                          <div style="height: 3px; font-size: 0; line-height: 3px; background-color: ${line12}; margin: 0; padding: 0;">&nbsp;</div>
+                        </td>
                       </tr>
                     </table>
                     <div style="font-size: 11px; font-weight: 700; color: #FD7100; margin-top: 6px;">Confirmed</div>
@@ -110,40 +199,50 @@ export const orderEmailTemplate = (order, user) => {
                   <td width="25%" align="center" style="vertical-align: top;">
                     <table width="100%" border="0" cellspacing="0" cellpadding="0">
                       <tr>
-                        <td width="50%" style="height: 3px; background-color: #FD7100;"></td>
-                        <td width="26" align="center">
-                          <div style="width: 26px; height: 26px; border-radius: 50%; background-color: #FED7AA; border: 2px solid #FD7100; color: #EA580C; font-size: 11px; font-weight: bold; line-height: 22px; text-align: center;">2</div>
+                        <td width="50%" style="vertical-align: middle; padding: 0; font-size: 0; line-height: 0;">
+                          <div style="height: 3px; font-size: 0; line-height: 3px; background-color: ${line12}; margin: 0; padding: 0;">&nbsp;</div>
                         </td>
-                        <td width="50%" style="height: 3px; background-color: #E2E8F0;"></td>
+                        <td width="26" align="center">
+                          <div style="width: 26px; height: 26px; border-radius: 50%; text-align: center; ${step2CircleStyle}">${step2Content}</div>
+                        </td>
+                        <td width="50%" style="vertical-align: middle; padding: 0; font-size: 0; line-height: 0;">
+                          <div style="height: 3px; font-size: 0; line-height: 3px; background-color: ${line23}; margin: 0; padding: 0;">&nbsp;</div>
+                        </td>
                       </tr>
                     </table>
-                    <div style="font-size: 11px; font-weight: 600; color: #0F172A; margin-top: 6px;">Processing</div>
+                    <div style="${step2LabelStyle}">Processing</div>
                   </td>
                   <!-- Step 3: Shipped -->
                   <td width="25%" align="center" style="vertical-align: top;">
                     <table width="100%" border="0" cellspacing="0" cellpadding="0">
                       <tr>
-                        <td width="50%" style="height: 3px; background-color: #E2E8F0;"></td>
-                        <td width="26" align="center">
-                          <div style="width: 26px; height: 26px; border-radius: 50%; background-color: #F1F5F9; border: 2px solid #CBD5E1; color: #94A3B8; font-size: 11px; font-weight: bold; line-height: 22px; text-align: center;">3</div>
+                        <td width="50%" style="vertical-align: middle; padding: 0; font-size: 0; line-height: 0;">
+                          <div style="height: 3px; font-size: 0; line-height: 3px; background-color: ${line23}; margin: 0; padding: 0;">&nbsp;</div>
                         </td>
-                        <td width="50%" style="height: 3px; background-color: #E2E8F0;"></td>
+                        <td width="26" align="center">
+                          <div style="width: 26px; height: 26px; border-radius: 50%; text-align: center; ${step3CircleStyle}">${step3Content}</div>
+                        </td>
+                        <td width="50%" style="vertical-align: middle; padding: 0; font-size: 0; line-height: 0;">
+                          <div style="height: 3px; font-size: 0; line-height: 3px; background-color: ${line34}; margin: 0; padding: 0;">&nbsp;</div>
+                        </td>
                       </tr>
                     </table>
-                    <div style="font-size: 11px; font-weight: 500; color: #94A3B8; margin-top: 6px;">Shipped</div>
+                    <div style="${step3LabelStyle}">Shipped</div>
                   </td>
                   <!-- Step 4: Delivered -->
                   <td width="25%" align="center" style="vertical-align: top;">
                     <table width="100%" border="0" cellspacing="0" cellpadding="0">
                       <tr>
-                        <td width="50%" style="height: 3px; background-color: #E2E8F0;"></td>
+                        <td width="50%" style="vertical-align: middle; padding: 0; font-size: 0; line-height: 0;">
+                          <div style="height: 3px; font-size: 0; line-height: 3px; background-color: ${line34}; margin: 0; padding: 0;">&nbsp;</div>
+                        </td>
                         <td width="26" align="center">
-                          <div style="width: 26px; height: 26px; border-radius: 50%; background-color: #F1F5F9; border: 2px solid #CBD5E1; color: #94A3B8; font-size: 11px; font-weight: bold; line-height: 22px; text-align: center;">4</div>
+                          <div style="width: 26px; height: 26px; border-radius: 50%; text-align: center; ${step4CircleStyle}">${step4Content}</div>
                         </td>
                         <td width="50%"></td>
                       </tr>
                     </table>
-                    <div style="font-size: 11px; font-weight: 500; color: #94A3B8; margin-top: 6px;">Delivered</div>
+                    <div style="${step4LabelStyle}">Delivered</div>
                   </td>
                 </tr>
               </table>
