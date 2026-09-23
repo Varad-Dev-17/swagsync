@@ -610,19 +610,24 @@ export const createOrder = async (req, res) => {
       .populate(ORDER_POPULATE_CONFIG)
       .lean();
 
+    const recipientEmail = populatedOrder?.user?.email || req.user?.email || populatedOrder?.shippingAddress?.email;
+    const recipientUser = populatedOrder?.user || { username: req.user?.username || populatedOrder?.shippingAddress?.name || "Shopper", email: recipientEmail };
+
     try {
-      if (populatedOrder.user && populatedOrder.user.email) {
-        console.log(`[Order Flow] Dispatching order confirmation email for order ${orderId} to ${populatedOrder.user.email}...`);
-        await transport.sendMail({
+      if (recipientEmail) {
+        console.log(`[Order Flow] Dispatching order confirmation email for order ${orderId} to ${recipientEmail}...`);
+        const info = await transport.sendMail({
           from: `"SwagSync Orders" <${process.env.NODE_CODE_SENDING_EMAIL_ADDRESS}>`,
-          to: populatedOrder.user.email,
+          to: recipientEmail,
           subject: `Order Confirmed #${orderId} - SwagSync`,
-          html: orderEmailTemplate(populatedOrder, populatedOrder.user),
+          html: orderEmailTemplate(populatedOrder, recipientUser),
         });
-        console.log(`[Order Flow] Order confirmation email dispatched for ${orderId}`);
+        console.log(`[Order Flow] Order confirmation email successfully sent for ${orderId}:`, info?.messageId || "Delivered");
+      } else {
+        console.warn(`[Order Flow] Recipient email could not be resolved for order ${orderId}. Skipping email dispatch.`);
       }
     } catch (emailError) {
-      console.error("[Order Flow] Failed to send order confirmation email:", emailError);
+      console.error(`[Order Flow] Failed to send order confirmation email for ${orderId}:`, emailError.message || emailError);
     }
 
     return res.status(201).json({
@@ -964,19 +969,24 @@ export const cancelOrder = async (req, res) => {
       .populate(ORDER_POPULATE_CONFIG)
       .lean();
 
+    const recipientEmail = populatedOrder?.user?.email || req.user?.email || populatedOrder?.shippingAddress?.email;
+    const recipientUser = populatedOrder?.user || { username: req.user?.username || populatedOrder?.shippingAddress?.name || "Shopper", email: recipientEmail };
+
     try {
-      if (populatedOrder.user && populatedOrder.user.email) {
-        console.log(`[Order Flow] Dispatching order cancellation email for order ${populatedOrder.orderId} to ${populatedOrder.user.email}...`);
-        await transport.sendMail({
+      if (recipientEmail) {
+        console.log(`[Order Flow] Dispatching order cancellation email for order ${populatedOrder.orderId} to ${recipientEmail}...`);
+        const info = await transport.sendMail({
           from: `"SwagSync Orders" <${process.env.NODE_CODE_SENDING_EMAIL_ADDRESS}>`,
-          to: populatedOrder.user.email,
+          to: recipientEmail,
           subject: `Order Cancelled #${populatedOrder.orderId} - SwagSync`,
-          html: cancelEmailTemplate(populatedOrder, populatedOrder.user),
+          html: cancelEmailTemplate(populatedOrder, recipientUser),
         });
-        console.log(`[Order Flow] Order cancellation email dispatched for ${populatedOrder.orderId}`);
+        console.log(`[Order Flow] Order cancellation email successfully sent for ${populatedOrder.orderId}:`, info?.messageId || "Delivered");
+      } else {
+        console.warn(`[Order Flow] Recipient email could not be resolved for order ${populatedOrder.orderId}. Skipping email dispatch.`);
       }
     } catch (emailError) {
-      console.error("[Order Flow] Failed to send order cancellation email:", emailError);
+      console.error(`[Order Flow] Failed to send order cancellation email for ${populatedOrder.orderId}:`, emailError.message || emailError);
     }
 
     return res.status(200).json({

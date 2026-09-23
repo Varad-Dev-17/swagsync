@@ -63,9 +63,10 @@ app.use(
   cors({
     origin: [
       process.env.FRONTEND_URL || "http://localhost:3000",
+      process.env.RENDER_EXTERNAL_URL,
       "http://localhost:8081", 
       "http://10.0.2.2:8081"
-    ],
+    ].filter(Boolean),
     credentials: true,
   })
 );
