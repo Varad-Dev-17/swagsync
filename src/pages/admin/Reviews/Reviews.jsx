@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import PageCard from "../../../components/admin/ui/PageCard";
-import { Star, Trash2, ShieldCheck, Search, Filter, Eye, Loader2, X, AlertCircle, ExternalLink, Camera } from "lucide-react";
+import { Star, Trash2, ShieldCheck, Search, Filter, Eye, Loader2, X, AlertCircle, Camera } from "lucide-react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { useAuth } from "../../../context/AuthContext";
@@ -193,7 +193,7 @@ const Reviews = () => {
                     ? `/product/${prodSlugOrId}${variantId ? `?variant=${variantId}` : ""}`
                     : "#";
 
-                  // Extract human-readable variant attributes (e.g. Color: Green, Size: M)
+                  // Extract variant attributes (e.g. Color: Green • Size: XXL) as plain text
                   const variantDetails = [];
                   if (rev.variant && Array.isArray(rev.variant.attributes)) {
                     rev.variant.attributes.forEach((attr) => {
@@ -209,8 +209,6 @@ const Reviews = () => {
                       ? variantDetails.join(" • ")
                       : rev.variant?.sku
                       ? `SKU: ${rev.variant.sku}`
-                      : rev.variant
-                      ? "Reviewed Variant"
                       : null;
 
                   // Score Styling
@@ -228,7 +226,7 @@ const Reviews = () => {
                             target="_blank"
                             rel="noopener noreferrer"
                             className="w-14 h-18 rounded-none border border-slate-200 overflow-hidden shrink-0 bg-white shadow-2xs block relative group/thumb hover:border-[#4F46E5] hover:shadow-sm transition-all cursor-pointer"
-                            title="Click to view reviewed variant"
+                            title="Click image to view reviewed variant"
                           >
                             <img
                               src={productImg}
@@ -240,30 +238,16 @@ const Reviews = () => {
                             <div className="absolute inset-0 bg-black/0 group-hover/thumb:bg-black/10 transition-colors" />
                           </Link>
                           <div className="min-w-0">
-                            <Link
-                              to={productVariantUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="font-bold text-slate-900 hover:text-[#4F46E5] line-clamp-2 transition-colors inline-flex items-center gap-1 group/link"
-                              title="Click to view reviewed variant"
-                            >
-                              <span>{rev.product?.title || "Deleted Product"}</span>
-                              <ExternalLink size={12} className="opacity-0 group-hover/link:opacity-100 transition-opacity text-[#4F46E5] shrink-0" />
-                            </Link>
+                            <span className="font-bold text-slate-900 line-clamp-2 block">
+                              {rev.product?.title || "Deleted Product"}
+                            </span>
                             <span className="text-xs font-mono text-slate-400 block mt-0.5">
                               ID: {rev.product?.productId || String(rev.product?._id || rev.product || "")}
                             </span>
                             {variantLabel && (
-                              <Link
-                                to={productVariantUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1 mt-1.5 px-2 py-0.5 text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 hover:border-indigo-300 transition-colors w-fit group/var cursor-pointer"
-                                title="Click to view this reviewed variant"
-                              >
-                                <span>{variantLabel}</span>
-                                <ExternalLink size={10} className="text-indigo-500 opacity-70 group-hover/var:opacity-100 shrink-0" />
-                              </Link>
+                              <span className="inline-block text-[11px] font-semibold text-slate-700 bg-slate-100/90 px-2 py-0.5 rounded-none border border-slate-200 mt-1.5">
+                                {variantLabel}
+                              </span>
                             )}
                           </div>
                         </div>

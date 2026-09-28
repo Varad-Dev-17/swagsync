@@ -20,6 +20,7 @@ const SmoothScrollProvider = ({ children }) => {
     });
 
     lenisRef.current = lenis;
+    window.__lenis = lenis;
 
     // Synchronize Lenis scrolling with GSAP ScrollTrigger updates
     lenis.on("scroll", ScrollTrigger.update);
@@ -36,13 +37,23 @@ const SmoothScrollProvider = ({ children }) => {
     return () => {
       gsap.ticker.remove(updateLenis);
       lenis.destroy();
+      window.__lenis = null;
     };
   }, []);
 
-  // Scroll to top instantly when route or search params change
+  // Scroll to top instantly when route or search params change, unless navigating to hash
   useEffect(() => {
     if (lenisRef.current) {
-      lenisRef.current.scrollTo(0, { immediate: true });
+      if (location.hash) {
+        setTimeout(() => {
+          lenisRef.current?.scrollTo(location.hash, {
+            offset: -70,
+            duration: 1.2,
+          });
+        }, 150);
+      } else {
+        lenisRef.current.scrollTo(0, { immediate: true });
+      }
     }
   }, [location.pathname, location.search]);
 

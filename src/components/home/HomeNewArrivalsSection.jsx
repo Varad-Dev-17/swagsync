@@ -149,8 +149,9 @@ const HomeNewArrivalsSection = ({ title, subtitle }) => {
 
   return (
     <section
+      id="new-arrivals"
       ref={sectionRef}
-      className="w-full bg-white overflow-hidden relative z-10 flex flex-col justify-center h-[calc(100dvh-62px)] sm:h-[calc(100dvh-68px)] lg:h-[calc(100vh-70px)] py-4 sm:py-0"
+      className="w-full bg-white overflow-hidden relative z-10 flex flex-col justify-center h-[calc(100dvh-62px)] sm:h-[calc(100dvh-68px)] lg:h-[calc(100vh-70px)] py-4 sm:py-0 scroll-mt-[62px] sm:scroll-mt-[68px] lg:scroll-mt-[70px]"
     >
       <div className="max-w-[1600px] mx-auto w-full px-4 md:px-8 lg:px-12 mb-4 sm:mb-8">
         {/* Section Header */}

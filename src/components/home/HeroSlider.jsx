@@ -3,6 +3,23 @@ import { Link } from "react-router-dom";
 import { MousePointer2, ChevronDown } from "lucide-react";
 
 const HeroSlider = () => {
+  const handleScrollToNewArrivals = (e) => {
+    e.preventDefault();
+    const navOffset = window.innerWidth < 640 ? -62 : (window.innerWidth < 1024 ? -68 : -70);
+    if (window.__lenis) {
+      window.__lenis.scrollTo("#new-arrivals", {
+        offset: navOffset,
+        duration: 1.2,
+      });
+    } else {
+      const el = document.getElementById("new-arrivals");
+      if (el) {
+        const top = el.getBoundingClientRect().top + window.pageYOffset + navOffset;
+        window.scrollTo({ top, behavior: "smooth" });
+      }
+    }
+  };
+
   return (
     <section className="relative w-full h-screen min-h-[100dvh] h-[100dvh] overflow-hidden">
       {/* BACKGROUND VIDEO */}
@@ -73,12 +90,13 @@ const HeroSlider = () => {
             >
               Explore Collection
             </Link>
-            <Link
-              to="/new-in"
-              className="flex-1 sm:flex-initial sm:w-auto px-3 sm:px-10 py-3 sm:py-4 bg-transparent border border-white text-white font-medium text-[14px] sm:text-[15px] hover:bg-white hover:text-[#111827] transition-all duration-300 rounded-[4px] text-center hero-mobile-btn-shadow sm:shadow-none active:scale-95 whitespace-nowrap"
+            <a
+              href="#new-arrivals"
+              onClick={handleScrollToNewArrivals}
+              className="flex-1 sm:flex-initial sm:w-auto px-3 sm:px-10 py-3 sm:py-4 bg-transparent border border-white text-white font-medium text-[14px] sm:text-[15px] hover:bg-white hover:text-[#111827] transition-all duration-300 rounded-[4px] text-center hero-mobile-btn-shadow sm:shadow-none active:scale-95 whitespace-nowrap cursor-pointer"
             >
               Shop New Arrivals
-            </Link>
+            </a>
           </motion.div>
         </motion.div>
       </div>

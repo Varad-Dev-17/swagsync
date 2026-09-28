@@ -655,7 +655,7 @@ const Navbar = () => {
                     <Link
                       to="/wishlist"
                       className={`relative p-2 rounded-full ${textColor} transition-all duration-200 ${
-                        isScrolled ? "hover:bg-gray-100 hover:text-[#FD7100]" : "hover:bg-white/10 hover:text-white"
+                        isNavSolid ? "hover:bg-gray-100 hover:text-[#FD7100]" : "hover:bg-white/10 hover:text-white"
                       }`}
                       aria-label="Wishlist"
                       title="Wishlist"
@@ -671,7 +671,7 @@ const Navbar = () => {
                     <Link
                       to="/bag"
                       className={`relative p-2 rounded-full ${textColor} transition-all duration-200 ${
-                        isScrolled ? "hover:bg-gray-100 hover:text-[#FD7100]" : "hover:bg-white/10 hover:text-white"
+                        isNavSolid ? "hover:bg-gray-100 hover:text-[#FD7100]" : "hover:bg-white/10 hover:text-white"
                       }`}
                       aria-label="Shopping Bag"
                       title="Bag"
@@ -688,7 +688,7 @@ const Navbar = () => {
                       <Link
                         to="/account/notifications"
                         className={`relative p-2 rounded-full ${textColor} transition-all duration-200 ${
-                          isScrolled ? "hover:bg-gray-100 hover:text-[#FD7100]" : "hover:bg-white/10 hover:text-white"
+                          isNavSolid ? "hover:bg-gray-100 hover:text-[#FD7100]" : "hover:bg-white/10 hover:text-white"
                         }`}
                         aria-label="Notifications"
                         title="Notifications"
@@ -708,7 +708,7 @@ const Navbar = () => {
                 {user ? (
                   <Link
                     to="/account"
-                    className={`flex items-center gap-2 ${textColor} transition-all duration-300 p-1 sm:pl-2 sm:pr-3 sm:py-1.5 rounded-full ${isScrolled ? "hover:bg-gray-100 hover:text-[#FD7100]" : "hover:bg-white/10 hover:text-white"
+                    className={`flex items-center gap-2 ${textColor} transition-all duration-300 p-1 sm:pl-2 sm:pr-3 sm:py-1.5 rounded-full ${isNavSolid ? "hover:bg-gray-100 hover:text-[#FD7100]" : "hover:bg-white/10 hover:text-white"
                       }`}
                     aria-label="My Account"
                   >
@@ -728,9 +728,9 @@ const Navbar = () => {
                     {/* Desktop Login Button */}
                     <Link
                       to="/signin"
-                      className={`hidden md:flex items-center justify-center px-6 py-2 border rounded-full font-medium transition-all duration-300 ${isScrolled
+                      className={`hidden md:flex items-center justify-center px-6 py-2 border rounded-full font-medium transition-all duration-300 ${isNavSolid
                         ? "border-[#111827] text-[#111827] hover:bg-[#111827] hover:text-white"
-                        : "border-white text-white hover:text-white/80"
+                        : "border-white text-white hover:bg-white hover:text-[#111827]"
                         }`}
                       style={{ fontSize: "14px", height: "38px" }}
                     >
@@ -740,7 +740,7 @@ const Navbar = () => {
                     {/* Mobile Login Icon */}
                     <Link
                       to="/signin"
-                      className={`md:hidden flex items-center justify-center p-2 rounded-lg ${textColor} transition-all duration-300 ${isScrolled ? "hover:bg-gray-100 hover:text-[#FD7100]" : "hover:text-white/80"
+                      className={`md:hidden flex items-center justify-center p-2 rounded-lg ${textColor} transition-all duration-300 ${isNavSolid ? "hover:bg-gray-100 hover:text-[#FD7100]" : "hover:text-white/80"
                         }`}
                       aria-label="Sign In"
                     >

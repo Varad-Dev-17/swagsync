@@ -52,6 +52,7 @@ const ProductsPage = () => {
     }
     setActiveDepartment(newDept);
     setActiveCategory(newCat);
+    setCurrentPage(1);
   }, [searchParams]);
   const [activeBrands, setActiveBrands] = useState([]);
   const [activeColors, setActiveColors] = useState([]);

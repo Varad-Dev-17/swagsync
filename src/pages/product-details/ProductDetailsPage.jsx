@@ -3,6 +3,7 @@ import { useParams, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import ProductImageGrid from "../../components/product-details/ProductImageGrid";
 import ProductInfo from "../../components/product-details/ProductInfo";
+import SyncLoader from "../../components/common/SyncLoader";
 
 const api = axios.create({
   baseURL: "",
@@ -90,8 +91,11 @@ const ProductDetailsPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white pt-20">
-        <div className="w-10 h-10 border-4 border-[#FD7100] border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen flex flex-col items-center justify-center bg-white pt-20 gap-3.5">
+        <SyncLoader color="#FD7100" size={11} gap={7} />
+        <span className="text-xs font-medium tracking-wide text-gray-400 uppercase">
+          Loading product...
+        </span>
       </div>
     );
   }
