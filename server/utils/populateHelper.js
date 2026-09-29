@@ -10,9 +10,6 @@ import "../models/attributeOption.js";
 import "../models/order.js";
 import "../models/address.js";
 
-/**
- * Centralized populate configurations for Order queries to reduce duplicated code across controllers.
- */
 export const ORDER_POPULATE_CONFIG = [
   { path: "user", select: "username email mobileNo gender" },
   {
