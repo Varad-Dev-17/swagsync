@@ -221,6 +221,40 @@ const OrdersSection = () => {
       )
     },
     {
+      header: 'Vendor',
+      accessor: 'vendor',
+      align: 'center',
+      headerAlign: 'center',
+      render: (row) => {
+        const vendors = (row.items || [])
+          .map(
+            (it) =>
+              it.vendor?.vendorProfile?.storeName ||
+              it.vendor?.storeName ||
+              it.vendor?.username ||
+              it.product?.vendorId?.storeName
+          )
+          .filter(Boolean);
+        const uniqueVendors = [...new Set(vendors)];
+        return (
+          <div className="flex flex-col items-center gap-1">
+            {uniqueVendors.length > 0 ? (
+              uniqueVendors.map((v, i) => (
+                <span
+                  key={i}
+                  className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-orange-50 text-[#fe4a03] border border-orange-200"
+                >
+                  {v}
+                </span>
+              ))
+            ) : (
+              <span className="text-[11px] text-slate-400 font-medium">Direct</span>
+            )}
+          </div>
+        );
+      },
+    },
+    {
       header: 'Date',
       accessor: 'createdAt',
       align: 'center',

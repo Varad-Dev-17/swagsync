@@ -112,16 +112,23 @@ const ReturnsSection = () => {
     
     const style = styles[status] || "bg-gray-50 text-gray-500 border-gray-100";
     
-    let displayStatus = status;
-    if (status === 'refunded' || status === 'exchanged' || status === 'completed') {
-      displayStatus = 'completed';
-    } else if (status === 'pickup' || status === 'pickup_scheduled' || status === 'picked_up') {
-      displayStatus = 'pickup';
-    } else if (status === 'pickup_replace') {
-      displayStatus = 'pickup & replace';
-    } else if (status === 'pending') {
-      displayStatus = 'requested';
-    }
+    const displayMap = {
+      pending: "Requested",
+      requested: "Requested",
+      approved: "Approved",
+      rejected: "Rejected",
+      pickup_scheduled: "Picked up schedule",
+      pickup: "Picked up schedule",
+      picked_up: "Picked up schedule",
+      received: "Recieved",
+      replace_and_exchange: "Replace and Exchange",
+      pickup_replace: "Replace and Exchange",
+      completed: "Completed",
+      refunded: "Completed",
+      exchanged: "Completed",
+    };
+    
+    const displayStatus = displayMap[status] || (typeof status === "string" ? status.replace(/_/g, " ") : "Unknown");
     
     return (
       <div 
@@ -211,6 +218,24 @@ const ReturnsSection = () => {
               {variantText && <span className="text-[10px] text-gray-400 mt-0.5">{variantText}</span>}
             </div>
           </div>
+        );
+      }
+    },
+    {
+      header: 'Vendor',
+      accessor: 'vendor',
+      align: 'center',
+      headerAlign: 'center',
+      render: (row) => {
+        const vendorName =
+          row.vendor?.vendorProfile?.storeName ||
+          row.vendor?.storeName ||
+          row.vendor?.username ||
+          "Direct";
+        return (
+          <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-orange-50 text-[#fe4a03] border border-orange-200">
+            {vendorName}
+          </span>
         );
       }
     },

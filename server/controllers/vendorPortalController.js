@@ -1475,6 +1475,14 @@ export const updateVendorOrderStatus = async (req, res) => {
     const vendorStoreName = req.vendor.vendorProfile?.storeName || req.vendor.username || "Vendor";
 
     if (status) {
+      const allowedVendorStatuses = ["packed", "shipped"];
+      if (!allowedVendorStatuses.includes(status)) {
+        return res.status(400).json({
+          success: false,
+          message: "Vendors can only update status to 'Packed' or 'Shipped'. 'Out for Delivery' and 'Delivered' are managed by Admin after shipment.",
+        });
+      }
+
       // Update vendor items in this order to the new status
       order.items.forEach((item) => {
         if (item.vendor?.toString() === vendorId.toString()) {
@@ -1550,9 +1558,12 @@ export const updateVendorOrderItemFulfillment = async (req, res) => {
       return res.status(403).json({ success: false, message: "Access denied. Item does not belong to your store." });
     }
 
-    const validStatuses = ["pending", "processing", "packed", "shipped", "delivered", "cancelled"];
+    const validStatuses = ["packed", "shipped"];
     if (status && !validStatuses.includes(status)) {
-      return res.status(400).json({ success: false, message: "Invalid fulfillment status" });
+      return res.status(400).json({
+        success: false,
+        message: "Vendors can only update fulfillment status to 'packed' or 'shipped'. 'Out for Delivery' and 'Delivered' are managed by Admin.",
+      });
     }
 
     const oldStatus = item.status || "pending";
@@ -1668,9 +1679,9 @@ export const getVendorReturnRequests = async (req, res) => {
 
     const stats = {
       total: allVendorReturns.length,
-      pending: allVendorReturns.filter((r) => r.status === "pending").length,
+      pending: allVendorReturns.filter((r) => r.status === "pending" || r.status === "requested").length,
       approved: allVendorReturns.filter((r) =>
-        ["approved", "pickup", "pickup_replace", "pickup_scheduled", "picked_up"].includes(r.status)
+        ["approved", "pickup", "pickup_replace", "replace_and_exchange", "pickup_scheduled", "picked_up", "received"].includes(r.status)
       ).length,
       rejected: allVendorReturns.filter((r) => r.status === "rejected").length,
       completed: allVendorReturns.filter((r) =>
@@ -1836,9 +1847,10 @@ export const updateVendorReturnStatus = async (req, res) => {
     }
 
     const vendorStoreName = req.vendor.vendorProfile?.storeName || req.vendor.username || "Vendor";
+    const previousStatus = returnReq.status;
 
     if (action === "approve") {
-      returnReq.status = returnReq.type === "exchange" ? "pickup_replace" : "approved";
+      returnReq.status = "approved";
       returnReq.timeline.push({
         eventId: `TL-RET-${Date.now()}`,
         type: "VENDOR_APPROVED",
@@ -1855,7 +1867,17 @@ export const updateVendorReturnStatus = async (req, res) => {
       returnReq.timeline.push({
         eventId: `TL-RET-${Date.now()}`,
         type: "VENDOR_REJECTED",
-        description: `Vendor [${vendorStoreName}] rejected the ${returnReq.type} request. Reason: ${rejectionReason || "None provided"}`,
+        description: `Vendor [${vendorStoreName}] rejected the ${returnReq.type} request. Reason: ${rejectionReason || "Customer request reason not accepted"}`,
+        performedBy: vendorStoreName,
+        createdBy: "Vendor",
+        timestamp: new Date(),
+      });
+    } else if (action === "pickup_scheduled" || action === "schedule_pickup") {
+      returnReq.status = "pickup_scheduled";
+      returnReq.timeline.push({
+        eventId: `TL-RET-${Date.now()}`,
+        type: "PICKUP_SCHEDULED",
+        description: `Vendor [${vendorStoreName}] scheduled courier pickup for the customer.`,
         performedBy: vendorStoreName,
         createdBy: "Vendor",
         timestamp: new Date(),
@@ -1870,6 +1892,26 @@ export const updateVendorReturnStatus = async (req, res) => {
         createdBy: "Vendor",
         timestamp: new Date(),
       });
+    } else if (action === "replace_and_exchange" || action === "pickup_replace") {
+      returnReq.status = "replace_and_exchange";
+      returnReq.timeline.push({
+        eventId: `TL-RET-${Date.now()}`,
+        type: "REPLACE_AND_EXCHANGE",
+        description: `Vendor [${vendorStoreName}] dispatched replacement for doorstep exchange.`,
+        performedBy: vendorStoreName,
+        createdBy: "Vendor",
+        timestamp: new Date(),
+      });
+    } else if (action === "complete" || action === "completed") {
+      returnReq.status = "completed";
+      returnReq.timeline.push({
+        eventId: `TL-RET-${Date.now()}`,
+        type: "COMPLETED",
+        description: `Vendor [${vendorStoreName}] marked the ${returnReq.type} request as completed.`,
+        performedBy: vendorStoreName,
+        createdBy: "Vendor",
+        timestamp: new Date(),
+      });
     } else if (action === "qc") {
       if (!["passed", "failed"].includes(qcStatus)) {
         return res.status(400).json({ success: false, message: "QC status must be 'passed' or 'failed'" });
@@ -1880,7 +1922,7 @@ export const updateVendorReturnStatus = async (req, res) => {
       if (qcStatus === "passed") {
         returnReq.status = "completed";
         if (returnReq.type === "return") {
-          returnReq.refundStatus = "initiated";
+          returnReq.refundStatus = "completed";
         }
       } else {
         returnReq.status = "rejected";
@@ -1895,15 +1937,73 @@ export const updateVendorReturnStatus = async (req, res) => {
         timestamp: new Date(),
       });
     } else if (status) {
+      const validStatuses = [
+        "pending",
+        "requested",
+        "approved",
+        "rejected",
+        "pickup_scheduled",
+        "received",
+        "replace_and_exchange",
+        "pickup_replace",
+        "completed",
+        "refunded",
+        "exchanged"
+      ];
+      if (!validStatuses.includes(status)) {
+        return res.status(400).json({ success: false, message: `Invalid status: ${status}` });
+      }
+
       returnReq.status = status;
+      const statusLabels = {
+        approved: "Approved",
+        rejected: "Rejected",
+        pickup_scheduled: "Picked Up Schedule",
+        received: "Recieved",
+        replace_and_exchange: "Replace and Exchange",
+        pickup_replace: "Replace and Exchange",
+        completed: "Completed"
+      };
+
       returnReq.timeline.push({
         eventId: `TL-RET-${Date.now()}`,
         type: "STATUS_UPDATE",
-        description: `Vendor [${vendorStoreName}] updated request status to ${status.toUpperCase()}`,
+        description: `Vendor [${vendorStoreName}] updated request status to ${statusLabels[status] || status.toUpperCase()}`,
         performedBy: vendorStoreName,
         createdBy: "Vendor",
         timestamp: new Date(),
       });
+    }
+
+    // Stock adjustments and payment sync if completed
+    if (
+      (returnReq.status === "completed" || returnReq.status === "exchanged") &&
+      previousStatus !== "completed" &&
+      previousStatus !== "exchanged"
+    ) {
+      const qty = Number(returnReq.quantity) || 1;
+      if (returnReq.type === "exchange") {
+        if (returnReq.requestedExchangeVariant) {
+          await Variant.findByIdAndUpdate(returnReq.requestedExchangeVariant, {
+            $inc: { stock: -qty },
+          });
+        }
+        if (returnReq.originalVariant) {
+          await Variant.findByIdAndUpdate(returnReq.originalVariant, {
+            $inc: { stock: qty },
+          });
+        }
+      } else if (returnReq.type === "return") {
+        if (returnReq.originalVariant) {
+          await Variant.findByIdAndUpdate(returnReq.originalVariant, {
+            $inc: { stock: qty },
+          });
+        }
+        returnReq.refundStatus = "completed";
+        if (returnReq.order) {
+          await Order.findByIdAndUpdate(returnReq.order, { paymentStatus: "refunded" });
+        }
+      }
     }
 
     if (vendorNotes !== undefined) {

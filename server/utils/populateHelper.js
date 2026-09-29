@@ -17,7 +17,7 @@ export const ORDER_POPULATE_CONFIG = [
   { path: "user", select: "username email mobileNo gender" },
   {
     path: "items.product",
-    select: "title brand slug images price returnPolicy",
+    select: "title brand slug images price returnPolicy vendorId",
     populate: { path: "brand", select: "name" }
   },
   {
@@ -27,6 +27,10 @@ export const ORDER_POPULATE_CONFIG = [
       { path: "attributes.attribute" },
       { path: "attributes.option" }
     ]
+  },
+  {
+    path: "items.vendor",
+    select: "storeName username email mobileNo vendorProfile"
   }
 ];
 
@@ -36,12 +40,16 @@ export const ORDER_POPULATE_CONFIG = [
 export const RETURN_REQUEST_POPULATE_CONFIG = [
   { path: "user", select: "username email mobileNo gender" },
   {
+    path: "vendor",
+    select: "storeName username email mobileNo vendorProfile"
+  },
+  {
     path: "order",
     select: "orderId createdAt paymentMethod paymentStatus status items shippingAddress totalAmount subtotal discountAmount shippingAmount taxAmount coupon deliveredAt trackingNumber timeline",
     populate: [
       {
         path: "items.product",
-        select: "title brand slug images price",
+        select: "title brand slug images price vendorId",
         populate: { path: "brand", select: "name" }
       },
       {
@@ -51,12 +59,16 @@ export const RETURN_REQUEST_POPULATE_CONFIG = [
           { path: "attributes.attribute" },
           { path: "attributes.option" }
         ]
+      },
+      {
+        path: "items.vendor",
+        select: "storeName username email mobileNo vendorProfile"
       }
     ]
   },
   {
     path: "product",
-    select: "title brand slug images price returnPolicy",
+    select: "title brand slug images price returnPolicy vendorId",
     populate: { path: "brand", select: "name" }
   },
   {

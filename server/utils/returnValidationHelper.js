@@ -49,10 +49,12 @@ export const validateReturnStatusTransition = (currentStatus, targetStatus, effe
 
   const validStatuses = [
     "pending",
+    "requested",
     "approved",
     "rejected",
     "pickup",
     "pickup_replace",
+    "replace_and_exchange",
     "completed",
     "pickup_scheduled",
     "picked_up",

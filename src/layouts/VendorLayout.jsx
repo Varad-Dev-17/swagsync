@@ -10,7 +10,6 @@ import {
   Boxes,
   ShoppingCart,
   RefreshCcw,
-  Headphones,
   MessageSquare,
   LogOut,
   Menu,
@@ -33,7 +32,6 @@ const navItems = [
   { path: "/vendor/portal/inventory", label: "Inventory", icon: Boxes },
   { path: "/vendor/portal/orders", label: "Orders", icon: ShoppingCart },
   { path: "/vendor/portal/returns", label: "Returns", icon: RefreshCcw },
-  { path: "/vendor/portal/tickets", label: "Tickets", icon: Headphones },
   { path: "/vendor/portal/reviews", label: "Reviews", icon: MessageSquare },
   { path: "/vendor/portal/payments", label: "Payments & Earnings", icon: WalletCards },
 ];

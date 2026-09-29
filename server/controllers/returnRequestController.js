@@ -382,6 +382,7 @@ export const getAllReturnRequestsAdmin = async (req, res) => {
     const [requests, total] = await Promise.all([
       ReturnRequest.find(query)
         .populate("user", "username email mobileNo gender")
+        .populate("vendor", "storeName username email mobileNo vendorProfile")
         .populate("order", "orderId createdAt paymentMethod paymentStatus status")
         .populate("product", "title brand")
         .populate({
@@ -648,24 +649,25 @@ export const updateReturnRequestStatusAdmin = async (req, res) => {
       const eventMap = isExchangeRequest ? {
         approved: ["Exchange Approved", "Exchange request verified and replacement product reserved.", "Admin"],
         rejected: ["Exchange Rejected", "Exchange request reviewed and declined by admin.", "Admin"],
-        pickup_replace: ["Pickup & Replace", "Courier en route with replacement product for simultaneous doorstep exchange.", "Logistics"],
+        pickup_scheduled: ["Picked Up Schedule", "Logistics courier scheduled for doorstep pickup & exchange.", "Logistics"],
+        replace_and_exchange: ["Replace and Exchange", "Doorstep replacement and exchange in progress.", "Logistics"],
+        pickup_replace: ["Replace and Exchange", "Doorstep replacement and exchange in progress.", "Logistics"],
         completed: ["Exchange Completed", "Replacement product successfully handed over and exchange completed.", "Courier"],
         // Legacy aliases
         packed: ["Packed", "Replacement product packed and verified at facility.", "Warehouse"],
         shipped: ["Shipped", "Replacement product dispatched via logistics carrier.", "Warehouse"],
-        pickup_scheduled: ["Pickup & Replace", "Courier en route with replacement product for simultaneous doorstep exchange.", "Logistics"],
-        picked_up: ["Pickup & Replace", "Doorstep pickup and replacement initiated.", "Courier"],
+        picked_up: ["Picked Up", "Doorstep pickup initiated.", "Courier"],
         received: ["Received at Facility", "Returned item logged at facility.", "Warehouse"],
         exchanged: ["Exchange Completed", "Replacement product successfully handed over and exchange completed.", "Courier"]
       } : {
         approved: ["Return Approved", "Request reviewed and approved by admin.", "Admin"],
         rejected: ["Return Rejected", "Request reviewed and declined by admin.", "Admin"],
-        pickup: ["Pickup", "Courier assigned for item collection from customer address.", "Logistics"],
+        pickup_scheduled: ["Picked Up Schedule", "Logistics courier scheduled for collection.", "Logistics"],
+        received: ["Recieved", "Returned product received and inspected at warehouse.", "Warehouse"],
         completed: ["Return Completed", "Return fulfilled, item received and return closed.", "Finance"],
         // Legacy aliases
-        pickup_scheduled: ["Pickup", "Logistics courier scheduled for collection.", "Warehouse"],
-        picked_up: ["Pickup", "Item picked up by courier from customer location.", "Warehouse"],
-        received: ["Pickup", "Returned product received and logged at warehouse.", "Warehouse"],
+        pickup: ["Pickup", "Courier assigned for item collection from customer address.", "Logistics"],
+        picked_up: ["Picked Up", "Item picked up by courier from customer location.", "Warehouse"],
         refunded: ["Return Completed", "Return closed and refund finalized.", "Finance"],
         exchanged: ["Return Completed", "Return request completed.", "Warehouse"]
       };
@@ -680,11 +682,15 @@ export const updateReturnRequestStatusAdmin = async (req, res) => {
 
     // Send user notification if status changed
     if (status && status !== previousStatus) {
-      const displayStatus = status === "pickup_replace" 
-        ? "Pickup & Replace" 
-        : status === "completed" 
-          ? (request.type === "exchange" ? "Exchange Completed" : "Return Completed")
-          : status.replace(/_/g, " ");
+      const displayStatus = status === "pickup_scheduled"
+        ? "Picked up schedule"
+        : status === "replace_and_exchange" || status === "pickup_replace"
+          ? "Replace and Exchange"
+          : status === "received"
+            ? "Recieved"
+            : status === "completed" 
+              ? (request.type === "exchange" ? "Exchange Completed" : "Return Completed")
+              : status.replace(/_/g, " ");
 
       createNotification({
         userId: request.user,

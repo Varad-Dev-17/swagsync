@@ -607,7 +607,7 @@ export default function VendorOrders() {
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-xs">{getStatusBadge(item.status || "pending")}</span>
 
-                          {item.status === "pending" && (
+                          {(!item.status || item.status === "pending") && (
                             <button
                               onClick={() =>
                                 handleUpdateItemFulfillment(selectedOrder._id, item._id, "packed")
@@ -618,7 +618,7 @@ export default function VendorOrders() {
                             </button>
                           )}
 
-                          {["pending", "processing", "packed"].includes(item.status) && (
+                          {item.status === "packed" && (
                             <button
                               onClick={() =>
                                 setShippingModal({
@@ -636,15 +636,10 @@ export default function VendorOrders() {
                             </button>
                           )}
 
-                          {item.status === "shipped" && (
-                            <button
-                              onClick={() =>
-                                handleUpdateItemFulfillment(selectedOrder._id, item._id, "delivered")
-                              }
-                              className="px-2.5 py-1 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-2xs transition-colors cursor-pointer"
-                            >
-                              Mark Delivered
-                            </button>
+                          {["shipped", "on_the_way", "delivered"].includes(item.status) && (
+                            <span className="text-[10px] font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-md">
+                              Managed by Admin
+                            </span>
                           )}
                         </div>
                       </div>

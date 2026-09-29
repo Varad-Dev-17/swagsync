@@ -273,25 +273,24 @@ export default function VendorCaseDetailsPage() {
     { value: "pending", label: "Order Confirmed" },
     { value: "packed", label: "Packed" },
     { value: "shipped", label: "Shipped" },
-    { value: "on_the_way", label: "Out for delivery" },
-    { value: "delivered", label: "Delivered" },
-    { value: "cancelled", label: "Cancelled" },
   ];
 
   const returnStatusOptions = isExchangeCase
     ? [
         { value: "pending", label: "Requested" },
         { value: "approved", label: "Approved" },
-        { value: "pickup_replace", label: "Pickup & Replace" },
-        { value: "completed", label: "Exchange Completed" },
         { value: "rejected", label: "Rejected" },
+        { value: "pickup_scheduled", label: "Picked up schedule" },
+        { value: "replace_and_exchange", label: "Replace and Exchange" },
+        { value: "completed", label: "Completed" },
       ]
     : [
         { value: "pending", label: "Requested" },
         { value: "approved", label: "Approved" },
-        { value: "pickup", label: "Pickup" },
-        { value: "completed", label: "Return Completed" },
         { value: "rejected", label: "Rejected" },
+        { value: "pickup_scheduled", label: "Picked up schedule" },
+        { value: "received", label: "Recieved" },
+        { value: "completed", label: "Completed" },
       ];
 
   const caseIdCode = isReturnView
@@ -438,18 +437,24 @@ export default function VendorCaseDetailsPage() {
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
               <span className="text-xs font-bold text-slate-600">Status:</span>
-              <select
-                value={activeStatus}
-                onChange={(e) => handleUpdateStatus(e.target.value)}
-                disabled={isUpdatingStatus}
-                className="px-3 py-1.5 rounded-xl border border-slate-200 bg-white font-bold text-xs text-slate-800 shadow-2xs focus:ring-2 focus:ring-[#fe4a03]/20 focus:border-[#fe4a03] transition-all cursor-pointer"
-              >
-                {(isReturnView ? returnStatusOptions : orderStatusOptions).map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
+              {isOrderView && (activeStatus === "shipped" || activeStatus === "on_the_way" || activeStatus === "delivered") ? (
+                <span className="px-3 py-1.5 rounded-xl border border-indigo-200 bg-indigo-50 font-bold text-xs text-indigo-700 shadow-2xs">
+                  {activeStatus === "shipped" ? "Shipped (Admin Logistics)" : activeStatus === "on_the_way" ? "Out for delivery (Admin)" : "Delivered"}
+                </span>
+              ) : (
+                <select
+                  value={activeStatus}
+                  onChange={(e) => handleUpdateStatus(e.target.value)}
+                  disabled={isUpdatingStatus}
+                  className="px-3 py-1.5 rounded-xl border border-slate-200 bg-white font-bold text-xs text-slate-800 shadow-2xs focus:ring-2 focus:ring-[#fe4a03]/20 focus:border-[#fe4a03] transition-all cursor-pointer"
+                >
+                  {(isReturnView ? returnStatusOptions : orderStatusOptions).map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
           </div>
         </div>

@@ -162,9 +162,11 @@ export default function VendorReturns() {
   const getStatusBadge = (status) => {
     const styles = {
       pending: "bg-orange-50 text-[#fe4a03] border-orange-200",
+      requested: "bg-orange-50 text-[#fe4a03] border-orange-200",
       approved: "bg-emerald-50 text-emerald-600 border-emerald-200",
       pickup: "bg-amber-50 text-amber-700 border-amber-200",
-      pickup_replace: "bg-amber-50 text-amber-700 border-amber-200",
+      pickup_replace: "bg-indigo-50 text-indigo-700 border-indigo-200",
+      replace_and_exchange: "bg-indigo-50 text-indigo-700 border-indigo-200",
       pickup_scheduled: "bg-amber-50 text-amber-700 border-amber-200",
       picked_up: "bg-amber-50 text-amber-700 border-amber-200",
       rejected: "bg-rose-50 text-rose-600 border-rose-200",
@@ -176,16 +178,23 @@ export default function VendorReturns() {
 
     const style = styles[status] || "bg-slate-50 text-slate-500 border-slate-200";
 
-    let displayStatus = status;
-    if (status === "refunded" || status === "exchanged" || status === "completed") {
-      displayStatus = "completed";
-    } else if (status === "pickup" || status === "pickup_scheduled" || status === "picked_up") {
-      displayStatus = "pickup";
-    } else if (status === "pickup_replace") {
-      displayStatus = "pickup & replace";
-    } else if (status === "pending") {
-      displayStatus = "requested";
-    }
+    const displayLabels = {
+      pending: "Requested",
+      requested: "Requested",
+      approved: "Approved",
+      rejected: "Rejected",
+      pickup_scheduled: "Picked up schedule",
+      pickup: "Picked up schedule",
+      picked_up: "Picked up schedule",
+      received: "Recieved",
+      replace_and_exchange: "Replace and Exchange",
+      pickup_replace: "Replace and Exchange",
+      completed: "Completed",
+      refunded: "Completed",
+      exchanged: "Completed",
+    };
+
+    const displayStatus = displayLabels[status] || (typeof status === "string" ? status.replace(/_/g, " ") : "Unknown");
 
     return (
       <div className={`inline-flex items-center justify-center px-2 py-0.5 rounded text-[11px] font-bold border ${style} capitalize shadow-2xs`}>
@@ -654,7 +663,7 @@ export default function VendorReturns() {
                 </p>
 
                 <div className="flex items-center gap-2 pt-2 flex-wrap">
-                  {selectedCase.status === "pending" && (
+                  {(selectedCase.status === "pending" || selectedCase.status === "requested") && (
                     <>
                       <button
                         onClick={() =>
@@ -692,23 +701,92 @@ export default function VendorReturns() {
                     </>
                   )}
 
-                  {["approved", "pickup", "pickup_replace", "received"].includes(selectedCase.status) && (
+                  {selectedCase.status === "approved" && (
                     <button
                       onClick={() =>
                         setActionModal({
                           open: true,
                           returnId: selectedCase._id,
-                          action: "qc",
+                          action: "pickup_scheduled",
                           vendorNotes: "",
                           rejectionReason: "",
                           qcStatus: "passed",
                           submitting: false,
                         })
                       }
-                      className="px-4 py-2 bg-[#fe4a03] hover:bg-[#e03f00] text-white rounded-xl text-xs font-bold shadow-2xs transition-colors cursor-pointer"
+                      className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold shadow-2xs transition-colors cursor-pointer"
                     >
-                      Process QC Verification
+                      Schedule Pickup
                     </button>
+                  )}
+
+                  {(selectedCase.status === "pickup_scheduled" || selectedCase.status === "pickup") && (
+                    selectedCase.type === "exchange" ? (
+                      <button
+                        onClick={() =>
+                          setActionModal({
+                            open: true,
+                            returnId: selectedCase._id,
+                            action: "replace_and_exchange",
+                            vendorNotes: "",
+                            rejectionReason: "",
+                            qcStatus: "passed",
+                            submitting: false,
+                          })
+                        }
+                        className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-2xs transition-colors cursor-pointer"
+                      >
+                        Replace and Exchange
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() =>
+                          setActionModal({
+                            open: true,
+                            returnId: selectedCase._id,
+                            action: "received",
+                            vendorNotes: "",
+                            rejectionReason: "",
+                            qcStatus: "passed",
+                            submitting: false,
+                          })
+                        }
+                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-2xs transition-colors cursor-pointer"
+                      >
+                        Mark Recieved
+                      </button>
+                    )
+                  )}
+
+                  {(selectedCase.status === "received" || selectedCase.status === "replace_and_exchange" || selectedCase.status === "pickup_replace") && (
+                    <button
+                      onClick={() =>
+                        setActionModal({
+                          open: true,
+                          returnId: selectedCase._id,
+                          action: "complete",
+                          vendorNotes: "",
+                          rejectionReason: "",
+                          qcStatus: "passed",
+                          submitting: false,
+                        })
+                      }
+                      className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold shadow-2xs transition-colors cursor-pointer"
+                    >
+                      Mark Completed
+                    </button>
+                  )}
+
+                  {(selectedCase.status === "completed" || selectedCase.status === "refunded" || selectedCase.status === "exchanged") && (
+                    <span className="px-3 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl text-xs font-bold">
+                      Case Completed
+                    </span>
+                  )}
+
+                  {selectedCase.status === "rejected" && (
+                    <span className="px-3 py-1.5 bg-rose-50 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold">
+                      Case Rejected
+                    </span>
                   )}
                 </div>
               </div>

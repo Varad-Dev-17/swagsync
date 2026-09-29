@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { 
   User, 
+  Store,
   Mail, 
   Phone, 
   MapPin, 
@@ -35,6 +36,21 @@ const CaseSidebarCards = ({
   const customerName = customer.username || customer.name || "Customer";
   const customerEmail = customer.email || "No email";
   const customerPhone = customer.mobileNo || customer.phone || order?.shippingAddress?.mobileNo || order?.shippingAddress?.phone || "No phone";
+
+  // Vendor info
+  const resolvedVendor =
+    returnRequest?.vendor ||
+    (Array.isArray(order?.items) ? order.items.find((it) => it.vendor)?.vendor : null) ||
+    returnRequest?.product?.vendorId ||
+    (Array.isArray(order?.items) ? order.items[0]?.product?.vendorId : null) ||
+    null;
+  const vendorStoreName =
+    resolvedVendor?.vendorProfile?.storeName ||
+    resolvedVendor?.storeName ||
+    resolvedVendor?.username ||
+    null;
+  const vendorEmail = resolvedVendor?.email || null;
+  const vendorPhone = resolvedVendor?.mobileNo || resolvedVendor?.phone || null;
 
   // Order identifiers
   const rawOrder = returnRequest?.order || order;
@@ -75,13 +91,16 @@ const CaseSidebarCards = ({
   let nextTargetStatus = null;
 
   if (isReturnView) {
-    if (status === "pending") {
+    if (status === "pending" || status === "requested") {
       primaryActionLabel = "Approve Request";
       nextTargetStatus = "approved";
     } else if (status === "approved") {
-      primaryActionLabel = isExchange ? "Schedule Pickup & Swap" : "Schedule Pickup";
-      nextTargetStatus = isExchange ? "pickup_replace" : "pickup";
-    } else if (status === "pickup" || status === "pickup_scheduled" || status === "pickup_replace") {
+      primaryActionLabel = "Schedule Pickup";
+      nextTargetStatus = "pickup_scheduled";
+    } else if (status === "pickup" || status === "pickup_scheduled") {
+      primaryActionLabel = isExchange ? "Replace and Exchange" : "Mark Recieved";
+      nextTargetStatus = isExchange ? "replace_and_exchange" : "received";
+    } else if (status === "received" || status === "replace_and_exchange" || status === "pickup_replace") {
       primaryActionLabel = isExchange ? "Complete Exchange" : "Complete Return";
       nextTargetStatus = "completed";
     }
@@ -179,7 +198,44 @@ const CaseSidebarCards = ({
         )}
       </div>
 
-      {/* 2. Shipping Address */}
+      {/* 2. Fulfilling Vendor Details */}
+      {vendorStoreName && (
+        <div className="p-4 space-y-3 bg-orange-50/30">
+          <div className="flex items-center gap-2 text-slate-800 font-bold text-xs">
+            <Store size={14} className="text-[#fe4a03]" />
+            <span>Fulfilling Vendor</span>
+          </div>
+
+          <div className="space-y-1.5 text-xs">
+            <div className="font-extrabold text-slate-900 text-sm flex items-center gap-1.5">
+              <span>{vendorStoreName}</span>
+              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-orange-100 text-[#fe4a03]">
+                Vendor
+              </span>
+            </div>
+
+            {vendorEmail && (
+              <div className="flex items-center gap-2 text-slate-600">
+                <Mail size={13} className="text-slate-400 shrink-0" />
+                <CopyBadge text={vendorEmail} label="Vendor Email" className="font-medium truncate text-slate-700">
+                  {vendorEmail}
+                </CopyBadge>
+              </div>
+            )}
+
+            {vendorPhone && (
+              <div className="flex items-center gap-2 text-slate-600">
+                <Phone size={13} className="text-slate-400 shrink-0" />
+                <CopyBadge text={vendorPhone} label="Vendor Phone" className="font-medium text-slate-700">
+                  {vendorPhone}
+                </CopyBadge>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* 3. Shipping Address */}
       <div className="p-4 space-y-2">
         <div className="flex items-center gap-2 text-slate-800 font-bold text-xs">
           <MapPin size={14} className="text-[#4F46E5]" />
