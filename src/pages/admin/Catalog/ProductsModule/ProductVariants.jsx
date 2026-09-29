@@ -1,13 +1,21 @@
-import { useState, useEffect, useMemo, forwardRef, useImperativeHandle } from 'react';
+import { useState, useEffect, useMemo, useCallback, forwardRef, useImperativeHandle } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { Plus, Trash2, UploadCloud, Save, ArrowLeft, Package, Edit2, Image as ImageIcon, ChevronLeft, ChevronRight, X, Copy } from 'lucide-react';
 import Breadcrumbs from '../../../../components/admin/ui/Breadcrumbs';
 
-const ProductVariants = forwardRef(({ isUnifiedMode = false, categoryId = null, productTitle = '', brandName = '' }, ref) => {
+const ProductVariants = forwardRef(({ isUnifiedMode = false, categoryId = null, productTitle = '', brandName = '', isVendor = false }, ref) => {
   const { id } = useParams();
   const navigate = useNavigate();
+
+  const getHeaders = useCallback(() => {
+    if (isVendor) {
+      const token = localStorage.getItem('token');
+      return token ? { Authorization: `Bearer ${token}` } : {};
+    }
+    return {};
+  }, [isVendor]);
 
   const [product, setProduct] = useState(null);
   const [variants, setVariants] = useState([]);
@@ -241,11 +249,15 @@ const ProductVariants = forwardRef(({ isUnifiedMode = false, categoryId = null, 
       setIsLoading(true);
       
       let catId = categoryId; // From props for unified mode
+      const baseUrl = import.meta.env.PROD ? '' : 'http://localhost:8000';
+      const headers = getHeaders();
 
       if (id) {
         try {
-          const prodRes = await axios.get(`${(import.meta.env.PROD ? '' : 'http://localhost:8000')}/admin/products/${id}`, { 
+          const prodUrl = isVendor ? `${baseUrl}/vendor/portal/products/${id}` : `${baseUrl}/admin/products/${id}`;
+          const prodRes = await axios.get(prodUrl, { 
             withCredentials: true,
+            headers,
             signal: abortController.signal
           });
           if (prodRes.data.success) {
@@ -259,8 +271,10 @@ const ProductVariants = forwardRef(({ isUnifiedMode = false, categoryId = null, 
         }
 
         try {
-          const varRes = await axios.get(`${(import.meta.env.PROD ? '' : 'http://localhost:8000')}/admin/products/${id}/variants`, { 
+          const varUrl = isVendor ? `${baseUrl}/vendor/portal/products/${id}/variants` : `${baseUrl}/admin/products/${id}/variants`;
+          const varRes = await axios.get(varUrl, { 
             withCredentials: true,
+            headers,
             signal: abortController.signal
           });
           if (varRes.data.success) {
@@ -282,8 +296,12 @@ const ProductVariants = forwardRef(({ isUnifiedMode = false, categoryId = null, 
       if (catId) {
         let attributes = [];
         try {
-          const attrRes = await axios.get(`${(import.meta.env.PROD ? '' : 'http://localhost:8000')}/admin/attribute-mapping/${catId}/attributes?usage=Variant`, { 
+          const attrUrl = isVendor
+            ? `${baseUrl}/vendor/portal/categories/${catId}/attributes?usage=Variant`
+            : `${baseUrl}/admin/attribute-mapping/${catId}/attributes?usage=Variant`;
+          const attrRes = await axios.get(attrUrl, { 
             withCredentials: true,
+            headers,
             signal: abortController.signal
           });
           if (attrRes.data.success) {
@@ -300,7 +318,8 @@ const ProductVariants = forwardRef(({ isUnifiedMode = false, categoryId = null, 
           await Promise.all(attributes.map(async (attr) => {
             if (['select', 'color', 'multiselect'].includes(attr.fieldType)) {
               try {
-                const optRes = await axios.get(`${(import.meta.env.PROD ? '' : 'http://localhost:8000')}/attribute-options/attribute/${attr._id}?limit=1000`, {
+                const optRes = await axios.get(`${baseUrl}/attribute-options/attribute/${attr._id}?limit=1000`, {
+                  headers,
                   signal: abortController.signal
                 });
                 if (optRes.data.success) {
@@ -323,7 +342,7 @@ const ProductVariants = forwardRef(({ isUnifiedMode = false, categoryId = null, 
 
     fetchData();
     return () => abortController.abort();
-  }, [id, isUnifiedMode, categoryId]);
+  }, [id, isUnifiedMode, categoryId, isVendor, getHeaders]);
 
   useEffect(() => {
     if (groupedVariants.length > 0 && !previewPrimaryOption) {
@@ -385,9 +404,11 @@ const ProductVariants = forwardRef(({ isUnifiedMode = false, categoryId = null, 
     const formData = new FormData();
     formData.append('image', file);
     try {
-      const res = await axios.post(`${(import.meta.env.PROD ? '' : 'http://localhost:8000')}/admin/upload/image`, formData, {
+      const baseUrl = import.meta.env.PROD ? '' : 'http://localhost:8000';
+      const uploadUrl = isVendor ? `${baseUrl}/vendor/portal/upload/image` : `${baseUrl}/admin/upload/image`;
+      const res = await axios.post(uploadUrl, formData, {
         withCredentials: true,
-        headers: { 'Content-Type': 'multipart/form-data' }
+        headers: { 'Content-Type': 'multipart/form-data', ...getHeaders() }
       });
       if (res.data.success) {
         setSharedImages(prev => ({ ...prev, mainImage: res.data.data }));
@@ -408,9 +429,11 @@ const ProductVariants = forwardRef(({ isUnifiedMode = false, categoryId = null, 
     const formData = new FormData();
     validFiles.forEach(f => formData.append('images', f));
     try {
-      const res = await axios.post(`${(import.meta.env.PROD ? '' : 'http://localhost:8000')}/admin/upload/multiple`, formData, {
+      const baseUrl = import.meta.env.PROD ? '' : 'http://localhost:8000';
+      const uploadMultiUrl = isVendor ? `${baseUrl}/vendor/portal/upload/multiple` : `${baseUrl}/admin/upload/multiple`;
+      const res = await axios.post(uploadMultiUrl, formData, {
         withCredentials: true,
-        headers: { 'Content-Type': 'multipart/form-data' }
+        headers: { 'Content-Type': 'multipart/form-data', ...getHeaders() }
       });
       if (res.data.success) {
         setSharedImages(prev => ({ ...prev, galleryImages: [...(prev.galleryImages || []), ...res.data.data] }));
@@ -633,9 +656,11 @@ const ProductVariants = forwardRef(({ isUnifiedMode = false, categoryId = null, 
     const formData = new FormData();
     formData.append('image', file);
     try {
-      const res = await axios.post(`${(import.meta.env.PROD ? '' : 'http://localhost:8000')}/admin/upload/image`, formData, {
+      const baseUrl = import.meta.env.PROD ? '' : 'http://localhost:8000';
+      const uploadUrl = isVendor ? `${baseUrl}/vendor/portal/upload/image` : `${baseUrl}/admin/upload/image`;
+      const res = await axios.post(uploadUrl, formData, {
         withCredentials: true,
-        headers: { 'Content-Type': 'multipart/form-data' }
+        headers: { 'Content-Type': 'multipart/form-data', ...getHeaders() }
       });
       if (res.data.success) {
         updateCurrentGroup('mainImage', res.data.data);
@@ -658,9 +683,11 @@ const ProductVariants = forwardRef(({ isUnifiedMode = false, categoryId = null, 
     const formData = new FormData();
     validFiles.forEach(f => formData.append('images', f));
     try {
-      const res = await axios.post(`${(import.meta.env.PROD ? '' : 'http://localhost:8000')}/admin/upload/multiple`, formData, {
+      const baseUrl = import.meta.env.PROD ? '' : 'http://localhost:8000';
+      const uploadMultiUrl = isVendor ? `${baseUrl}/vendor/portal/upload/multiple` : `${baseUrl}/admin/upload/multiple`;
+      const res = await axios.post(uploadMultiUrl, formData, {
         withCredentials: true,
-        headers: { 'Content-Type': 'multipart/form-data' }
+        headers: { 'Content-Type': 'multipart/form-data', ...getHeaders() }
       });
       if (res.data.success) {
         const newGallery = [...(currentGroup.galleryImages || []), ...res.data.data];
@@ -694,8 +721,13 @@ const ProductVariants = forwardRef(({ isUnifiedMode = false, categoryId = null, 
     if (isUnifiedMode) {
       return { success: true, data: variantsToSave };
     }
-    const res = await axios.put(`${(import.meta.env.PROD ? '' : 'http://localhost:8000')}/admin/products/${id}/variants`, { variants: variantsToSave }, {
-      withCredentials: true
+    const baseUrl = import.meta.env.PROD ? '' : 'http://localhost:8000';
+    const saveUrl = isVendor
+      ? `${baseUrl}/vendor/portal/products/${id}/variants`
+      : `${baseUrl}/admin/products/${id}/variants`;
+    const res = await axios.put(saveUrl, { variants: variantsToSave }, {
+      withCredentials: true,
+      headers: getHeaders()
     });
     return res.data;
   };
@@ -957,8 +989,7 @@ const ProductVariants = forwardRef(({ isUnifiedMode = false, categoryId = null, 
       {!isUnifiedMode && (
       <div className="mb-6">
         <Breadcrumbs items={[
-          { label: 'Catalog', path: '/admin/catalog' },
-          { label: 'Products', path: '/admin/products' },
+          { label: 'Products', path: isVendor ? '/vendor/portal/products' : '/admin/products' },
           { label: 'Product Variants' }
         ]} />
       </div>

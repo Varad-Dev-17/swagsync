@@ -19,9 +19,17 @@ const slugify = (text = '', preserveTrailingDash = false) => {
   return s;
 };
 
-const ProductForm = forwardRef(({ isEdit = false, isUnifiedMode = false, onFormChange = () => {} }, ref) => {
+const ProductForm = forwardRef(({ isEdit = false, isUnifiedMode = false, onFormChange = () => {}, isVendor = false }, ref) => {
   const navigate = useNavigate();
   const { id } = useParams();
+
+  const getHeaders = useCallback(() => {
+    if (isVendor) {
+      const token = localStorage.getItem('token');
+      return token ? { Authorization: `Bearer ${token}` } : {};
+    }
+    return {};
+  }, [isVendor]);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -131,8 +139,11 @@ const ProductForm = forwardRef(({ isEdit = false, isUnifiedMode = false, onFormC
     const fetchProduct = async () => {
       if (!isEdit || !id) return;
       try {
-        const response = await axios.get(`${(import.meta.env.PROD ? '' : 'http://localhost:8000')}/admin/products/${id}`, {
-          withCredentials: true
+        const baseUrl = import.meta.env.PROD ? '' : 'http://localhost:8000';
+        const url = isVendor ? `${baseUrl}/vendor/portal/products/${id}` : `${baseUrl}/admin/products/${id}`;
+        const response = await axios.get(url, {
+          withCredentials: true,
+          headers: getHeaders()
         });
         if (response.data.success) {
           const prod = response.data.data.product || response.data.data;
@@ -196,7 +207,11 @@ const ProductForm = forwardRef(({ isEdit = false, isUnifiedMode = false, onFormC
     const fetchDepartments = async () => {
       try {
         setIsDepartmentsLoading(true);
-        const res = await axios.get(`${(import.meta.env.PROD ? '' : 'http://localhost:8000')}/departments`, { params: { limit: 1000, status: 'Active' } });
+        const baseUrl = import.meta.env.PROD ? '' : 'http://localhost:8000';
+        const res = await axios.get(`${baseUrl}/departments`, { 
+          params: { limit: 1000, status: 'Active' },
+          headers: getHeaders()
+        });
         if (res.data.success) {
           setDepartments(res.data.departments || res.data.data);
         }
@@ -208,7 +223,7 @@ const ProductForm = forwardRef(({ isEdit = false, isUnifiedMode = false, onFormC
       }
     };
     fetchDepartments();
-  }, []);
+  }, [getHeaders]);
 
   // Fetch Categories and Brands when Department changes
   useEffect(() => {
@@ -223,9 +238,18 @@ const ProductForm = forwardRef(({ isEdit = false, isUnifiedMode = false, onFormC
         setIsCategoriesLoading(true);
         setIsBrandsLoading(true);
 
+        const baseUrl = import.meta.env.PROD ? '' : 'http://localhost:8000';
+        const headers = getHeaders();
+
         const [catsRes, brandsRes] = await Promise.all([
-          axios.get(`${(import.meta.env.PROD ? '' : 'http://localhost:8000')}/categories`, { params: { limit: 1000, status: 'Active', department: formData.department, departmentId: formData.department } }),
-          axios.get(`${(import.meta.env.PROD ? '' : 'http://localhost:8000')}/brands`, { params: { limit: 1000, status: 'Active', department: formData.department, departmentId: formData.department } })
+          axios.get(`${baseUrl}/categories`, { 
+            params: { limit: 1000, status: 'Active', department: formData.department, departmentId: formData.department },
+            headers
+          }),
+          axios.get(`${baseUrl}/brands`, { 
+            params: { limit: 1000, status: 'Active', department: formData.department, departmentId: formData.department },
+            headers
+          })
         ]);
 
         if (catsRes.data.success) {
@@ -257,7 +281,7 @@ const ProductForm = forwardRef(({ isEdit = false, isUnifiedMode = false, onFormC
     };
 
     fetchCascadingOptions();
-  }, [formData.department]);
+  }, [formData.department, getHeaders]);
 
   // Fetch Dynamic Attributes when Category changes
   useEffect(() => {
@@ -273,9 +297,15 @@ const ProductForm = forwardRef(({ isEdit = false, isUnifiedMode = false, onFormC
 
       try {
         setIsDynamicAttributesLoading(true);
-        // Use the attribute mapping API to get exact mapped attributes for this category
-        const { data } = await axios.get(`${(import.meta.env.PROD ? '' : 'http://localhost:8000')}/admin/attribute-mapping/${formData.category}/attributes?usage=Product`, {
-          withCredentials: true
+        const baseUrl = import.meta.env.PROD ? '' : 'http://localhost:8000';
+        const headers = getHeaders();
+        const attrUrl = isVendor
+          ? `${baseUrl}/vendor/portal/categories/${formData.category}/attributes?usage=Product`
+          : `${baseUrl}/admin/attribute-mapping/${formData.category}/attributes?usage=Product`;
+
+        const { data } = await axios.get(attrUrl, {
+          withCredentials: true,
+          headers
         });
 
         if (data.success && data.attributes) {
@@ -289,7 +319,7 @@ const ProductForm = forwardRef(({ isEdit = false, isUnifiedMode = false, onFormC
             let options = [];
             if (['select', 'color', 'multiselect'].includes(attr.fieldType)) {
               try {
-                const optRes = await axios.get(`${(import.meta.env.PROD ? '' : 'http://localhost:8000')}/attribute-options/attribute/${attr._id}?limit=1000`);
+                const optRes = await axios.get(`${baseUrl}/attribute-options/attribute/${attr._id}?limit=1000`, { headers });
                 if (optRes.data.success) {
                   options = optRes.data.options;
                 }
@@ -470,22 +500,28 @@ const ProductForm = forwardRef(({ isEdit = false, isUnifiedMode = false, onFormC
     setIsSubmitting(true);
 
     try {
+      const baseUrl = import.meta.env.PROD ? '' : 'http://localhost:8000';
+      const headers = getHeaders();
       if (isEdit) {
-        const response = await axios.put(`${(import.meta.env.PROD ? '' : 'http://localhost:8000')}/admin/products/${id}`, payload, {
-          withCredentials: true
+        const updateUrl = isVendor ? `${baseUrl}/vendor/portal/products/${id}` : `${baseUrl}/admin/products/${id}`;
+        const response = await axios.put(updateUrl, payload, {
+          withCredentials: true,
+          headers
         });
         if (response.data.success) {
           toast.success('Product updated successfully');
-          navigate(`/admin/products/${id}/variants`);
+          navigate(isVendor ? `/vendor/portal/products/${id}/variants` : `/admin/products/${id}/variants`);
         }
       } else {
-        const response = await axios.post(`${(import.meta.env.PROD ? '' : 'http://localhost:8000')}/admin/products`, payload, {
-          withCredentials: true
+        const createUrl = isVendor ? `${baseUrl}/vendor/portal/products` : `${baseUrl}/admin/products`;
+        const response = await axios.post(createUrl, payload, {
+          withCredentials: true,
+          headers
         });
         if (response.data.success) {
           toast.success('Product created successfully. Now add variants.');
           const newProductId = response.data.data._id;
-          navigate(`/admin/products/${newProductId}/variants`);
+          navigate(isVendor ? `/vendor/portal/products/${newProductId}/variants` : `/admin/products/${newProductId}/variants`);
         }
       }
     } catch (error) {
@@ -846,7 +882,7 @@ const ProductForm = forwardRef(({ isEdit = false, isUnifiedMode = false, onFormC
         <div className="flex justify-center gap-4 py-6 border-t border-slate-200">
           <button
             type="button"
-            onClick={() => navigate('/admin/products')}
+            onClick={() => navigate(isVendor ? '/vendor/portal/products' : '/admin/products')}
             className="h-10 px-6 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors shadow-sm"
           >
             Cancel

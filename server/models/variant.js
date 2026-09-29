@@ -69,6 +69,12 @@ const VariantSchema = new mongoose.Schema(
     },
     mainImage: ProductImageSchema,
     galleryImages: [ProductImageSchema],
+    vendorId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Vendor",
+      default: null,
+      index: true,
+    },
   },
   { timestamps: true }
 );

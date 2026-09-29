@@ -21,6 +21,9 @@ const transport = nodemailer.createTransport({
     user: process.env.SMTP_USER || process.env.NODE_CODE_SENDING_EMAIL_ADDRESS,
     pass: process.env.SMTP_PASS || process.env.NODE_CODE_SENDING_EMAIL_PASSWORD,
   },
+  tls: {
+    rejectUnauthorized: false,
+  },
   connectionTimeout: 10000,
   greetingTimeout: 10000,
   socketTimeout: 10000,

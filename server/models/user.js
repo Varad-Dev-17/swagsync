@@ -68,10 +68,21 @@ const userSchema = new mongoose.Schema(
       enum: ["Male", "Female", "Other", ""],
       default: "",
     },
+    role: {
+      type: String,
+      default: "customer",
+    },
   },
   {
     timestamps: true,
   }
 );
+
+userSchema.pre("save", function (next) {
+  if (this.isAdmin && this.role !== "admin") {
+    this.role = "admin";
+  }
+  next();
+});
 
 export default mongoose.model("User", userSchema);

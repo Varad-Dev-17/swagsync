@@ -33,6 +33,10 @@ export const getAllVariantGroups = async (req, res) => {
     const pipeline = [];
     const matchStage1 = {};
 
+    if (req.vendor?._id) {
+      matchStage1.vendorId = new mongoose.Types.ObjectId(req.vendor._id);
+    }
+
     if (status) matchStage1.status = status;
 
     if (department && mongoose.isValidObjectId(department)) {

@@ -4,7 +4,7 @@ dns.setDefaultResultOrder?.("ipv4first");
 import dotenv from "dotenv";
 dotenv.config({ override: true });
 import express from "express";
-// Triggering server restart for sequential ID changes
+// Triggering server restart for database model separation (Admin, Vendor, User)
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import connectDB from "./config/db.js";
@@ -46,6 +46,9 @@ import dashboardRoutes from "./routers/dashboardRoutes.js";
 import ticketRoutes from "./routers/ticketRoutes.js";
 import ticketAdminRoutes from "./routers/ticketAdminRoutes.js";
 import notificationRoutes from "./routers/notificationRoutes.js";
+import vendorRoutes from "./routers/vendorRoutes.js";
+import vendorAdminRoutes from "./routers/vendorAdminRoutes.js";
+import vendorPortalRoutes from "./routers/vendorPortalRoutes.js";
 
 import path from "path";
 import { fileURLToPath } from "url";
@@ -93,9 +96,14 @@ app.use("/admin/reviews", reviewAdminRoutes);
 app.use("/admin/dashboard", dashboardRoutes);
 app.use("/admin/upload", uploadRoutes);
 app.use("/admin/tickets", ticketAdminRoutes);
+app.use("/admin/vendors", vendorAdminRoutes);
 
 // Public / User routes
 app.use("/auth", authRoutes);
+app.use("/vendor", vendorRoutes);
+// Vendor Portal routes (Approved vendor access: store, products, variants, inventory, catalog)
+app.use("/vendor/portal", vendorPortalRoutes);
+app.use("/api/vendor/portal", vendorPortalRoutes);
 app.use("/products", productPublicRoutes);
 app.use("/departments", departmentPublicRoutes);
 app.use("/categories", categoryPublicRoutes);
@@ -135,3 +143,6 @@ const startServer = async () => {
 };
 
 startServer();
+
+export { app };
+export default app;

@@ -1,4 +1,6 @@
 import User from "../models/user.js";
+import Admin from "../models/admin.js";
+import Vendor from "../models/vendor.js";
 import { hashPassword, doHashValidation, hmacProcess } from "../utils/hash.js";
 import { verificationEmailTemplate } from "../utils/verificationEmailTemplate.js";
 import { forgotPasswordEmailTemplate } from "../utils/forgotPasswordEmailTemplate.js";
@@ -227,6 +229,22 @@ export const signIn = async (req, res) => {
 
     const existingUser = await User.findOne({ email }).select("+password");
     if (!existingUser) {
+      const [existingAdmin, existingVendor] = await Promise.all([
+        Admin.findOne({ email }),
+        Vendor.findOne({ email }),
+      ]);
+      if (existingAdmin) {
+        return res.status(403).json({
+          success: false,
+          message: "Admin accounts must use admin login (/admin/signin).",
+        });
+      }
+      if (existingVendor) {
+        return res.status(403).json({
+          success: false,
+          message: "Vendor accounts must use the vendor portal login (/vendor/login).",
+        });
+      }
       return res
         .status(401)
         .json({ success: false, message: "User does not exists." });
@@ -260,6 +278,7 @@ export const signIn = async (req, res) => {
         username: existingUser.username,
         verified: existingUser.verified,
         isAdmin: existingUser.isAdmin,
+        role: existingUser.role || "customer",
         profileImage: existingUser.profileImage,
         mobileNo: existingUser.mobileNo,
         dateOfBirth: existingUser.dateOfBirth,

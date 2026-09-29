@@ -1,10 +1,5 @@
 import { createContext, useContext, useState, useEffect } from "react";
-import axios from "axios";
-
-const api = axios.create({
-  baseURL: "",
-  withCredentials: true,
-});
+import api from "../api/axiosConfig";
 
 const AuthContext = createContext(null);
 
@@ -28,6 +23,10 @@ export const AuthProvider = ({ children }) => {
             email: payload.email,
             username: payload.username,
             isAdmin: payload.isAdmin,
+            role: payload.role || (payload.isAdmin ? "admin" : "customer"),
+            vendorStatus: payload.vendorStatus,
+            vendorId: payload.vendorId,
+            storeName: payload.storeName,
             profileImage: storedProfileImage ? JSON.parse(storedProfileImage) : payload.profileImage,
             mobileNo: payload.mobileNo,
             dateOfBirth: payload.dateOfBirth,
@@ -98,6 +97,43 @@ export const AuthProvider = ({ children }) => {
       return {
         success: false,
         message: err.response?.data?.message || "Something went wrong",
+      };
+    }
+  };
+
+  const vendorLogin = async (email, password) => {
+    try {
+      const response = await api.post("/vendor/login", { email, password });
+      if (response.data.success) {
+        const token = response.data.token;
+        localStorage.setItem("token", token);
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        setUser({
+          userId: payload.userId,
+          email: payload.email,
+          username: payload.username,
+          isAdmin: false,
+          role: "vendor",
+          vendorStatus: payload.vendorStatus,
+          vendorId: payload.vendorId,
+          storeName: payload.storeName,
+          token,
+        });
+        return { success: true, vendor: response.data.vendor };
+      }
+      return {
+        success: false,
+        message: response.data.message,
+        vendorStatus: response.data.vendorStatus,
+        needsVerification: response.data.needsVerification,
+      };
+    } catch (err) {
+      return {
+        success: false,
+        message: err.response?.data?.message || "Failed to log in as vendor",
+        vendorStatus: err.response?.data?.vendorStatus,
+        needsVerification: err.response?.data?.needsVerification,
+        email: err.response?.data?.email,
       };
     }
   };
@@ -263,6 +299,7 @@ export const AuthProvider = ({ children }) => {
         user,
         login,
         adminLogin,
+        vendorLogin,
         logout,
         loading,
         getAuthHeaders,

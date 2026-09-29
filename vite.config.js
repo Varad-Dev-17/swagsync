@@ -38,6 +38,8 @@ export default defineConfig({
       "/return-requests": proxyConfig,
       "/tickets": proxyConfig,
       "/notifications": proxyConfig,
+      "/vendor": proxyConfig,
+      "/api": proxyConfig,
     },
   },
 });

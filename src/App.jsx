@@ -81,8 +81,31 @@ const Reviews = lazy(() => import("./pages/admin/Reviews/Reviews"));
 const Returns = lazy(() => import("./pages/admin/Returns/Returns"));
 const AdminTickets = lazy(() => import("./pages/admin/Tickets/Tickets"));
 const AdminCaseDetailsPage = lazy(() => import("./pages/admin/CaseDetails/AdminCaseDetailsPage"));
+const AdminVendorsList = lazy(() => import("./pages/admin/Vendors/VendorsList"));
+const AdminVendorDetailsPage = lazy(() => import("./pages/admin/Vendors/AdminVendorDetailsPage"));
 
-const ProtectedRoute = ({ children, adminOnly = false }) => {
+// Vendor Portal Pages
+const VendorRegister = lazy(() => import("./pages/vendor/VendorRegister"));
+const VendorLogin = lazy(() => import("./pages/vendor/VendorLogin"));
+const VendorLayout = lazy(() => import("./layouts/VendorLayout"));
+const VendorDashboard = lazy(() => import("./pages/vendor/portal/VendorDashboard"));
+const VendorStore = lazy(() => import("./pages/vendor/portal/VendorStore"));
+const VendorCatalog = lazy(() => import("./pages/vendor/portal/VendorCatalog"));
+const VendorProductsList = lazy(() => import("./pages/vendor/portal/products/VendorProductsList"));
+const VendorAddProduct = lazy(() => import("./pages/vendor/portal/products/VendorAddProduct"));
+const VendorEditProduct = lazy(() => import("./pages/vendor/portal/products/VendorEditProduct"));
+const VendorProductVariants = lazy(() => import("./pages/vendor/portal/products/VendorProductVariants"));
+const VendorProductView = lazy(() => import("./pages/vendor/portal/products/VendorProductView"));
+const VendorVariantGroupView = lazy(() => import("./pages/vendor/portal/products/VendorVariantGroupView"));
+const VendorInventory = lazy(() => import("./pages/vendor/portal/VendorInventory"));
+const VendorOrders = lazy(() => import("./pages/vendor/portal/orders/VendorOrders"));
+const VendorReturns = lazy(() => import("./pages/vendor/portal/returns/VendorReturns"));
+const VendorTickets = lazy(() => import("./pages/vendor/portal/tickets/VendorTickets"));
+const VendorReviews = lazy(() => import("./pages/vendor/portal/reviews/VendorReviews"));
+const VendorPayments = lazy(() => import("./pages/vendor/portal/payments/VendorPayments"));
+const VendorCaseDetailsPage = lazy(() => import("./pages/vendor/portal/VendorCaseDetailsPage"));
+
+const ProtectedRoute = ({ children, adminOnly = false, vendorOnly = false }) => {
   const { user, loading } = useAuth();
   const location = useLocation();
 
@@ -94,8 +117,16 @@ const ProtectedRoute = ({ children, adminOnly = false }) => {
     );
   }
 
-  if (!user) return <Navigate to="/signin" state={{ from: location }} replace />;
+  if (!user) {
+    if (vendorOnly) {
+      return <Navigate to="/vendor/login" state={{ from: location }} replace />;
+    }
+    return <Navigate to="/signin" state={{ from: location }} replace />;
+  }
   if (adminOnly && !user.isAdmin) return <Navigate to="/" replace />;
+  if (vendorOnly && (user.role !== "vendor" || user.vendorStatus !== "APPROVED")) {
+    return <Navigate to="/vendor/login" state={{ from: location }} replace />;
+  }
 
   return children;
 };
@@ -105,7 +136,7 @@ const ProtectedRoute = ({ children, adminOnly = false }) => {
 // ============================================
 const UserLayout = ({ children }) => {
   const location = useLocation();
-  const hideFooterPaths = ["/signin", "/signup", "/admin-login"];
+  const hideFooterPaths = ["/signin", "/signup", "/admin-login", "/vendor/login", "/vendor/register"];
   const showFooter = !hideFooterPaths.includes(location.pathname) && !location.pathname.startsWith("/account");
 
   return (
@@ -146,6 +177,48 @@ const AppRoutes = () => {
       <Route path="/signup" element={<SignUp />} />
       <Route path="/admin-login" element={<AdminSignInPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+
+      {/* Vendor Routes */}
+      <Route path="/vendor/register" element={<VendorRegister />} />
+      <Route path="/vendor/login" element={<VendorLogin />} />
+      {/* Vendor Portal (Phase 2) */}
+      <Route
+        path="/vendor/portal"
+        element={
+          <ProtectedRoute vendorOnly>
+            <VendorLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<VendorDashboard />} />
+        <Route path="dashboard" element={<Navigate to="/vendor/portal" replace />} />
+        <Route path="store" element={<VendorStore />} />
+        <Route path="catalog" element={<VendorCatalog />} />
+        <Route path="products">
+          <Route index element={<VendorProductsList />} />
+          <Route path="add" element={<VendorAddProduct />} />
+          <Route path=":id/edit" element={<VendorEditProduct />} />
+          <Route path=":id/view" element={<VendorProductView />} />
+          <Route path=":id/variants" element={<VendorProductVariants />} />
+          <Route path=":id/variant-group/:primaryOptionId/view" element={<VendorVariantGroupView />} />
+        </Route>
+        <Route path="inventory" element={<VendorInventory />} />
+        <Route path="orders">
+          <Route index element={<VendorOrders />} />
+          <Route path=":id" element={<VendorCaseDetailsPage />} />
+        </Route>
+        <Route path="returns">
+          <Route index element={<VendorReturns />} />
+          <Route path=":id" element={<VendorCaseDetailsPage />} />
+        </Route>
+        <Route path="tickets" element={<VendorTickets />} />
+        <Route path="reviews" element={<VendorReviews />} />
+        <Route path="payments" element={<VendorPayments />} />
+      </Route>
+      <Route
+        path="/vendor/dashboard"
+        element={<Navigate to="/vendor/portal" replace />}
+      />
 
       <Route
         path="/change-password"
@@ -341,6 +414,10 @@ const AppRoutes = () => {
         <Route path="tickets" element={<AdminTickets />} />
         <Route path="users" element={<Users />} />
         <Route path="users/:id" element={<AdminUserDetailsPage />} />
+        <Route path="vendors">
+          <Route index element={<AdminVendorsList />} />
+          <Route path=":id" element={<AdminVendorDetailsPage />} />
+        </Route>
         <Route path="coupons" element={<Coupons />} />
         <Route path="reviews" element={<Reviews />} />
       </Route>

@@ -8,7 +8,7 @@ import { isAdmin } from "../middlewares/isAdmin.js";
 const router = express.Router();
 
 // Multer setup
-const upload = multer({
+export const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB max
   fileFilter: (req, file, cb) => {
@@ -22,7 +22,7 @@ const upload = multer({
 });
 
 // Helper: upload buffer to Cloudinary
-const uploadToCloudinary = async (buffer, mimetype, folder = "swagsync-products") => {
+export const uploadToCloudinary = async (buffer, mimetype, folder = "swagsync-products") => {
   let optimizedBuffer = buffer;
   let optimizedMimetype = mimetype;
 

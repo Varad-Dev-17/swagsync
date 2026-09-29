@@ -242,6 +242,7 @@ export const createReturnRequest = async (req, res) => {
     }
 
     const origVariantId = (typeof orderItem.variant === 'object' ? orderItem.variant?._id : orderItem.variant) || variantId || undefined;
+    const vendorId = orderItem.vendor || product.vendorId || undefined;
 
     // Create request with initial states
     const returnRequest = new ReturnRequest({
@@ -249,6 +250,7 @@ export const createReturnRequest = async (req, res) => {
       product: productId,
       originalVariant: origVariantId,
       user: userId,
+      vendor: vendorId,
       type,
       reason,
       additionalDetails,

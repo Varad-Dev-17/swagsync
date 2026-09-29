@@ -17,7 +17,8 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   RefreshCcw,
-  Headphones
+  Headphones,
+  Store,
 } from "lucide-react";
 
 const Sidebar = ({ onClose, isCollapsed, toggleCollapse }) => {
@@ -42,6 +43,7 @@ const Sidebar = ({ onClose, isCollapsed, toggleCollapse }) => {
     { path: "/admin/returns", label: "Returns", icon: RefreshCcw },
     { path: "/admin/tickets", label: "Tickets", icon: Headphones },
     { path: "/admin/users", label: "Users", icon: Users },
+    { path: "/admin/vendors", label: "Vendors", icon: Store },
     { path: "/admin/coupons", label: "Coupons", icon: Ticket },
     { path: "/admin/reviews", label: "Reviews", icon: MessageSquare },
   ];

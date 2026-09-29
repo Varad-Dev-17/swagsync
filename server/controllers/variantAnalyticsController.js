@@ -6,7 +6,12 @@ export const getVariantGroupAnalytics = async (req, res) => {
   try {
     const { id, primaryOptionId } = req.params;
 
-    const allVariants = await Variant.find({ product: id });
+    const query = { product: id };
+    if (req.vendor?._id) {
+      query.vendorId = req.vendor._id;
+    }
+
+    const allVariants = await Variant.find(query);
     if (!allVariants || allVariants.length === 0) {
       return res.status(404).json({ success: false, message: "No variants found for this product" });
     }

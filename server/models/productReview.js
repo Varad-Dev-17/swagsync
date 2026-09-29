@@ -44,6 +44,12 @@ const ProductReviewSchema = new mongoose.Schema(
       ref: "Variant",
       default: null,
     },
+
+    vendorReply: {
+      message: { type: String, trim: true },
+      repliedAt: { type: Date },
+      vendor: { type: mongoose.Schema.Types.ObjectId, ref: "Vendor" },
+    },
   },
   { timestamps: true }
 );

@@ -1,4 +1,5 @@
 import User from "../models/user.js";
+import Admin from "../models/admin.js";
 import Order from "../models/order.js";
 import ReturnRequest from "../models/returnRequest.js";
 import Ticket from "../models/ticket.js";
@@ -41,7 +42,22 @@ export const makeAdmin = async (req, res) => {
     }
 
     user.isAdmin = true;
+    user.role = "admin";
     await user.save();
+
+    // Ensure Admin record exists in admins collection
+    let adminRecord = await Admin.findOne({ email: user.email });
+    if (!adminRecord) {
+      adminRecord = new Admin({
+        username: user.username,
+        email: user.email,
+        password: user.password,
+        isAdmin: true,
+        role: "admin",
+        mobileNo: user.mobileNo,
+      });
+      await adminRecord.save();
+    }
 
     res.status(200).json({
       success: true,
@@ -84,7 +100,11 @@ export const removeAdmin = async (req, res) => {
     }
 
     user.isAdmin = false;
+    user.role = "customer";
     await user.save();
+
+    // Remove from admins collection
+    await Admin.deleteOne({ email: user.email });
 
     res.status(200).json({
       success: true,

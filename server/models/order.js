@@ -19,6 +19,10 @@ const OrderSchema = new mongoose.Schema(
           type: mongoose.Schema.Types.ObjectId,
           ref: "Variant",
         },
+        vendor: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Vendor",
+        },
         quantity: { type: Number, default: 1 },
         mrp: { type: Number, required: true },
         sellingPrice: { type: Number, required: true },

@@ -1,4 +1,6 @@
 import "../models/user.js";
+import "../models/admin.js";
+import "../models/vendor.js";
 import "../models/product.js";
 import "../models/variant.js";
 import "../models/brand.js";

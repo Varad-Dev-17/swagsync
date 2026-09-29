@@ -482,6 +482,7 @@ export const createOrder = async (req, res) => {
       orderItems.push({
         product: product._id,
         variant: variant._id,
+        vendor: product.vendorId || variant.vendorId || null,
         quantity: item.quantity,
         mrp: variant.mrp || variant.price,
         sellingPrice: variant.price,

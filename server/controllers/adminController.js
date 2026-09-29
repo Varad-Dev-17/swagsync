@@ -1,3 +1,4 @@
+import Admin from "../models/admin.js";
 import User from "../models/user.js";
 import { hashPassword } from "../utils/hash.js";
 import jwt from "jsonwebtoken";
@@ -19,19 +20,22 @@ export const adminSignIn = async (req, res) => {
       });
     }
 
-    let adminUser = await User.findOne({ email: ADMIN_EMAIL });
+    let adminUser = await Admin.findOne({ email: ADMIN_EMAIL });
 
     if (!adminUser) {
-      const hashedPassword = await hashPassword(ADMIN_PASSWORD, 12);
-      adminUser = new User({
-        username: "admin",
+      // Check if existing admin user exists in User collection to migrate password
+      const existingUserAdmin = await User.findOne({ email: ADMIN_EMAIL });
+      const passwordToUse = existingUserAdmin ? existingUserAdmin.password : await hashPassword(ADMIN_PASSWORD, 12);
+
+      adminUser = new Admin({
+        username: existingUserAdmin?.username || "admin",
         email: ADMIN_EMAIL,
-        password: hashedPassword,
+        password: passwordToUse,
         isAdmin: true,
-        verified: true,
+        role: "admin",
       });
       await adminUser.save();
-      console.log("Admin created...");
+      console.log("Admin created in admins collection...");
     }
 
     const token = jwt.sign(
@@ -41,6 +45,7 @@ export const adminSignIn = async (req, res) => {
         username: adminUser.username,
         verified: true,
         isAdmin: true,
+        role: "admin",
       },
       process.env.JWT_TOKEN_SECRET,
       { expiresIn: "8h" }

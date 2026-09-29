@@ -22,6 +22,14 @@ const ReturnRequestSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    vendor: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Vendor",
+    },
+    vendorNotes: {
+      type: String,
+      default: "",
+    },
     type: {
       type: String,
       enum: ["return", "exchange"],

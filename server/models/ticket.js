@@ -4,7 +4,7 @@ const ResponseSchema = new mongoose.Schema(
   {
     sender: {
       type: String,
-      enum: ["user", "admin"],
+      enum: ["user", "admin", "vendor"],
       required: true,
     },
     senderName: {
@@ -13,7 +13,6 @@ const ResponseSchema = new mongoose.Schema(
     },
     senderId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
       required: true,
     },
     message: {
@@ -40,6 +39,10 @@ const TicketSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
+    },
+    vendor: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Vendor",
     },
     category: {
       type: String,
