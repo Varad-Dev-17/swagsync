@@ -65,10 +65,15 @@ app.use(express.json());
 app.use(
   cors({
     origin: [
-      process.env.FRONTEND_URL || "http://localhost:3000",
+      "http://localhost:3000",
+      "http://localhost:5173",
+      "http://127.0.0.1:3000",
+      "http://127.0.0.1:5173",
+      "http://localhost:8081",
+      "http://10.0.2.2:8081",
+      process.env.FRONTEND_URL,
       process.env.RENDER_EXTERNAL_URL,
-      "http://localhost:8081", 
-      "http://10.0.2.2:8081"
+      "https://swagsync.onrender.com",
     ].filter(Boolean),
     credentials: true,
   })
