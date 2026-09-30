@@ -148,7 +148,7 @@ export const approveVendor = async (req, res) => {
     await vendor.save();
 
     // Send Approval Email
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+    const frontendUrl = process.env.FRONTEND_URL || process.env.RENDER_EXTERNAL_URL || "https://swagsync.onrender.com";
     const vendorLoginUrl = `${frontendUrl}/vendor/login`;
 
     try {

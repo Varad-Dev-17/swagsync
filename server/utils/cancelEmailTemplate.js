@@ -1,5 +1,20 @@
+const optimizeEmailImageUrl = (url) => {
+  if (!url || typeof url !== "string") return "";
+  let cleanUrl = url.trim();
+  if (cleanUrl.startsWith("http://")) {
+    cleanUrl = "https://" + cleanUrl.slice(7);
+  }
+  if (cleanUrl.includes("res.cloudinary.com")) {
+    cleanUrl = cleanUrl.replace(/\.webp($|\?)/i, ".jpg$1");
+    if (cleanUrl.includes("/upload/") && !cleanUrl.includes("/f_") && !cleanUrl.includes("/c_")) {
+      cleanUrl = cleanUrl.replace("/upload/", "/upload/f_jpg,q_auto,w_160,h_160,c_fill/");
+    }
+  }
+  return cleanUrl;
+};
+
 export const cancelEmailTemplate = (order, user) => {
-  const frontendUrl = process.env.FRONTEND_URL || process.env.RENDER_EXTERNAL_URL || "http://localhost:3000";
+  const frontendUrl = process.env.FRONTEND_URL || process.env.RENDER_EXTERNAL_URL || "https://swagsync.onrender.com";
   const ordersUrl = `${frontendUrl}/account/orders`;
   const userName = user?.username || order?.shippingAddress?.name || "Shopper";
 
@@ -83,20 +98,24 @@ export const cancelEmailTemplate = (order, user) => {
             <td style="padding: 0 32px 20px 32px;">
               <table width="100%" border="0" cellspacing="0" cellpadding="0">
                 ${(order?.items || []).map((item, index) => {
-                  let imageUrl = "";
+                  let rawImageUrl = "";
                   if (item?.variant?.mainImage?.url) {
-                    imageUrl = item.variant.mainImage.url;
+                    rawImageUrl = item.variant.mainImage.url;
                   } else if (typeof item?.variant?.mainImage === "string" && item.variant.mainImage.trim() !== "") {
-                    imageUrl = item.variant.mainImage;
+                    rawImageUrl = item.variant.mainImage;
                   } else if (item?.variant?.galleryImages?.[0]?.url) {
-                    imageUrl = item.variant.galleryImages[0].url;
+                    rawImageUrl = item.variant.galleryImages[0].url;
                   } else if (typeof item?.variant?.galleryImages?.[0] === "string" && item.variant.galleryImages[0].trim() !== "") {
-                    imageUrl = item.variant.galleryImages[0];
+                    rawImageUrl = item.variant.galleryImages[0];
+                  } else if (item?.image) {
+                    rawImageUrl = item.image;
                   } else if (item?.product?.images?.[0]?.url) {
-                    imageUrl = item.product.images[0].url;
+                    rawImageUrl = item.product.images[0].url;
                   } else if (typeof item?.product?.images?.[0] === "string" && item.product.images[0].trim() !== "") {
-                    imageUrl = item.product.images[0];
+                    rawImageUrl = item.product.images[0];
                   }
+
+                  const imageUrl = optimizeEmailImageUrl(rawImageUrl);
 
                   const attributesList = [];
                   if (item?.variant?.attributes && Array.isArray(item.variant.attributes)) {

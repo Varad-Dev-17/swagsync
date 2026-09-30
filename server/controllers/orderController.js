@@ -2,6 +2,7 @@ import Order from "../models/order.js";
 import Cart from "../models/cart.js";
 import Address from "../models/address.js";
 import Coupon from "../models/coupon.js";
+import Variant from "../models/variant.js";
 import transport from "../middlewares/sendMail.js";
 import { orderEmailTemplate } from "../utils/orderEmailTemplate.js";
 import { cancelEmailTemplate } from "../utils/cancelEmailTemplate.js";
@@ -612,6 +613,25 @@ export const createOrder = async (req, res) => {
     const populatedOrder = await Order.findById(order._id)
       .populate(ORDER_POPULATE_CONFIG)
       .lean();
+
+    // Ensure all items have complete variant data and image assets for email rendering
+    if (populatedOrder?.items && Array.isArray(populatedOrder.items)) {
+      for (const it of populatedOrder.items) {
+        if (!it.variant || typeof it.variant !== "object" || (!it.variant.mainImage && !it.variant.galleryImages)) {
+          try {
+            const vId = it.variant?._id || it.variant;
+            if (vId) {
+              const fullVariant = await Variant.findById(vId).lean();
+              if (fullVariant) {
+                it.variant = fullVariant;
+              }
+            }
+          } catch (vErr) {
+            console.warn("[Order Flow] Could not populate missing variant for email:", vErr.message);
+          }
+        }
+      }
+    }
 
     const recipientEmail = populatedOrder?.user?.email || req.user?.email || populatedOrder?.shippingAddress?.email;
     const recipientUser = populatedOrder?.user || { username: req.user?.username || populatedOrder?.shippingAddress?.name || "Shopper", email: recipientEmail };

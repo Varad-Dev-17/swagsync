@@ -1,5 +1,21 @@
+const optimizeEmailImageUrl = (url) => {
+  if (!url || typeof url !== "string") return "";
+  let cleanUrl = url.trim();
+  if (cleanUrl.startsWith("http://")) {
+    cleanUrl = "https://" + cleanUrl.slice(7);
+  }
+  if (cleanUrl.includes("res.cloudinary.com")) {
+    // Deliver universal JPEG with automatic quality & sharp square sizing for 100% email client support
+    cleanUrl = cleanUrl.replace(/\.webp($|\?)/i, ".jpg$1");
+    if (cleanUrl.includes("/upload/") && !cleanUrl.includes("/f_") && !cleanUrl.includes("/c_")) {
+      cleanUrl = cleanUrl.replace("/upload/", "/upload/f_jpg,q_auto,w_160,h_160,c_fill/");
+    }
+  }
+  return cleanUrl;
+};
+
 export const orderEmailTemplate = (order, user) => {
-  const frontendUrl = process.env.FRONTEND_URL || process.env.RENDER_EXTERNAL_URL || "http://localhost:3000";
+  const frontendUrl = process.env.FRONTEND_URL || process.env.RENDER_EXTERNAL_URL || "https://swagsync.onrender.com";
   const orderDetailUrl = order?._id ? `${frontendUrl}/account/orders/${order._id}` : `${frontendUrl}/account/orders`;
 
   // Format creation date
@@ -288,20 +304,24 @@ export const orderEmailTemplate = (order, user) => {
                   // 2. Variant mainImage string
                   // 3. Variant galleryImages[0] object or string
                   // 4. Product images fallback (if present)
-                  let imageUrl = "";
+                  let rawImageUrl = "";
                   if (item?.variant?.mainImage?.url) {
-                    imageUrl = item.variant.mainImage.url;
+                    rawImageUrl = item.variant.mainImage.url;
                   } else if (typeof item?.variant?.mainImage === "string" && item.variant.mainImage.trim() !== "") {
-                    imageUrl = item.variant.mainImage;
+                    rawImageUrl = item.variant.mainImage;
                   } else if (item?.variant?.galleryImages?.[0]?.url) {
-                    imageUrl = item.variant.galleryImages[0].url;
+                    rawImageUrl = item.variant.galleryImages[0].url;
                   } else if (typeof item?.variant?.galleryImages?.[0] === "string" && item.variant.galleryImages[0].trim() !== "") {
-                    imageUrl = item.variant.galleryImages[0];
+                    rawImageUrl = item.variant.galleryImages[0];
+                  } else if (item?.image) {
+                    rawImageUrl = item.image;
                   } else if (item?.product?.images?.[0]?.url) {
-                    imageUrl = item.product.images[0].url;
+                    rawImageUrl = item.product.images[0].url;
                   } else if (typeof item?.product?.images?.[0] === "string" && item.product.images[0].trim() !== "") {
-                    imageUrl = item.product.images[0];
+                    rawImageUrl = item.product.images[0];
                   }
+
+                  const imageUrl = optimizeEmailImageUrl(rawImageUrl);
 
                   // Resolve attributes (Color, Size, Shade, Storage, etc.)
                   const attributesList = [];
