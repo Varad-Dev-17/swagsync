@@ -617,32 +617,48 @@ export const updateReturnRequestStatusAdmin = async (req, res) => {
 
     // Handle Return Status mutations & timeline generation
     if (status && status !== previousStatus) {
-      // Stock update rules if completed / exchanged
-      if ((status === "exchanged" || status === "completed") && previousStatus !== "exchanged" && previousStatus !== "completed") {
+      // Stock update rules if completed / exchanged / refunded
+      const isFinishing = ["completed", "exchanged", "refunded"].includes(status);
+      const wasFinishing = ["completed", "exchanged", "refunded"].includes(previousStatus);
+
+      if (isFinishing && !wasFinishing && !request.isStockAdjusted) {
         const Variant = (await import("../models/variant.js")).default;
         const qty = Number(request.quantity) || 1;
 
+        // Resolve original variant with fallback to order item
+        let origVariantToRestock = request.originalVariant;
+        if (!origVariantToRestock && request.order) {
+          const orderDoc = await Order.findById(request.order).select("items").lean();
+          const match = orderDoc?.items?.find(i => String(i.product?._id || i.product) === String(request.product?._id || request.product));
+          if (match) origVariantToRestock = match.variant?._id || match.variant;
+        }
+
         if (request.type === "exchange") {
-          // 1. Decrement replacement variant stock (dispatched to customer)
-          if (request.requestedExchangeVariant) {
-            await Variant.findByIdAndUpdate(request.requestedExchangeVariant, {
-              $inc: { stock: -qty },
-            });
+          // If exchanging with a different variant (different size or color)
+          if (String(request.requestedExchangeVariant) !== String(origVariantToRestock)) {
+            // 1. Decrement replacement variant stock (dispatched to customer)
+            if (request.requestedExchangeVariant) {
+              await Variant.findByIdAndUpdate(request.requestedExchangeVariant, {
+                $inc: { stock: -qty },
+              });
+            }
+            // 2. Increment returning original variant stock (returned back to warehouse)
+            if (origVariantToRestock) {
+              await Variant.findByIdAndUpdate(origVariantToRestock, {
+                $inc: { stock: qty },
+              });
+            }
           }
-          // 2. Increment returning original variant stock (returned back to warehouse)
-          if (request.originalVariant) {
-            await Variant.findByIdAndUpdate(request.originalVariant, {
-              $inc: { stock: qty },
-            });
-          }
+          // Note: If exchanging with the SAME variant, net warehouse stock change is 0.
         } else if (request.type === "return") {
           // Increment returned item stock back into warehouse inventory
-          if (request.originalVariant) {
-            await Variant.findByIdAndUpdate(request.originalVariant, {
+          if (origVariantToRestock) {
+            await Variant.findByIdAndUpdate(origVariantToRestock, {
               $inc: { stock: qty },
             });
           }
         }
+        request.isStockAdjusted = true;
       }
 
       const isExchangeRequest = request.type === "exchange";
@@ -775,6 +791,10 @@ export const processRazorpayRefundAdmin = async (req, res) => {
     request.refundTransactionId = refund.id;
     request.refundProcessedAt = new Date();
 
+    if (request.type === "return" && request.status !== "completed") {
+      request.status = "completed";
+    }
+
     addTimelineEvent(
       request,
       "Refund Completed",
@@ -782,6 +802,24 @@ export const processRazorpayRefundAdmin = async (req, res) => {
       "Finance",
       { refundId: refund.id, amount: refundAmount, gateway: "Razorpay" }
     );
+
+    // Restock returned variant into inventory if not yet adjusted
+    if (request.type === "return" && !request.isStockAdjusted) {
+      const Variant = (await import("../models/variant.js")).default;
+      const qty = Number(request.quantity) || 1;
+      let origVariantToRestock = request.originalVariant;
+      if (!origVariantToRestock && request.order) {
+        const orderDoc = await Order.findById(request.order).select("items").lean();
+        const match = orderDoc?.items?.find(i => String(i.product?._id || i.product) === String(request.product?._id || request.product));
+        if (match) origVariantToRestock = match.variant?._id || match.variant;
+      }
+      if (origVariantToRestock) {
+        await Variant.findByIdAndUpdate(origVariantToRestock, {
+          $inc: { stock: qty },
+        });
+        request.isStockAdjusted = true;
+      }
+    }
 
     await request.save();
 

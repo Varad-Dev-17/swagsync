@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { Loader2, ArrowLeft, CheckCircle2, Truck, Clock, X, MapPin, Receipt, Phone, Mail, Package } from "lucide-react";
+import { Loader2, ArrowLeft, CheckCircle2, Truck, Clock, X, XCircle, MapPin, Receipt, Phone, Mail, Package, RefreshCw } from "lucide-react";
 import axios from "axios";
 import { useAuth } from "../../../../context/AuthContext";
 import toast from "react-hot-toast";
@@ -88,7 +88,7 @@ const OrderDetails = () => {
     cancelled: "Cancelled",
     delayed: "⚠️ Delayed • Slight Shipping Delay"
   };
-  const statusDisplay = statusDisplayMap[order.status?.toLowerCase()] || (order.status.charAt(0).toUpperCase() + order.status.slice(1).replace(/_/g, " "));
+  const statusDisplay = statusDisplayMap[order.status?.toLowerCase()] || (order.status ? (order.status.charAt(0).toUpperCase() + order.status.slice(1).replace(/_/g, " ")) : "");
 
   const calculateItemPaid = (item, orderData) => {
     const unitPrice = Number(item?.sellingPrice ?? item?.price ?? item?.mrp ?? item?.variant?.price ?? 0) || 0;
@@ -156,19 +156,18 @@ const OrderDetails = () => {
 
               const brandName = item.product?.brand?.name;
 
-              // Compute Return/Exchange eligibility & active item requests
-              const activeRequest = Array.isArray(order.returnRequests) ? order.returnRequests.find(req => 
-                (req.product?._id || req.product) === (item.product?._id || item.product) &&
-                !["rejected", "refunded", "exchanged"].includes(req.status)
-              ) : null;
-              const itemRequest = Array.isArray(order.returnRequests) ? order.returnRequests.find(req => 
-                (req.product?._id || req.product) === (item.product?._id || item.product)
-              ) : null;
-              const eligibility = getReturnEligibility(order, item, activeRequest);
+              // Compute Return/Exchange eligibility & latest item request
+              const itemRequests = (Array.isArray(order.returnRequests) ? order.returnRequests : [])
+                .filter(req => String(req.product?._id || req.product) === String(item.product?._id || item.product))
+                .sort((a, b) => new Date(b.updatedAt || b.createdAt || 0) - new Date(a.updatedAt || a.createdAt || 0));
+
+              const latestRequest = itemRequests[0] || null;
+              const activeRequest = latestRequest && !["rejected", "cancelled", "completed", "refunded"].includes(latestRequest.status);
+              const eligibility = getReturnEligibility(order, item, latestRequest);
               const itemFin = calculateItemPaid(item, order);
 
               const currentItemStatus = (item.status || order.status || "pending").toLowerCase();
-              const itemStatusDisplay = statusDisplayMap[currentItemStatus] || (currentItemStatus.charAt(0).toUpperCase() + currentItemStatus.slice(1).replace(/_/g, " "));
+              const itemStatusDisplay = statusDisplayMap[currentItemStatus] || (currentItemStatus ? (currentItemStatus.charAt(0).toUpperCase() + currentItemStatus.slice(1).replace(/_/g, " ")) : "");
               const statusDotColor = currentItemStatus === "delayed" ? "bg-amber-500" : currentItemStatus === "cancelled" ? "bg-rose-500" : "bg-emerald-500";
               const statusTextColor = currentItemStatus === "delayed" ? "text-amber-800 font-extrabold" : currentItemStatus === "cancelled" ? "text-rose-700 font-extrabold" : "text-slate-700";
 
@@ -196,10 +195,28 @@ const OrderDetails = () => {
                         </div>
                         {/* Status / Claim Subtext */}
                         <div className="mt-1.5 flex items-center gap-2 text-xs">
-                          {itemRequest ? (
-                            <span className="inline-flex items-center gap-1 font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-                              {itemRequest.type === "exchange" ? "⇄ Exchange Claim:" : "↩ Return Claim:"} {String(itemRequest.status).replace(/_/g, " ").toUpperCase()}
-                            </span>
+                          {latestRequest ? (
+                            latestRequest.status === 'rejected' ? (
+                              <span className="inline-flex items-center gap-1 font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
+                                <XCircle className="w-3.5 h-3.5 text-rose-600" />
+                                {latestRequest.type === 'exchange' ? 'Exchange Rejected' : 'Return Rejected'}
+                              </span>
+                            ) : latestRequest.status === 'completed' || latestRequest.status === 'exchanged' ? (
+                              <span className="inline-flex items-center gap-1 font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded border border-purple-200">
+                                <CheckCircle2 className="w-3.5 h-3.5 text-purple-600" />
+                                {latestRequest.type === 'exchange' ? 'Exchange Completed' : 'Return Completed'}
+                              </span>
+                            ) : latestRequest.status === 'refunded' ? (
+                              <span className="inline-flex items-center gap-1 font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                                Returned & Refunded
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                                <RefreshCw className="w-3.5 h-3.5 text-amber-600 animate-spin-slow" />
+                                {latestRequest.type === "exchange" ? "⇄ Exchange Claim:" : "↩ Return Claim:"} {String(latestRequest.status).replace(/_/g, " ").toUpperCase()}
+                              </span>
+                            )
                           ) : (
                             <span className="text-gray-600 font-medium flex items-center gap-1.5">
                               <span className={`w-2 h-2 rounded-full ${statusDotColor}`}></span>
@@ -207,7 +224,7 @@ const OrderDetails = () => {
                             </span>
                           )}
                         </div>
-                        {(order.status === "delivered" || currentItemStatus === "delivered") && !itemRequest && (
+                        {(order.status === "delivered" || currentItemStatus === "delivered") && !activeRequest && (
                           <div className="mt-2 flex items-center gap-1.5 text-xs text-gray-600 font-medium">
                             <span>Rate product:</span>
                             <div className="flex gap-0.5 text-amber-400 text-sm">
@@ -234,7 +251,7 @@ const OrderDetails = () => {
                           productId={item.product?._id || item.product} 
                           item={item}
                           eligibility={eligibility}
-                          onClick={activeRequest ? () => {
+                          onClick={eligibility.hasReturnRequest ? () => {
                             const elem = document.getElementById("customer-order-tracking");
                             if (elem) elem.scrollIntoView({ behavior: "smooth" });
                           } : null}

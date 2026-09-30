@@ -153,7 +153,6 @@ const VendorCatalog = () => {
           </div>
           <div>
             <p className="font-bold text-slate-900 text-sm">{row.name}</p>
-            <p className="text-xs text-slate-400 font-mono">slug: {row.slug || row.name.toLowerCase()}</p>
           </div>
         </div>
       ),
@@ -223,7 +222,6 @@ const VendorCatalog = () => {
           </div>
           <div>
             <p className="font-bold text-slate-900 text-sm">{row.name}</p>
-            <p className="text-xs text-slate-400 font-mono">slug: {row.slug || row.name.toLowerCase()}</p>
           </div>
         </div>
       ),
@@ -295,7 +293,6 @@ const VendorCatalog = () => {
           </div>
           <div>
             <p className="font-bold text-slate-900 text-sm">{row.name}</p>
-            <p className="text-xs text-slate-400 font-mono">slug: {row.slug || row.name.toLowerCase()}</p>
           </div>
         </div>
       ),
@@ -577,12 +574,6 @@ const VendorCatalog = () => {
                     </p>
                   </div>
                   <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80">
-                    <p className="text-[11px] text-slate-500 font-semibold uppercase">Category Slug</p>
-                    <p className="font-bold font-mono text-slate-900 text-xs mt-0.5">
-                      {inspectModal.data?.slug}
-                    </p>
-                  </div>
-                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80">
                     <p className="text-[11px] text-slate-500 font-semibold uppercase">Status</p>
                     <div className="mt-1">
                       <StatusBadge status={inspectModal.data?.status || "Active"} />
@@ -610,12 +601,6 @@ const VendorCatalog = () => {
 
               {inspectModal.entityType === "Brand" && (
                 <div className="space-y-3">
-                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80">
-                    <p className="text-[11px] text-slate-500 font-semibold uppercase">Brand Slug</p>
-                    <p className="font-bold font-mono text-slate-900 text-xs mt-0.5">
-                      {inspectModal.data?.slug}
-                    </p>
-                  </div>
                   <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80">
                     <p className="text-[11px] text-slate-500 font-semibold uppercase">Status</p>
                     <div className="mt-1">

@@ -122,6 +122,37 @@ const ProductSchema = new mongoose.Schema(
       default: null,
       index: true,
     },
+
+    storeId: {
+      type: mongoose.Schema.Types.ObjectId,
+      default: null,
+    },
+
+    store: {
+      storeName: { type: String, trim: true },
+      phone: { type: String, trim: true },
+      storeDescription: { type: String, trim: true },
+      addressLine1: { type: String, trim: true },
+      addressLine2: { type: String, trim: true },
+      city: { type: String, trim: true },
+      state: { type: String, trim: true },
+      country: { type: String, trim: true, default: "India" },
+      pincode: { type: String, trim: true },
+    },
+
+    manufacturerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      default: null,
+    },
+
+    manufacturer: {
+      manufacturerName: { type: String, trim: true },
+      countryOfOrigin: { type: String, trim: true, default: "India" },
+      manufacturerAddress: { type: String, trim: true },
+      packer: { type: String, trim: true },
+      packerPhone: { type: String, trim: true },
+      packerAddress: { type: String, trim: true },
+    },
   },
   { timestamps: true }
 );

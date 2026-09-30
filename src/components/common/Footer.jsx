@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Mail, ArrowRight, X, ShieldCheck, Truck, FileText, Info, Store } from "lucide-react";
+import { Mail, ArrowRight } from "lucide-react";
 import { toast } from "react-hot-toast";
 import api from "../../api/axiosConfig";
 
@@ -87,115 +87,9 @@ const DEFAULT_DEPARTMENTS = [
   { name: "Sports" },
 ];
 
-const MODAL_DATA = {
-  shipping: {
-    title: "Shipping & Delivery Policy",
-    icon: Truck,
-    content: [
-      {
-        heading: "Free Delivery Above ₹499",
-        text: "We offer complimentary standard shipping on all prepaid and cash-on-delivery orders exceeding ₹499. Orders below ₹499 incur a nominal delivery fee of ₹49.",
-      },
-      {
-        heading: "Dispatch & Delivery Timeline",
-        text: "Orders are processed and dispatched within 24 business hours from our nearest fulfillment hub. Delivery typically takes 2 to 5 business days depending on your location.",
-      },
-      {
-        heading: "Live Order Tracking",
-        text: "Once your package is picked up by our logistics partner (Delhivery, BlueDart, DTDC, Xpressbees), you will receive a tracking link via SMS and email. You can also monitor real-time updates directly in your SwagSync account under 'My Orders'.",
-      },
-      {
-        heading: "Secure & Contactless Delivery",
-        text: "All items are packed securely with tamper-evident seals to ensure pristine condition upon arrival.",
-      },
-    ],
-  },
-  terms: {
-    title: "Terms of Service",
-    icon: FileText,
-    content: [
-      {
-        heading: "Welcome to SwagSync",
-        text: "By accessing and purchasing from SwagSync, you agree to comply with our user agreement, genuine purchase terms, and platform security standards.",
-      },
-      {
-        heading: "User Accounts & Security",
-        text: "You are responsible for maintaining the confidentiality of your account credentials. All activity under your account is your responsibility.",
-      },
-      {
-        heading: "Product Authenticity & Pricing",
-        text: "All products listed on SwagSync are 100% genuine and verified. Prices, promotional discounts, and availability are subject to change without prior notice.",
-      },
-      {
-        heading: "Orders & Cancellations",
-        text: "You may cancel an order anytime before it enters the dispatch phase directly from your account. Once dispatched, our standard 7-day return process applies.",
-      },
-    ],
-  },
-  privacy: {
-    title: "Privacy Policy",
-    icon: ShieldCheck,
-    content: [
-      {
-        heading: "Your Privacy Matters",
-        text: "SwagSync respects your privacy. We strictly never sell, trade, or rent your personal identifiable information to third parties.",
-      },
-      {
-        heading: "Information We Collect",
-        text: "We collect only essential details necessary for order fulfillment and seamless communication: your name, shipping address, contact phone number, and email.",
-      },
-      {
-        heading: "Encrypted & Secure Payments",
-        text: "All payment transactions are encrypted using industry-standard 256-bit SSL encryption. We never store complete credit/debit card credentials on our servers.",
-      },
-      {
-        heading: "Your Rights & Control",
-        text: "You can update your personal details, manage saved addresses, or delete your account anytime from your Profile settings.",
-      },
-    ],
-  },
-  about: {
-    title: "About SwagSync",
-    icon: Info,
-    content: [
-      {
-        heading: "The SwagSync Vision",
-        text: "SwagSync is your curated e-commerce destination bringing together premium fashion, modern lifestyle, latest electronics, beauty, and active sports gear all under one roof.",
-      },
-      {
-        heading: "Direct From Trusted Brands",
-        text: "We collaborate directly with verified sellers and renowned brands to ensure every item you receive is 100% authentic, brand-new, and backed by manufacturer warranty.",
-      },
-      {
-        heading: "Customer-First Experience",
-        text: "From fast dispatch to transparent order tracking, responsive 24/7 customer support, and seamless 7-day returns, your satisfaction is at the core of everything we build.",
-      },
-    ],
-  },
-  seller: {
-    title: "Become a Seller on SwagSync",
-    icon: Store,
-    content: [
-      {
-        heading: "Grow Your Brand With Us",
-        text: "Reach thousands of fashion and lifestyle shoppers across India. SwagSync empowers verified brands and manufacturers with high-visibility shelf space.",
-      },
-      {
-        heading: "Low Commissions & Fast Payouts",
-        text: "Benefit from competitive commission rates, weekly automated payment settlements, and intuitive inventory management dashboards.",
-      },
-      {
-        heading: "How to Get Started",
-        text: "Contact our merchant onboarding team at partners@swagsync.com with your brand profile, GSTIN, and product catalog to begin onboarding.",
-      },
-    ],
-  },
-};
-
 const Footer = () => {
   const [email, setEmail] = useState("");
   const [departments, setDepartments] = useState(DEFAULT_DEPARTMENTS);
-  const [activeModalKey, setActiveModalKey] = useState(null);
 
   // Fetch real active departments dynamically from API
   useEffect(() => {
@@ -247,11 +141,8 @@ const Footer = () => {
     window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
   };
 
-  const activeModalData = activeModalKey ? MODAL_DATA[activeModalKey] : null;
-
   return (
-    <>
-      <footer className="bg-white border-t border-gray-200 pt-12 pb-8 text-gray-700">
+    <footer className="bg-white border-t border-gray-200 pt-12 pb-8 text-gray-700">
         <div className="max-w-[1500px] mx-auto px-8 sm:px-10 lg:px-16">
           <div className="flex flex-col lg:flex-row justify-between gap-8 lg:gap-0">
             {/* Column 1: Brand Info & Socials */}
@@ -342,13 +233,13 @@ const Footer = () => {
                   </Link>
                 </li>
                 <li>
-                  <button
-                    type="button"
-                    onClick={() => setActiveModalKey("shipping")}
-                    className="text-gray-500 hover:text-[#FD7100] transition-colors text-left cursor-pointer"
+                  <Link
+                    to="#"
+                    onClick={(e) => e.preventDefault()}
+                    className="text-gray-500 hover:text-[#FD7100] transition-colors block"
                   >
                     Shipping Policy
-                  </button>
+                  </Link>
                 </li>
                 <li>
                   <Link
@@ -369,40 +260,40 @@ const Footer = () => {
               </h3>
               <ul className="space-y-3 text-[14.5px]">
                 <li>
-                  <button
-                    type="button"
-                    onClick={() => setActiveModalKey("about")}
-                    className="text-gray-500 hover:text-[#FD7100] transition-colors text-left cursor-pointer"
+                  <Link
+                    to="#"
+                    onClick={(e) => e.preventDefault()}
+                    className="text-gray-500 hover:text-[#FD7100] transition-colors block"
                   >
                     About Us
-                  </button>
+                  </Link>
                 </li>
                 <li>
-                  <button
-                    type="button"
-                    onClick={() => setActiveModalKey("terms")}
-                    className="text-gray-500 hover:text-[#FD7100] transition-colors text-left cursor-pointer"
+                  <Link
+                    to="#"
+                    onClick={(e) => e.preventDefault()}
+                    className="text-gray-500 hover:text-[#FD7100] transition-colors block"
                   >
                     Terms of Service
-                  </button>
+                  </Link>
                 </li>
                 <li>
-                  <button
-                    type="button"
-                    onClick={() => setActiveModalKey("privacy")}
-                    className="text-gray-500 hover:text-[#FD7100] transition-colors text-left cursor-pointer"
+                  <Link
+                    to="#"
+                    onClick={(e) => e.preventDefault()}
+                    className="text-gray-500 hover:text-[#FD7100] transition-colors block"
                   >
                     Privacy Policy
-                  </button>
+                  </Link>
                 </li>
                 <li>
-                  <button
-                    type="button"
-                    onClick={() => setActiveModalKey("seller")}
-                    className="text-gray-500 hover:text-[#FD7100] transition-colors text-left cursor-pointer"
+                  <Link
+                    to="/vendor/register"
+                    onClick={handleNavClick}
+                    className="text-gray-500 hover:text-[#FD7100] transition-colors block"
                   >
                     Become a Seller
-                  </button>
+                  </Link>
                 </li>
               </ul>
             </div>
@@ -747,21 +638,21 @@ const Footer = () => {
 
           {/* Right: Legal Links */}
           <div className="flex items-center gap-3 text-center md:text-right order-3">
-            <button
-              type="button"
-              onClick={() => setActiveModalKey("terms")}
-              className="hover:text-gray-900 transition-colors cursor-pointer"
+            <Link
+              to="#"
+              onClick={(e) => e.preventDefault()}
+              className="hover:text-gray-900 transition-colors"
             >
               Terms of Service
-            </button>
+            </Link>
             <span className="text-gray-300">|</span>
-            <button
-              type="button"
-              onClick={() => setActiveModalKey("privacy")}
-              className="hover:text-gray-900 transition-colors cursor-pointer"
+            <Link
+              to="#"
+              onClick={(e) => e.preventDefault()}
+              className="hover:text-gray-900 transition-colors"
             >
               Privacy Policy
-            </button>
+            </Link>
             <span className="text-gray-300">|</span>
             <Link
               to="/products"
@@ -774,65 +665,6 @@ const Footer = () => {
         </div>
       </div>
     </footer>
-
-    {/* Policy / Informational Modal */}
-    {activeModalData && (
-      <div
-        className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4"
-        onClick={() => setActiveModalKey(null)}
-      >
-        <div
-          className="bg-white rounded-2xl max-w-lg w-full max-h-[85vh] overflow-y-auto p-6 shadow-2xl relative animate-in fade-in zoom-in-95 duration-150"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* Header */}
-          <div className="flex items-center justify-between pb-4 border-b border-gray-100">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-orange-50 text-[#FD7100] flex items-center justify-center flex-shrink-0">
-                <activeModalData.icon className="w-5 h-5" />
-              </div>
-              <h3 className="text-lg font-bold text-gray-900">
-                {activeModalData.title}
-              </h3>
-            </div>
-            <button
-              type="button"
-              onClick={() => setActiveModalKey(null)}
-              className="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
-              aria-label="Close dialog"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-
-          {/* Content Sections */}
-          <div className="mt-4 space-y-3.5">
-            {activeModalData.content.map((item, idx) => (
-              <div key={idx} className="bg-gray-50/70 rounded-xl p-3.5 border border-gray-100">
-                <h4 className="text-[13.5px] font-semibold text-gray-900 mb-1">
-                  {item.heading}
-                </h4>
-                <p className="text-[13px] text-gray-600 leading-relaxed">
-                  {item.text}
-                </p>
-              </div>
-            ))}
-          </div>
-
-          {/* Footer Close Button */}
-          <div className="mt-6 pt-4 border-t border-gray-100 flex justify-end">
-            <button
-              type="button"
-              onClick={() => setActiveModalKey(null)}
-              className="bg-[#FD7100] hover:bg-[#ea580c] text-white text-[13.5px] font-medium px-5 py-2.5 rounded-lg transition-colors cursor-pointer shadow-xs active:scale-95"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      </div>
-    )}
-  </>
   );
 };
 

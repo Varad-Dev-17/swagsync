@@ -22,6 +22,7 @@ import { RETURN_REQUEST_POPULATE_CONFIG, ORDER_POPULATE_CONFIG } from "../utils/
 export const getVendorDashboardStats = async (req, res) => {
   try {
     const vendorId = req.vendor._id;
+    const { revenueTime = "This Week", ordersTime = "This Week", analyticsTime = "This Week" } = req.query;
 
     const [
       totalProducts,
@@ -85,16 +86,6 @@ export const getVendorDashboardStats = async (req, res) => {
       .sort({ createdAt: -1 })
       .lean();
 
-    // Order fulfillment status breakdown for this vendor
-    const orderStats = {
-      pending: 0,
-      processing: 0,
-      packed: 0,
-      shipped: 0,
-      delivered: 0,
-      cancelled: 0,
-    };
-
     let totalRevenue = 0;
     const uniqueBuyers = new Set();
     const productSalesMap = {};
@@ -110,7 +101,6 @@ export const getVendorDashboardStats = async (req, res) => {
       });
 
       if (vendorItems.length === 0) return;
-      validVendorOrders.push(ord);
 
       if (ord.user?._id) uniqueBuyers.add(ord.user._id.toString());
 
@@ -128,9 +118,9 @@ export const getVendorDashboardStats = async (req, res) => {
         fulfillmentStatus = "cancelled";
       }
 
-      if (orderStats[fulfillmentStatus] !== undefined) {
-        orderStats[fulfillmentStatus]++;
-      }
+      ord.vendorItems = vendorItems;
+      ord.vendorFulfillmentStatus = fulfillmentStatus;
+      validVendorOrders.push(ord);
 
       // Calculate revenue strictly from this vendor's items
       vendorItems.forEach((item) => {
@@ -250,37 +240,138 @@ export const getVendorDashboardStats = async (req, res) => {
       .sort((a, b) => b.totalSold - a.totalSold)
       .slice(0, 5);
 
-    // Revenue chart & Analytics chart (weekly distribution of this vendor's sales)
-    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-    const now = new Date();
-    const revenueChart = [];
-    const analyticsChart = [];
+    // Helper to format local date keys (YYYY-MM-DD) avoiding UTC shifts
+    const toLocalDateKey = (date) => {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, "0");
+      const d = String(date.getDate()).padStart(2, "0");
+      return `${y}-${m}-${d}`;
+    };
 
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date(now);
-      d.setDate(d.getDate() - i);
-      const dayName = days[d.getDay()];
-      const dayStr = d.toISOString().split("T")[0];
+    // Calculate time bounds for 'This Week', 'This Month', and 'This Year'
+    const getFilterBounds = (filter) => {
+      const now = new Date();
+      let start, end;
+      if (filter === "This Week") {
+        const d = new Date(now);
+        const day = d.getDay(); // 0 is Sun, 1 is Mon
+        const diff = (day === 0 ? -6 : 1) - day; // Monday
+        start = new Date(d);
+        start.setDate(d.getDate() + diff);
+        start.setHours(0, 0, 0, 0);
 
-      let dayRev = 0;
-      let dayOrdersCount = 0;
-      const dayCustomersSet = new Set();
+        end = new Date(start);
+        end.setDate(start.getDate() + 6);
+        end.setHours(23, 59, 59, 999);
+      } else if (filter === "This Month") {
+        start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+        end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+      } else {
+        // This Year
+        start = new Date(now.getFullYear(), 0, 1, 0, 0, 0, 0);
+        end = new Date(now.getFullYear(), 11, 31, 23, 59, 59, 999);
+      }
+      return { start, end };
+    };
+
+    // Filtered Order Breakdown for Donut Chart
+    const ordersBounds = getFilterBounds(ordersTime);
+    const orderStats = {
+      pending: 0,
+      processing: 0,
+      packed: 0,
+      shipped: 0,
+      delivered: 0,
+      cancelled: 0,
+      total: 0,
+    };
+
+    validVendorOrders.forEach((ord) => {
+      const ordDate = new Date(ord.createdAt);
+      if (ordDate >= ordersBounds.start && ordDate <= ordersBounds.end) {
+        orderStats.total++;
+        const status = ord.vendorFulfillmentStatus || "pending";
+        if (orderStats[status] !== undefined) {
+          orderStats[status]++;
+        }
+      }
+    });
+
+    // Helper to build timeline chart data (Revenue Overview & Sales Analytics)
+    const buildChartData = (timeFilter) => {
+      const now = new Date();
+      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+      const items = [];
+      const bounds = getFilterBounds(timeFilter);
+
+      if (timeFilter === "This Week") {
+        for (let i = 0; i < 7; i++) {
+          const cur = new Date(bounds.start);
+          cur.setDate(bounds.start.getDate() + i);
+          const dStr = toLocalDateKey(cur);
+          items.push({
+            dateKey: dStr,
+            label: dayNames[i],
+            name: dayNames[i],
+            revenue: 0,
+            orders: 0,
+            customersSet: new Set(),
+          });
+        }
+      } else if (timeFilter === "This Month") {
+        const year = now.getFullYear();
+        const month = now.getMonth();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+        for (let i = 1; i <= daysInMonth; i++) {
+          const cur = new Date(year, month, i);
+          const dStr = toLocalDateKey(cur);
+          items.push({
+            dateKey: dStr,
+            label: `${i} ${monthNames[month]}`,
+            name: `${i} ${monthNames[month]}`,
+            revenue: 0,
+            orders: 0,
+            customersSet: new Set(),
+          });
+        }
+      } else {
+        // This Year
+        const year = now.getFullYear();
+        for (let m = 0; m < 12; m++) {
+          items.push({
+            monthIndex: m,
+            label: monthNames[m],
+            name: monthNames[m],
+            revenue: 0,
+            orders: 0,
+            customersSet: new Set(),
+          });
+        }
+      }
 
       validVendorOrders.forEach((ord) => {
-        const ordDateStr = new Date(ord.createdAt).toISOString().split("T")[0];
-        if (ordDateStr === dayStr) {
-          const vendorItems = (ord.items || []).filter(
-            (item) =>
-              item.vendor?.toString() === vendorId.toString() ||
-              vendorProductIds.some((pId) => pId.toString() === item.product?.toString())
-          );
-          if (vendorItems.length > 0) {
-            dayOrdersCount++;
-            if (ord.user?._id) dayCustomersSet.add(ord.user._id.toString());
+        const ordDate = new Date(ord.createdAt);
+        if (ordDate >= bounds.start && ordDate <= bounds.end) {
+          let bucket;
+          if (timeFilter === "This Year") {
+            bucket = items.find((it) => it.monthIndex === ordDate.getMonth());
+          } else {
+            const dStr = toLocalDateKey(ordDate);
+            bucket = items.find((it) => it.dateKey === dStr);
+          }
+
+          if (bucket) {
+            bucket.orders += 1;
+            if (ord.user?._id) {
+              bucket.customersSet.add(ord.user._id.toString());
+            }
             if (ord.status !== "cancelled") {
-              vendorItems.forEach((item) => {
+              (ord.vendorItems || []).forEach((item) => {
                 if (item.status !== "cancelled") {
-                  dayRev += (item.sellingPrice || item.price || 0) * (item.quantity || 1);
+                  bucket.revenue += (item.sellingPrice || item.price || 0) * (item.quantity || 1);
                 }
               });
             }
@@ -288,22 +379,17 @@ export const getVendorDashboardStats = async (req, res) => {
         }
       });
 
-      revenueChart.push({
-        name: dayName,
-        label: dayName,
-        date: dayStr,
-        revenue: dayRev,
-      });
+      return items.map((it) => ({
+        label: it.label,
+        name: it.name,
+        revenue: Math.round(it.revenue),
+        orders: it.orders,
+        customers: it.customersSet.size,
+      }));
+    };
 
-      analyticsChart.push({
-        name: dayName,
-        label: dayName,
-        date: dayStr,
-        revenue: dayRev,
-        orders: dayOrdersCount,
-        customers: dayCustomersSet.size,
-      });
-    }
+    const revenueChart = buildChartData(revenueTime);
+    const analyticsChart = buildChartData(analyticsTime);
 
     return res.status(200).json({
       success: true,
@@ -435,6 +521,35 @@ export const updateVendorStore = async (req, res) => {
     if (country !== undefined) vendor.vendorProfile.storeAddress.country = country.trim() || "India";
     if (pincode !== undefined) vendor.vendorProfile.storeAddress.pincode = pincode.trim();
 
+    // Handle Manufacturer Details
+    if (!vendor.vendorProfile.manufacturerDetails) {
+      vendor.vendorProfile.manufacturerDetails = {};
+    }
+
+    const mfg = req.body.manufacturerDetails || {};
+    const manufacturerName = req.body.manufacturerName !== undefined ? req.body.manufacturerName : mfg.manufacturerName;
+    const manufacturerAddress = req.body.manufacturerAddress !== undefined ? req.body.manufacturerAddress : mfg.manufacturerAddress;
+    const packer = req.body.packer !== undefined ? req.body.packer : mfg.packer;
+    const packerAddress = req.body.packerAddress !== undefined ? req.body.packerAddress : mfg.packerAddress;
+    const packerPhone = req.body.packerPhone !== undefined ? req.body.packerPhone : mfg.packerPhone;
+    const importer = req.body.importer !== undefined ? req.body.importer : mfg.importer;
+    const importerAddress = req.body.importerAddress !== undefined ? req.body.importerAddress : mfg.importerAddress;
+    const countryOfOrigin = req.body.countryOfOrigin !== undefined ? req.body.countryOfOrigin : mfg.countryOfOrigin;
+    const itemModelNumber = req.body.itemModelNumber !== undefined ? req.body.itemModelNumber : mfg.itemModelNumber;
+
+    if (manufacturerName !== undefined) vendor.vendorProfile.manufacturerDetails.manufacturerName = String(manufacturerName).trim();
+    if (manufacturerAddress !== undefined) vendor.vendorProfile.manufacturerDetails.manufacturerAddress = String(manufacturerAddress).trim();
+    if (packer !== undefined) vendor.vendorProfile.manufacturerDetails.packer = String(packer).trim();
+    if (packerAddress !== undefined) vendor.vendorProfile.manufacturerDetails.packerAddress = String(packerAddress).trim();
+    if (packerPhone !== undefined) vendor.vendorProfile.manufacturerDetails.packerPhone = String(packerPhone).trim();
+    if (importer !== undefined) vendor.vendorProfile.manufacturerDetails.importer = String(importer).trim();
+    if (importerAddress !== undefined) vendor.vendorProfile.manufacturerDetails.importerAddress = String(importerAddress).trim();
+    if (countryOfOrigin !== undefined) vendor.vendorProfile.manufacturerDetails.countryOfOrigin = String(countryOfOrigin).trim() || "India";
+    if (itemModelNumber !== undefined) vendor.vendorProfile.manufacturerDetails.itemModelNumber = String(itemModelNumber).trim();
+    if (vendor.vendorProfile.manufacturerDetails.asin !== undefined) {
+      delete vendor.vendorProfile.manufacturerDetails.asin;
+    }
+
     await vendor.save();
 
     return res.status(200).json({
@@ -451,6 +566,561 @@ export const updateVendorStore = async (req, res) => {
       success: false,
       message: "Server error updating store profile",
     });
+  }
+};
+
+/**
+ * 2B. GET VENDOR STORES
+ */
+export const getVendorStores = async (req, res) => {
+  try {
+    const vendor = await Vendor.findById(req.vendor._id);
+    if (!vendor) {
+      return res.status(404).json({ success: false, message: "Vendor not found" });
+    }
+
+    if (!vendor.vendorProfile) vendor.vendorProfile = {};
+    if (!Array.isArray(vendor.vendorProfile.stores)) {
+      vendor.vendorProfile.stores = [];
+    }
+
+    // Auto-seed default store if empty
+    if (vendor.vendorProfile.stores.length === 0) {
+      const storeAddr = vendor.vendorProfile.storeAddress || {};
+      const defaultStore = {
+        storeName: vendor.vendorProfile.storeName || vendor.username || "Primary Store",
+        storeDescription: vendor.vendorProfile.storeDescription || "",
+        phone: vendor.vendorProfile.phone || vendor.mobileNo || "",
+        addressLine1: storeAddr.addressLine1 || "",
+        addressLine2: storeAddr.addressLine2 || "",
+        city: storeAddr.city || "",
+        state: storeAddr.state || "",
+        country: storeAddr.country || "India",
+        pincode: storeAddr.pincode || "",
+        isDefault: true,
+      };
+
+      vendor.vendorProfile.stores.push(defaultStore);
+      await vendor.save();
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: vendor.vendorProfile.stores,
+    });
+  } catch (error) {
+    console.error("[Get Vendor Stores] Error:", error);
+    return res.status(500).json({ success: false, message: "Server error fetching stores" });
+  }
+};
+
+/**
+ * 2C. ADD VENDOR STORE
+ */
+export const addVendorStore = async (req, res) => {
+  try {
+    const vendor = await Vendor.findById(req.vendor._id);
+    if (!vendor) {
+      return res.status(404).json({ success: false, message: "Vendor not found" });
+    }
+
+    const {
+      storeName,
+      storeDescription,
+      phone,
+      addressLine1,
+      addressLine2,
+      city,
+      state,
+      country,
+      pincode,
+      isDefault,
+    } = req.body;
+
+    if (!storeName?.trim()) {
+      return res.status(400).json({ success: false, message: "Store name is required" });
+    }
+
+    if (!vendor.vendorProfile) vendor.vendorProfile = {};
+    if (!Array.isArray(vendor.vendorProfile.stores)) {
+      vendor.vendorProfile.stores = [];
+    }
+
+    const shouldBeDefault = Boolean(isDefault) || vendor.vendorProfile.stores.length === 0;
+
+    if (shouldBeDefault) {
+      vendor.vendorProfile.stores.forEach((s) => {
+        s.isDefault = false;
+      });
+      vendor.vendorProfile.storeName = storeName.trim();
+      vendor.vendorProfile.storeDescription = storeDescription?.trim() || "";
+      if (phone?.trim()) vendor.vendorProfile.phone = phone.trim();
+      vendor.vendorProfile.storeAddress = {
+        addressLine1: addressLine1?.trim() || "",
+        addressLine2: addressLine2?.trim() || "",
+        city: city?.trim() || "",
+        state: state?.trim() || "",
+        country: country?.trim() || "India",
+        pincode: pincode?.trim() || "",
+      };
+    }
+
+    const newStore = {
+      storeName: storeName.trim(),
+      storeDescription: storeDescription?.trim() || "",
+      phone: phone?.trim() || "",
+      addressLine1: addressLine1?.trim() || "",
+      addressLine2: addressLine2?.trim() || "",
+      city: city?.trim() || "",
+      state: state?.trim() || "",
+      country: country?.trim() || "India",
+      pincode: pincode?.trim() || "",
+      isDefault: shouldBeDefault,
+    };
+
+    vendor.vendorProfile.stores.push(newStore);
+    await vendor.save();
+
+    return res.status(201).json({
+      success: true,
+      message: "Store added successfully",
+      data: vendor.vendorProfile.stores,
+    });
+  } catch (error) {
+    console.error("[Add Vendor Store] Error:", error);
+    return res.status(500).json({ success: false, message: "Server error adding store" });
+  }
+};
+
+/**
+ * 2D. UPDATE VENDOR STORE BY ID
+ */
+export const updateVendorStoreById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const vendor = await Vendor.findById(req.vendor._id);
+    if (!vendor) {
+      return res.status(404).json({ success: false, message: "Vendor not found" });
+    }
+
+    const storeItem = vendor.vendorProfile?.stores?.id(id);
+    if (!storeItem) {
+      return res.status(404).json({ success: false, message: "Store not found" });
+    }
+
+    const {
+      storeName,
+      storeDescription,
+      phone,
+      addressLine1,
+      addressLine2,
+      city,
+      state,
+      country,
+      pincode,
+      isDefault,
+    } = req.body;
+
+    if (storeName !== undefined) {
+      if (!storeName.trim()) {
+        return res.status(400).json({ success: false, message: "Store name cannot be empty" });
+      }
+      storeItem.storeName = storeName.trim();
+    }
+    if (storeDescription !== undefined) storeItem.storeDescription = storeDescription.trim();
+    if (phone !== undefined) storeItem.phone = phone.trim();
+    if (addressLine1 !== undefined) storeItem.addressLine1 = addressLine1.trim();
+    if (addressLine2 !== undefined) storeItem.addressLine2 = addressLine2.trim();
+    if (city !== undefined) storeItem.city = city.trim();
+    if (state !== undefined) storeItem.state = state.trim();
+    if (country !== undefined) storeItem.country = country.trim() || "India";
+    if (pincode !== undefined) storeItem.pincode = pincode.trim();
+
+    if (isDefault === true) {
+      vendor.vendorProfile.stores.forEach((s) => {
+        s.isDefault = s._id.toString() === id;
+      });
+    }
+
+    if (storeItem.isDefault) {
+      vendor.vendorProfile.storeName = storeItem.storeName;
+      vendor.vendorProfile.storeDescription = storeItem.storeDescription;
+      vendor.vendorProfile.phone = storeItem.phone;
+      vendor.vendorProfile.storeAddress = {
+        addressLine1: storeItem.addressLine1,
+        addressLine2: storeItem.addressLine2,
+        city: storeItem.city,
+        state: storeItem.state,
+        country: storeItem.country,
+        pincode: storeItem.pincode,
+      };
+    }
+
+    await vendor.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Store updated successfully",
+      data: vendor.vendorProfile.stores,
+    });
+  } catch (error) {
+    console.error("[Update Vendor Store By Id] Error:", error);
+    return res.status(500).json({ success: false, message: "Server error updating store" });
+  }
+};
+
+/**
+ * 2E. DELETE VENDOR STORE
+ */
+export const deleteVendorStore = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const vendor = await Vendor.findById(req.vendor._id);
+    if (!vendor) {
+      return res.status(404).json({ success: false, message: "Vendor not found" });
+    }
+
+    const storeList = vendor.vendorProfile?.stores || [];
+    const targetIdx = storeList.findIndex((s) => s._id.toString() === id);
+    if (targetIdx === -1) {
+      return res.status(404).json({ success: false, message: "Store not found" });
+    }
+
+    if (storeList.length <= 1) {
+      return res.status(400).json({
+        success: false,
+        message: "You must have at least one registered store.",
+      });
+    }
+
+    const wasDefault = storeList[targetIdx].isDefault;
+    storeList.splice(targetIdx, 1);
+
+    if (wasDefault && storeList.length > 0) {
+      storeList[0].isDefault = true;
+      vendor.vendorProfile.storeName = storeList[0].storeName;
+      vendor.vendorProfile.storeDescription = storeList[0].storeDescription;
+      vendor.vendorProfile.phone = storeList[0].phone;
+      vendor.vendorProfile.storeAddress = {
+        addressLine1: storeList[0].addressLine1,
+        addressLine2: storeList[0].addressLine2,
+        city: storeList[0].city,
+        state: storeList[0].state,
+        country: storeList[0].country,
+        pincode: storeList[0].pincode,
+      };
+    }
+
+    vendor.vendorProfile.stores = storeList;
+    await vendor.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Store deleted successfully",
+      data: vendor.vendorProfile.stores,
+    });
+  } catch (error) {
+    console.error("[Delete Vendor Store] Error:", error);
+    return res.status(500).json({ success: false, message: "Server error deleting store" });
+  }
+};
+
+/**
+ * 2F. SET DEFAULT VENDOR STORE
+ */
+export const setDefaultVendorStore = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const vendor = await Vendor.findById(req.vendor._id);
+    if (!vendor) {
+      return res.status(404).json({ success: false, message: "Vendor not found" });
+    }
+
+    const storeItem = vendor.vendorProfile?.stores?.id(id);
+    if (!storeItem) {
+      return res.status(404).json({ success: false, message: "Store not found" });
+    }
+
+    vendor.vendorProfile.stores.forEach((s) => {
+      s.isDefault = s._id.toString() === id;
+    });
+
+    vendor.vendorProfile.storeName = storeItem.storeName;
+    vendor.vendorProfile.storeDescription = storeItem.storeDescription;
+    vendor.vendorProfile.phone = storeItem.phone;
+    vendor.vendorProfile.storeAddress = {
+      addressLine1: storeItem.addressLine1,
+      addressLine2: storeItem.addressLine2,
+      city: storeItem.city,
+      state: storeItem.state,
+      country: storeItem.country,
+      pincode: storeItem.pincode,
+    };
+
+    await vendor.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Default store updated successfully",
+      data: vendor.vendorProfile.stores,
+    });
+  } catch (error) {
+    console.error("[Set Default Vendor Store] Error:", error);
+    return res.status(500).json({ success: false, message: "Server error setting default store" });
+  }
+};
+
+/**
+ * 3A. GET VENDOR MANUFACTURERS
+ */
+export const getVendorManufacturers = async (req, res) => {
+  try {
+    const vendor = await Vendor.findById(req.vendor._id);
+    if (!vendor) {
+      return res.status(404).json({ success: false, message: "Vendor not found" });
+    }
+
+    if (!vendor.vendorProfile) vendor.vendorProfile = {};
+    if (!Array.isArray(vendor.vendorProfile.manufacturers)) {
+      vendor.vendorProfile.manufacturers = [];
+    }
+
+    // Auto-seed default manufacturer if empty
+    if (vendor.vendorProfile.manufacturers.length === 0) {
+      const storeAddress = vendor.vendorProfile.storeAddress || {};
+      const fullAddr = [
+        storeAddress.addressLine1,
+        storeAddress.addressLine2,
+        storeAddress.city,
+        storeAddress.state,
+        storeAddress.pincode,
+        storeAddress.country,
+      ]
+        .filter(Boolean)
+        .join(", ");
+
+      const legacyMfg = vendor.vendorProfile.manufacturerDetails || {};
+      const defaultItem = {
+        manufacturerName:
+          legacyMfg.manufacturerName ||
+          vendor.vendorProfile.storeName ||
+          vendor.username ||
+          "Primary Manufacturer",
+        countryOfOrigin: legacyMfg.countryOfOrigin || "India",
+        manufacturerAddress: legacyMfg.manufacturerAddress || fullAddr,
+        packer: legacyMfg.packer || `${vendor.vendorProfile.storeName || vendor.username} Logistics`,
+        packerPhone: legacyMfg.packerPhone || vendor.vendorProfile.phone || vendor.mobileNo || "",
+        packerAddress: legacyMfg.packerAddress || fullAddr,
+        isDefault: true,
+      };
+
+      vendor.vendorProfile.manufacturers.push(defaultItem);
+      await vendor.save();
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: vendor.vendorProfile.manufacturers,
+    });
+  } catch (error) {
+    console.error("[Get Vendor Manufacturers] Error:", error);
+    return res.status(500).json({ success: false, message: "Server error fetching manufacturers" });
+  }
+};
+
+/**
+ * 3B. ADD VENDOR MANUFACTURER
+ */
+export const addVendorManufacturer = async (req, res) => {
+  try {
+    const vendor = await Vendor.findById(req.vendor._id);
+    if (!vendor) {
+      return res.status(404).json({ success: false, message: "Vendor not found" });
+    }
+
+    const {
+      manufacturerName,
+      countryOfOrigin,
+      manufacturerAddress,
+      packer,
+      packerPhone,
+      packerAddress,
+      isDefault,
+    } = req.body;
+
+    if (!manufacturerName?.trim()) {
+      return res.status(400).json({ success: false, message: "Manufacturer name is required" });
+    }
+
+    if (!vendor.vendorProfile) vendor.vendorProfile = {};
+    if (!Array.isArray(vendor.vendorProfile.manufacturers)) {
+      vendor.vendorProfile.manufacturers = [];
+    }
+
+    const shouldBeDefault = Boolean(isDefault) || vendor.vendorProfile.manufacturers.length === 0;
+
+    if (shouldBeDefault) {
+      vendor.vendorProfile.manufacturers.forEach((m) => {
+        m.isDefault = false;
+      });
+    }
+
+    const newMfg = {
+      manufacturerName: manufacturerName.trim(),
+      countryOfOrigin: countryOfOrigin?.trim() || "India",
+      manufacturerAddress: manufacturerAddress?.trim() || "",
+      packer: packer?.trim() || "",
+      packerPhone: packerPhone?.trim() || "",
+      packerAddress: packerAddress?.trim() || "",
+      isDefault: shouldBeDefault,
+    };
+
+    vendor.vendorProfile.manufacturers.push(newMfg);
+    await vendor.save();
+
+    return res.status(201).json({
+      success: true,
+      message: "Manufacturer added successfully",
+      data: vendor.vendorProfile.manufacturers,
+    });
+  } catch (error) {
+    console.error("[Add Vendor Manufacturer] Error:", error);
+    return res.status(500).json({ success: false, message: "Server error adding manufacturer" });
+  }
+};
+
+/**
+ * 3C. UPDATE VENDOR MANUFACTURER
+ */
+export const updateVendorManufacturer = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const vendor = await Vendor.findById(req.vendor._id);
+    if (!vendor) {
+      return res.status(404).json({ success: false, message: "Vendor not found" });
+    }
+
+    const mfgItem = vendor.vendorProfile?.manufacturers?.id(id);
+    if (!mfgItem) {
+      return res.status(404).json({ success: false, message: "Manufacturer not found" });
+    }
+
+    const {
+      manufacturerName,
+      countryOfOrigin,
+      manufacturerAddress,
+      packer,
+      packerPhone,
+      packerAddress,
+      isDefault,
+    } = req.body;
+
+    if (manufacturerName !== undefined) {
+      if (!manufacturerName.trim()) {
+        return res.status(400).json({ success: false, message: "Manufacturer name cannot be empty" });
+      }
+      mfgItem.manufacturerName = manufacturerName.trim();
+    }
+    if (countryOfOrigin !== undefined) mfgItem.countryOfOrigin = countryOfOrigin.trim() || "India";
+    if (manufacturerAddress !== undefined) mfgItem.manufacturerAddress = manufacturerAddress.trim();
+    if (packer !== undefined) mfgItem.packer = packer.trim();
+    if (packerPhone !== undefined) mfgItem.packerPhone = packerPhone.trim();
+    if (packerAddress !== undefined) mfgItem.packerAddress = packerAddress.trim();
+
+    if (isDefault === true) {
+      vendor.vendorProfile.manufacturers.forEach((m) => {
+        m.isDefault = m._id.toString() === id;
+      });
+    }
+
+    await vendor.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Manufacturer updated successfully",
+      data: vendor.vendorProfile.manufacturers,
+    });
+  } catch (error) {
+    console.error("[Update Vendor Manufacturer] Error:", error);
+    return res.status(500).json({ success: false, message: "Server error updating manufacturer" });
+  }
+};
+
+/**
+ * 3D. DELETE VENDOR MANUFACTURER
+ */
+export const deleteVendorManufacturer = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const vendor = await Vendor.findById(req.vendor._id);
+    if (!vendor) {
+      return res.status(404).json({ success: false, message: "Vendor not found" });
+    }
+
+    const mfgList = vendor.vendorProfile?.manufacturers || [];
+    const targetIdx = mfgList.findIndex((m) => m._id.toString() === id);
+    if (targetIdx === -1) {
+      return res.status(404).json({ success: false, message: "Manufacturer not found" });
+    }
+
+    if (mfgList.length <= 1) {
+      return res.status(400).json({
+        success: false,
+        message: "You must have at least one registered manufacturer.",
+      });
+    }
+
+    const wasDefault = mfgList[targetIdx].isDefault;
+    mfgList.splice(targetIdx, 1);
+
+    if (wasDefault && mfgList.length > 0) {
+      mfgList[0].isDefault = true;
+    }
+
+    vendor.vendorProfile.manufacturers = mfgList;
+    await vendor.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Manufacturer deleted successfully",
+      data: vendor.vendorProfile.manufacturers,
+    });
+  } catch (error) {
+    console.error("[Delete Vendor Manufacturer] Error:", error);
+    return res.status(500).json({ success: false, message: "Server error deleting manufacturer" });
+  }
+};
+
+/**
+ * 3E. SET DEFAULT VENDOR MANUFACTURER
+ */
+export const setDefaultVendorManufacturer = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const vendor = await Vendor.findById(req.vendor._id);
+    if (!vendor) {
+      return res.status(404).json({ success: false, message: "Vendor not found" });
+    }
+
+    const mfgItem = vendor.vendorProfile?.manufacturers?.id(id);
+    if (!mfgItem) {
+      return res.status(404).json({ success: false, message: "Manufacturer not found" });
+    }
+
+    vendor.vendorProfile.manufacturers.forEach((m) => {
+      m.isDefault = m._id.toString() === id;
+    });
+
+    await vendor.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Default manufacturer set successfully",
+      data: vendor.vendorProfile.manufacturers,
+    });
+  } catch (error) {
+    console.error("[Set Default Vendor Manufacturer] Error:", error);
+    return res.status(500).json({ success: false, message: "Server error setting default manufacturer" });
   }
 };
 
@@ -682,6 +1352,10 @@ export const createVendorProduct = async (req, res) => {
       status = "Active",
       returnPolicy,
       variants = [],
+      storeId,
+      store,
+      manufacturerId,
+      manufacturer,
     } = req.body;
 
     if (
@@ -744,6 +1418,10 @@ export const createVendorProduct = async (req, res) => {
         exchangeable: returnPolicy?.exchangeable ?? true,
         returnDays: returnPolicy?.returnDays !== undefined ? parseInt(returnPolicy.returnDays, 10) : 7,
       },
+      storeId: storeId || null,
+      store: store || undefined,
+      manufacturerId: manufacturerId || null,
+      manufacturer: manufacturer || undefined,
     });
 
     // If variants were provided during creation, insert them
@@ -855,6 +1533,20 @@ export const updateVendorProduct = async (req, res) => {
             ? parseInt(returnPolicy.returnDays, 10)
             : product.returnPolicy?.returnDays || 7,
       };
+    }
+
+    if (req.body.storeId !== undefined) {
+      product.storeId = req.body.storeId || null;
+    }
+    if (req.body.store !== undefined) {
+      product.store = req.body.store;
+    }
+
+    if (req.body.manufacturerId !== undefined) {
+      product.manufacturerId = req.body.manufacturerId || null;
+    }
+    if (req.body.manufacturer !== undefined) {
+      product.manufacturer = req.body.manufacturer;
     }
 
     await product.save();
@@ -1976,26 +2668,36 @@ export const updateVendorReturnStatus = async (req, res) => {
     }
 
     // Stock adjustments and payment sync if completed
-    if (
-      (returnReq.status === "completed" || returnReq.status === "exchanged") &&
-      previousStatus !== "completed" &&
-      previousStatus !== "exchanged"
-    ) {
+    const isFinishing = ["completed", "exchanged", "refunded"].includes(returnReq.status);
+    const wasFinishing = ["completed", "exchanged", "refunded"].includes(previousStatus);
+
+    if (isFinishing && !wasFinishing && !returnReq.isStockAdjusted) {
       const qty = Number(returnReq.quantity) || 1;
+
+      // Resolve original variant with fallback to order item
+      let origVariantToRestock = returnReq.originalVariant;
+      if (!origVariantToRestock && returnReq.order) {
+        const orderDoc = await Order.findById(returnReq.order).select("items").lean();
+        const match = orderDoc?.items?.find(i => String(i.product?._id || i.product) === String(returnReq.product?._id || returnReq.product));
+        if (match) origVariantToRestock = match.variant?._id || match.variant;
+      }
+
       if (returnReq.type === "exchange") {
-        if (returnReq.requestedExchangeVariant) {
-          await Variant.findByIdAndUpdate(returnReq.requestedExchangeVariant, {
-            $inc: { stock: -qty },
-          });
-        }
-        if (returnReq.originalVariant) {
-          await Variant.findByIdAndUpdate(returnReq.originalVariant, {
-            $inc: { stock: qty },
-          });
+        if (String(returnReq.requestedExchangeVariant) !== String(origVariantToRestock)) {
+          if (returnReq.requestedExchangeVariant) {
+            await Variant.findByIdAndUpdate(returnReq.requestedExchangeVariant, {
+              $inc: { stock: -qty },
+            });
+          }
+          if (origVariantToRestock) {
+            await Variant.findByIdAndUpdate(origVariantToRestock, {
+              $inc: { stock: qty },
+            });
+          }
         }
       } else if (returnReq.type === "return") {
-        if (returnReq.originalVariant) {
-          await Variant.findByIdAndUpdate(returnReq.originalVariant, {
+        if (origVariantToRestock) {
+          await Variant.findByIdAndUpdate(origVariantToRestock, {
             $inc: { stock: qty },
           });
         }
@@ -2004,6 +2706,7 @@ export const updateVendorReturnStatus = async (req, res) => {
           await Order.findByIdAndUpdate(returnReq.order, { paymentStatus: "refunded" });
         }
       }
+      returnReq.isStockAdjusted = true;
     }
 
     if (vendorNotes !== undefined) {

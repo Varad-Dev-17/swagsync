@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../../../../api/axiosConfig';
@@ -20,9 +20,18 @@ const VendorEditProduct = () => {
     brandName: ''
   });
 
-  const handleFormChange = (contextData) => {
-    setProductContext(contextData);
-  };
+  const handleFormChange = useCallback((contextData) => {
+    setProductContext((prev) => {
+      if (
+        prev.categoryId === contextData.categoryId &&
+        prev.title === contextData.title &&
+        prev.brandName === contextData.brandName
+      ) {
+        return prev;
+      }
+      return contextData;
+    });
+  }, []);
 
   const handleFinalSave = async () => {
     if (isSubmitting) return;
@@ -91,7 +100,7 @@ const VendorEditProduct = () => {
         <div className="flex-1 pb-16">
           <div className="bg-white border border-slate-200 rounded-2xl shadow-sm relative flex flex-col">
             <div className="p-6 sm:p-8 border-b border-slate-200">
-              <h1 className="text-xl font-bold text-[#221B59]">EDIT PRODUCT</h1>
+              <h1 className="text-xl font-black text-slate-900 tracking-tight">EDIT PRODUCT</h1>
               <p className="text-sm text-gray-500 mt-1">Update product details and configure variants</p>
             </div>
             
@@ -120,7 +129,7 @@ const VendorEditProduct = () => {
                 <button
                   type="button"
                   onClick={() => navigate('/vendor/portal/products')}
-                  className="h-10 px-6 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors shadow-sm"
+                  className="h-10 px-6 text-xs font-bold text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors shadow-sm cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -128,7 +137,7 @@ const VendorEditProduct = () => {
                   type="button"
                   onClick={handleFinalSave}
                   disabled={isSubmitting}
-                  className={`h-10 px-8 text-sm font-medium text-white bg-[#4648d4] rounded-lg shadow-sm transition-colors flex items-center justify-center min-w-[200px] ${isSubmitting ? 'opacity-70 cursor-not-allowed' : 'hover:bg-[#3b3db0]'}`}
+                  className={`h-10 px-8 text-xs font-bold text-white bg-[#fe4a03] hover:bg-[#e03f00] rounded-xl shadow-md shadow-[#fe4a03]/25 transition-all flex items-center justify-center min-w-[200px] cursor-pointer ${isSubmitting ? 'opacity-70 cursor-not-allowed' : 'active:scale-95'}`}
                 >
                   {isSubmitting ? (
                     <>

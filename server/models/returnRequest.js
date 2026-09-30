@@ -132,6 +132,7 @@ const ReturnRequestSchema = new mongoose.Schema(
     refundTransactionId: { type: String },
     refundFailureReason: { type: String },
     refundProcessedAt: { type: Date },
+    isStockAdjusted: { type: Boolean, default: false },
     adminNotes: [
       {
         note: { type: String, required: true },

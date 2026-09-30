@@ -3,6 +3,16 @@ import {
   getVendorDashboardStats,
   getVendorStore,
   updateVendorStore,
+  getVendorStores,
+  addVendorStore,
+  updateVendorStoreById,
+  deleteVendorStore,
+  setDefaultVendorStore,
+  getVendorManufacturers,
+  addVendorManufacturer,
+  updateVendorManufacturer,
+  deleteVendorManufacturer,
+  setDefaultVendorManufacturer,
   getVendorMasterCatalog,
   getVendorProducts,
   getVendorProductById,
@@ -49,9 +59,21 @@ router.use(identifier, isApprovedVendor);
 // 1. Dashboard
 router.get("/dashboard/stats", getVendorDashboardStats);
 
-// 2. Store Profile
+// 2. Store Profile & Multi-Store Management
 router.get("/store", getVendorStore);
 router.put("/store", updateVendorStore);
+router.get("/stores", getVendorStores);
+router.post("/stores", addVendorStore);
+router.put("/stores/:id", updateVendorStoreById);
+router.delete("/stores/:id", deleteVendorStore);
+router.patch("/stores/:id/default", setDefaultVendorStore);
+
+// 2B. Manufacturer Management (Multiple per vendor)
+router.get("/manufacturers", getVendorManufacturers);
+router.post("/manufacturers", addVendorManufacturer);
+router.put("/manufacturers/:id", updateVendorManufacturer);
+router.delete("/manufacturers/:id", deleteVendorManufacturer);
+router.patch("/manufacturers/:id/default", setDefaultVendorManufacturer);
 
 // 3. Catalog (Master Catalog View for Vendor)
 router.get("/catalog", getVendorMasterCatalog);

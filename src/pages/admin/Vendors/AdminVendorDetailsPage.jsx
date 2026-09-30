@@ -25,6 +25,7 @@ import {
   Loader2,
   CheckCheck,
   FileCheck,
+  Factory,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "../../../api/axiosConfig";
@@ -183,6 +184,9 @@ const AdminVendorDetailsPage = () => {
 
   const profile = vendor.vendorProfile || {};
   const address = profile.storeAddress || {};
+  const mfg = profile.manufacturerDetails || {};
+  const manufacturers = Array.isArray(profile.manufacturers) ? profile.manufacturers : [];
+  const primaryMfg = manufacturers.find((m) => m.isDefault) || manufacturers[0] || mfg;
   const business = profile.businessDetails || {};
   const bank = profile.bankDetails || {};
   const documents = profile.documents || [];
@@ -381,7 +385,73 @@ const AdminVendorDetailsPage = () => {
           </div>
         </div>
 
-        {/* 2. STORE INFORMATION */}
+        {/* 2. MANUFACTURER DETAILS */}
+        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-orange-50 text-[#fe4a03] flex items-center justify-center">
+                <Factory size={16} />
+              </div>
+              <div>
+                <h2 className="text-sm font-bold text-slate-900">Manufacturer Profiles</h2>
+                <span className="text-[11px] text-slate-400">
+                  {manufacturers.length} registered profile{manufacturers.length === 1 ? "" : "s"}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            {(manufacturers.length > 0 ? manufacturers : [primaryMfg]).map((m, idx) => (
+              <div
+                key={m._id || idx}
+                className="p-4 rounded-xl border border-slate-200/80 bg-slate-50/50 space-y-3 text-xs"
+              >
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-slate-900 text-sm">
+                      {m.manufacturerName || profile.storeName || "Primary Manufacturer"}
+                    </span>
+                    {m.isDefault && (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        Default
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white text-slate-600 border border-slate-200">
+                    {m.countryOfOrigin || "India"}
+                  </span>
+                </div>
+
+                <div>
+                  <span className="text-slate-400 block mb-0.5 text-[11px]">Manufacturer Address</span>
+                  <span className="font-medium text-slate-800 leading-relaxed">
+                    {m.manufacturerAddress || "—"}
+                  </span>
+                </div>
+
+                <div className="pt-2 border-t border-slate-200/60 grid grid-cols-1 sm:grid-cols-2 gap-2 text-slate-700">
+                  <div>
+                    <span className="text-slate-400 text-[11px] block">Packer:</span>
+                    <span className="font-semibold text-slate-800">{m.packer || "—"}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 text-[11px] block">Packer Phone:</span>
+                    <span className="font-semibold text-slate-800">{m.packerPhone || "—"}</span>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <span className="text-slate-400 text-[11px] block">Packer Address:</span>
+                    <span className="font-medium text-slate-700 leading-relaxed">
+                      {m.packerAddress || "—"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* 3. STORE INFORMATION & REGISTERED ADDRESS (MERGED) */}
         <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
           <div className="flex items-center gap-2.5 pb-3 border-b border-slate-100">
             <div className="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center">
@@ -390,10 +460,17 @@ const AdminVendorDetailsPage = () => {
             <h2 className="text-sm font-bold text-slate-900">Store Information</h2>
           </div>
 
-          <div className="space-y-3 text-xs">
-            <div>
-              <span className="text-slate-400 block mb-0.5">Store Display Name</span>
-              <span className="font-bold text-slate-900 text-sm">{profile.storeName || "—"}</span>
+          <div className="space-y-4 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <span className="text-slate-400 block mb-0.5">Store Display Name</span>
+                <span className="font-bold text-slate-900 text-sm">{profile.storeName || "—"}</span>
+              </div>
+
+              <div>
+                <span className="text-slate-400 block mb-0.5">Store Phone / Contact</span>
+                <span className="font-semibold text-slate-800">{profile.phone || vendor.mobileNo || "—"}</span>
+              </div>
             </div>
 
             <div>
@@ -402,10 +479,49 @@ const AdminVendorDetailsPage = () => {
                 {profile.storeDescription || "No store description provided."}
               </p>
             </div>
+
+            <div className="pt-3 border-t border-slate-100 space-y-3">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+                Registered Store & Warehouse Address
+              </span>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="col-span-2">
+                  <span className="text-slate-400 block mb-0.5">Address Line 1</span>
+                  <span className="font-semibold text-slate-800">{address.addressLine1 || "—"}</span>
+                </div>
+
+                {address.addressLine2 && (
+                  <div className="col-span-2">
+                    <span className="text-slate-400 block mb-0.5">Address Line 2</span>
+                    <span className="text-slate-700">{address.addressLine2}</span>
+                  </div>
+                )}
+
+                <div>
+                  <span className="text-slate-400 block mb-0.5">City</span>
+                  <span className="font-semibold text-slate-800">{address.city || "—"}</span>
+                </div>
+
+                <div>
+                  <span className="text-slate-400 block mb-0.5">State</span>
+                  <span className="font-semibold text-slate-800">{address.state || "—"}</span>
+                </div>
+
+                <div>
+                  <span className="text-slate-400 block mb-0.5">Pincode / Postal Code</span>
+                  <span className="font-mono font-bold text-slate-900">{address.pincode || "—"}</span>
+                </div>
+
+                <div>
+                  <span className="text-slate-400 block mb-0.5">Country</span>
+                  <span className="text-slate-700">{address.country || "India"}</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* 3. BUSINESS / LEGAL DETAILS */}
+        {/* 4. BUSINESS / LEGAL DETAILS */}
         <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
           <div className="flex items-center gap-2.5 pb-3 border-b border-slate-100">
             <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
@@ -455,50 +571,6 @@ const AdminVendorDetailsPage = () => {
                   </button>
                 )}
               </div>
-            </div>
-          </div>
-        </div>
-
-        {/* 4. BUSINESS STORE ADDRESS */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
-          <div className="flex items-center gap-2.5 pb-3 border-b border-slate-100">
-            <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
-              <MapPin size={16} />
-            </div>
-            <h2 className="text-sm font-bold text-slate-900">Registered Store Address</h2>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4 text-xs">
-            <div className="col-span-2">
-              <span className="text-slate-400 block mb-0.5">Address Line 1</span>
-              <span className="font-semibold text-slate-800">{address.addressLine1 || "—"}</span>
-            </div>
-
-            {address.addressLine2 && (
-              <div className="col-span-2">
-                <span className="text-slate-400 block mb-0.5">Address Line 2</span>
-                <span className="text-slate-700">{address.addressLine2}</span>
-              </div>
-            )}
-
-            <div>
-              <span className="text-slate-400 block mb-0.5">City</span>
-              <span className="font-semibold text-slate-800">{address.city || "—"}</span>
-            </div>
-
-            <div>
-              <span className="text-slate-400 block mb-0.5">State</span>
-              <span className="font-semibold text-slate-800">{address.state || "—"}</span>
-            </div>
-
-            <div>
-              <span className="text-slate-400 block mb-0.5">Pincode / Postal Code</span>
-              <span className="font-mono font-bold text-slate-900">{address.pincode || "—"}</span>
-            </div>
-
-            <div>
-              <span className="text-slate-400 block mb-0.5">Country</span>
-              <span className="text-slate-700">{address.country || "India"}</span>
             </div>
           </div>
         </div>

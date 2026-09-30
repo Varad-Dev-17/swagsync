@@ -128,6 +128,7 @@ export const getAdminOrderById = async (req, res) => {
         select: "mainImage attributes sku price",
         populate: [{ path: "attributes.attribute" }, { path: "attributes.option" }],
       })
+      .sort({ createdAt: -1 })
       .lean();
 
     const fullPayload = {
@@ -260,6 +261,7 @@ export const getOrderById = async (req, res) => {
         select: "mainImage attributes sku price",
         populate: [{ path: "attributes.attribute" }, { path: "attributes.option" }],
       })
+      .sort({ createdAt: -1 })
       .lean();
 
     const fullPayload = {
@@ -860,6 +862,14 @@ export const updateOrderItemStatus = async (req, res) => {
     targetItem.status = status;
     if (trackingNumber !== undefined) targetItem.trackingNumber = trackingNumber;
     if (courier !== undefined) targetItem.courier = courier;
+
+    // Handle individual item cancellation - restore stock
+    if (status === "cancelled" && oldStatus !== "cancelled" && targetItem.variant) {
+      const Variant = (await import("../models/variant.js")).default;
+      await Variant.findByIdAndUpdate(targetItem.variant, {
+        $inc: { stock: targetItem.quantity || 1 },
+      });
+    }
 
     // Add timeline event
     const Product = (await import("../models/product.js")).default;

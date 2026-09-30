@@ -24,7 +24,6 @@ const migrateAccounts = async () => {
       for (const v of vendorDocs) {
         const vendorPayload = {
           _id: v._id,
-          vendorId: v.vendorId,
           username: v.username || `vendor_${v.email?.split("@")[0]}`,
           email: v.email,
           password: v.password,
@@ -40,11 +39,22 @@ const migrateAccounts = async () => {
           updatedAt: v.updatedAt || new Date(),
         };
 
-        await rawVendorsCollection.updateOne(
-          { _id: v._id },
-          { $set: vendorPayload },
-          { upsert: true }
-        );
+        if (v.vendorId) {
+          vendorPayload.vendorId = v.vendorId;
+        }
+
+        const existingVendor = await rawVendorsCollection.findOne({
+          $or: [{ _id: v._id }, { email: v.email }],
+        });
+
+        if (existingVendor) {
+          await rawVendorsCollection.updateOne(
+            { _id: existingVendor._id },
+            { $set: { ...vendorPayload, _id: existingVendor._id } }
+          );
+        } else {
+          await rawVendorsCollection.insertOne(vendorPayload);
+        }
 
         // Remove from users collection so users table is dedicated to customers
         await rawUsersCollection.deleteOne({ _id: v._id });

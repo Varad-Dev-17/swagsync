@@ -71,23 +71,39 @@ const ExchangeSection = ({ requestedVariantId, setRequestedVariantId, productVar
     return null;
   }, [activeColorVariants]);
 
-  // If a color has only 1 variant with no secondary attributes (e.g. electronics like iPhone with only color options)
+  // Auto-select if there is only 1 variant available or if variants differ only by color
   useEffect(() => {
-    if (hasColorAttr && selectedColor && activeColorVariants.length > 0) {
-      if (!secondaryAttribute) {
-        // Only 1 variant for this color, or variants differ only by color
-        const targetVariant = activeColorVariants[0];
-        const isCurrent = String(targetVariant._id) === String(currentVariantId);
-        const isOutOfStock = targetVariant.status === 'Inactive' || targetVariant.stock <= 0;
-        
-        if (!isCurrent && !isOutOfStock) {
-          setRequestedVariantId(targetVariant._id);
-        } else if (isCurrent) {
-          setRequestedVariantId('');
-        }
+    if (activeColorVariants.length === 1) {
+      const targetVariant = activeColorVariants[0];
+      const isOutOfStock = targetVariant.status === 'Inactive' || targetVariant.stock <= 0;
+      if (!isOutOfStock && requestedVariantId !== targetVariant._id) {
+        setRequestedVariantId(targetVariant._id);
+      }
+    } else if (hasColorAttr && selectedColor && activeColorVariants.length > 0 && !secondaryAttribute) {
+      const targetVariant = activeColorVariants[0];
+      const isOutOfStock = targetVariant.status === 'Inactive' || targetVariant.stock <= 0;
+      if (!isOutOfStock && requestedVariantId !== targetVariant._id) {
+        setRequestedVariantId(targetVariant._id);
       }
     }
-  }, [hasColorAttr, selectedColor, activeColorVariants, secondaryAttribute, currentVariantId, setRequestedVariantId]);
+  }, [hasColorAttr, selectedColor, activeColorVariants, secondaryAttribute, requestedVariantId, setRequestedVariantId]);
+
+  // If activeColorVariants change (e.g. user selected different color) and current requestedVariantId is not in it
+  useEffect(() => {
+    if (requestedVariantId && activeColorVariants.length > 0) {
+      const exists = activeColorVariants.some(v => String(v._id) === String(requestedVariantId));
+      if (!exists) {
+        if (activeColorVariants.length === 1) {
+          const single = activeColorVariants[0];
+          if (single.status !== 'Inactive' && single.stock > 0) {
+            setRequestedVariantId(single._id);
+            return;
+          }
+        }
+        setRequestedVariantId('');
+      }
+    }
+  }, [activeColorVariants, requestedVariantId, setRequestedVariantId]);
 
   const qty = Number(selectedQty) || 1;
   const selectedVariant = productVariants?.find(v => String(v._id) === String(requestedVariantId));
@@ -173,7 +189,7 @@ const ExchangeSection = ({ requestedVariantId, setRequestedVariantId, productVar
               
               const isCurrent = String(variant._id) === String(currentVariantId);
               const isOutOfStock = variant.status === 'Inactive' || variant.stock <= 0;
-              const isDisabled = isCurrent || isOutOfStock;
+              const isDisabled = isOutOfStock;
               const isSelected = String(requestedVariantId) === String(variant._id);
 
               return (
@@ -190,14 +206,25 @@ const ExchangeSection = ({ requestedVariantId, setRequestedVariantId, productVar
                           : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:bg-gray-50'
                     }`}
                   >
-                    <span className="text-[14px] font-bold leading-tight">{optionLabel}</span>
-                    <span className={`text-[12px] font-medium leading-tight ${isSelected ? 'text-orange-200' : 'text-gray-500'}`}>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[14px] font-bold leading-tight">{optionLabel}</span>
+                      {isCurrent && (
+                        <span className={`text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded border leading-none ${
+                          isSelected 
+                            ? 'bg-white/20 text-white border-white/30' 
+                            : 'bg-gray-100 text-gray-600 border-gray-200'
+                        }`}>
+                          Current
+                        </span>
+                      )}
+                    </div>
+                    <span className={`text-[12px] font-medium leading-tight ${isSelected ? 'text-orange-100' : 'text-gray-500'}`}>
                       ₹{(variant.price || 0).toLocaleString("en-IN")}
                     </span>
                   </button>
                   {isDisabled && (
                     <div className="absolute -top-9 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap transition-opacity z-10">
-                      {isCurrent ? 'Current Variant' : 'Out of Stock'}
+                      Out of Stock
                     </div>
                   )}
                 </div>
@@ -216,7 +243,7 @@ const ExchangeSection = ({ requestedVariantId, setRequestedVariantId, productVar
               const attrsSummary = variant.attributes?.map(a => a.option?.displayName || a.option?.storedValue).join(' / ') || 'Standard';
               const isCurrent = String(variant._id) === String(currentVariantId);
               const isOutOfStock = variant.status === 'Inactive' || variant.stock <= 0;
-              const isDisabled = isCurrent || isOutOfStock;
+              const isDisabled = isOutOfStock;
               const isSelected = String(requestedVariantId) === String(variant._id);
 
               return (
@@ -233,14 +260,25 @@ const ExchangeSection = ({ requestedVariantId, setRequestedVariantId, productVar
                           : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:bg-gray-50'
                     }`}
                   >
-                    <span className="text-[13px] font-bold leading-tight truncate max-w-[150px]">{attrsSummary}</span>
-                    <span className={`text-[12px] font-medium leading-tight ${isSelected ? 'text-orange-200' : 'text-gray-500'}`}>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[13px] font-bold leading-tight truncate max-w-[150px]">{attrsSummary}</span>
+                      {isCurrent && (
+                        <span className={`text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded border leading-none ${
+                          isSelected 
+                            ? 'bg-white/20 text-white border-white/30' 
+                            : 'bg-gray-100 text-gray-600 border-gray-200'
+                        }`}>
+                          Current
+                        </span>
+                      )}
+                    </div>
+                    <span className={`text-[12px] font-medium leading-tight ${isSelected ? 'text-orange-100' : 'text-gray-500'}`}>
                       ₹{(variant.price || 0).toLocaleString("en-IN")}
                     </span>
                   </button>
                   {isDisabled && (
                     <div className="absolute -top-9 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap transition-opacity z-10">
-                      {isCurrent ? 'Current Variant' : 'Out of Stock'}
+                      Out of Stock
                     </div>
                   )}
                 </div>
@@ -299,8 +337,12 @@ const ExchangeSection = ({ requestedVariantId, setRequestedVariantId, productVar
 
             {/* New Requested Variant */}
             <div className="space-y-3 p-4 bg-white rounded-xl border border-[#FD7100]/30 ring-2 ring-[#FD7100]/10 shadow-sm">
-              <span className="inline-block px-2.5 py-1 bg-emerald-50 text-emerald-700 text-[11px] font-bold rounded-md border border-emerald-100">
-                Requested Replacement
+              <span className={`inline-block px-2.5 py-1 text-[11px] font-bold rounded-md border ${
+                String(selectedVariant._id) === String(currentVariantId)
+                  ? "bg-blue-50 text-blue-700 border-blue-100"
+                  : "bg-emerald-50 text-emerald-700 border-emerald-100"
+              }`}>
+                {String(selectedVariant._id) === String(currentVariantId) ? "Replacement (Same Variant)" : "Requested Replacement"}
               </span>
               <div className="flex items-center gap-4 pt-1">
                 {(selectedVariant?.mainImage?.url || currentVariant?.mainImage?.url) ? (
@@ -336,7 +378,15 @@ const ExchangeSection = ({ requestedVariantId, setRequestedVariantId, productVar
           {/* Price difference banner across bottom */}
           <div className="pt-3 border-t border-gray-200/80 flex flex-wrap items-center justify-between gap-2 text-xs font-bold text-slate-700">
             <span className="flex items-center gap-1.5 text-slate-600">
-              Exchange Type: <strong className="text-slate-700 capitalize">{priceDifference === 0 ? "No Difference" : priceDifference > 0 ? "Additional Payment" : "Refund Difference"}</strong>
+              Exchange Type: <strong className="text-slate-700 capitalize">
+                {String(selectedVariant._id) === String(currentVariantId)
+                  ? "Same Item Replacement (No Difference)"
+                  : priceDifference === 0 
+                    ? "No Difference" 
+                    : priceDifference > 0 
+                      ? "Additional Payment" 
+                      : "Refund Difference"}
+              </strong>
             </span>
             <span className={`px-3 py-1 rounded-lg font-mono font-bold text-sm ${
               priceDifference === 0 ? "bg-gray-100 text-gray-600" : priceDifference > 0 ? "bg-amber-50 text-amber-700" : "bg-emerald-50 text-emerald-700"
@@ -348,7 +398,7 @@ const ExchangeSection = ({ requestedVariantId, setRequestedVariantId, productVar
       ) : (
         <div className="p-4 rounded-xl border border-amber-200 bg-amber-50/60 text-xs text-amber-800 flex items-center gap-2">
           <span className="font-bold">Note:</span>
-          <span>Please select an available variant above to exchange with (must be different from your current variant).</span>
+          <span>Please select an available variant above to exchange with (you can select the current variant for a replacement or choose a different one).</span>
         </div>
       )}
     </div>

@@ -99,7 +99,7 @@ const CustomerTrackingCard = ({ order = null }) => {
     const reqStatus = (req.status || "pending").toLowerCase();
     const isRejected = reqStatus === "rejected";
 
-    const matchingItem = order?.items?.find(item => (item.product?._id || item.product) === (req.product?._id || req.product));
+    const matchingItem = order?.items?.find(item => String(item.product?._id || item.product) === String(req.product?._id || req.product));
     const itemTitle = matchingItem?.product?.title || matchingItem?.product?.name || "";
 
     // 4-step simplified flows:
@@ -198,6 +198,7 @@ const CustomerTrackingCard = ({ order = null }) => {
   // Refund Tracking
   const renderRefundTracking = (req) => {
     if (!req) return null;
+    if (req.status === "rejected") return null;
     const type = req.type || "return";
     const refundStatus = (req.refundStatus || "not_required").toLowerCase();
 
@@ -369,11 +370,21 @@ const CustomerTrackingCard = ({ order = null }) => {
     );
   };
 
+  // Group to latest request per product to show accurate updated status
+  const latestRequestsMap = new Map();
+  returnRequests.forEach(req => {
+    const prodKey = String(req.product?._id || req.product);
+    if (!latestRequestsMap.has(prodKey)) {
+      latestRequestsMap.set(prodKey, req);
+    }
+  });
+  const displayRequests = Array.from(latestRequestsMap.values());
+
   // Smart Conditional Rendering Orchestration
   return (
     <div id="customer-order-tracking" className="space-y-6 pt-2 pb-4">
       {renderOrderTracker()}
-      {returnRequests.map((req, idx) => (
+      {displayRequests.map((req, idx) => (
         <div key={req._id || idx} className="space-y-6 pt-2 border-t-2 border-orange-50/60">
           {renderReturnExchangeTracker(req)}
           {renderRefundTracking(req)}

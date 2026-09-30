@@ -279,6 +279,7 @@ const VendorDashboard = () => {
                   tickLine={false}
                   tick={{ fontSize: 12, fill: "#475569", fontWeight: 600 }}
                   dy={10}
+                  interval={revenueFilter === "This Month" ? 3 : 0}
                 />
                 <YAxis
                   axisLine={false}
@@ -350,7 +351,9 @@ const VendorDashboard = () => {
               </PieChart>
             </ResponsiveContainer>
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span className="text-2xl font-black text-slate-900">{counts.totalOrders || 0}</span>
+              <span className="text-2xl font-black text-slate-900">
+                {orderStats.total !== undefined ? orderStats.total : (counts.totalOrders || 0)}
+              </span>
               <span className="text-xs text-slate-500 font-bold uppercase tracking-wider mt-0.5">Total Orders</span>
             </div>
           </div>
@@ -565,6 +568,7 @@ const VendorDashboard = () => {
                 tickLine={false}
                 tick={{ fontSize: 12, fill: "#475569", fontWeight: 600 }}
                 dy={10}
+                interval={analyticsFilter === "This Month" ? 3 : 0}
               />
               <YAxis
                 yAxisId="left"
@@ -597,9 +601,9 @@ const VendorDashboard = () => {
                 iconType="circle"
                 wrapperStyle={{ paddingBottom: "20px", fontSize: "13px", fontWeight: 600, color: "#334155" }}
               />
-              <Bar yAxisId="left" dataKey="revenue" name="Revenue" fill="#fe4a03" maxBarSize={14} radius={[4, 4, 0, 0]} />
-              <Bar yAxisId="right" dataKey="orders" name="Orders" fill="#2563eb" maxBarSize={14} radius={[4, 4, 0, 0]} />
-              <Bar yAxisId="right" dataKey="customers" name="Customers" fill="#059669" maxBarSize={14} radius={[4, 4, 0, 0]} />
+              <Bar yAxisId="left" dataKey="revenue" name="Revenue" fill="#fe4a03" maxBarSize={analyticsFilter === "This Month" ? 8 : 14} radius={[4, 4, 0, 0]} />
+              <Bar yAxisId="right" dataKey="orders" name="Orders" fill="#2563eb" maxBarSize={analyticsFilter === "This Month" ? 8 : 14} radius={[4, 4, 0, 0]} />
+              <Bar yAxisId="right" dataKey="customers" name="Customers" fill="#059669" maxBarSize={analyticsFilter === "This Month" ? 8 : 14} radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>

@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 
 import { useState, useEffect, useRef, useCallback, forwardRef, useImperativeHandle } from 'react';
 import SearchableSelect from '../../../../components/admin/ui/SearchableSelect';
+import { Factory, Store, Plus, MapPin, Phone, Star, X, Loader2, Check, ChevronDown } from 'lucide-react';
 
 const slugify = (text = '', preserveTrailingDash = false) => {
   let s = text
@@ -63,6 +64,181 @@ const ProductForm = forwardRef(({ isEdit = false, isUnifiedMode = false, onFormC
   const [dynamicAttributesConfig, setDynamicAttributesConfig] = useState([]);
   const [dynamicAttributes, setDynamicAttributes] = useState([]);
 
+  // Store Selection State (Address-Book style for vendor products)
+  const [stores, setStores] = useState([]);
+  const [selectedStoreId, setSelectedStoreId] = useState(null);
+  const [isStoreLoading, setIsStoreLoading] = useState(false);
+  const [isStoreModalOpen, setIsStoreModalOpen] = useState(false);
+  const [storeSubmitting, setStoreSubmitting] = useState(false);
+  const [storeFormData, setStoreFormData] = useState({
+    storeName: '',
+    phone: '',
+    storeDescription: '',
+    addressLine1: '',
+    addressLine2: '',
+    city: '',
+    state: '',
+    country: 'India',
+    pincode: '',
+    isDefault: false,
+  });
+
+  const fetchStores = useCallback(async () => {
+    if (!isVendor) return;
+    try {
+      setIsStoreLoading(true);
+      const baseUrl = import.meta.env.PROD ? '' : 'http://localhost:8000';
+      const response = await axios.get(`${baseUrl}/vendor/portal/stores`, {
+        withCredentials: true,
+        headers: getHeaders(),
+      });
+      if (response.data.success) {
+        const list = response.data.data || [];
+        setStores(list);
+        setSelectedStoreId((prev) => {
+          if (prev) return prev;
+          const def = list.find((s) => s.isDefault);
+          return def ? def._id : (list[0]?._id || null);
+        });
+      }
+    } catch (err) {
+      console.error('Failed to load stores in product form:', err);
+    } finally {
+      setIsStoreLoading(false);
+    }
+  }, [isVendor, getHeaders]);
+
+  const handleQuickAddStore = async (e) => {
+    e.preventDefault();
+    if (!storeFormData.storeName.trim()) {
+      toast.error('Store name is required');
+      return;
+    }
+    try {
+      setStoreSubmitting(true);
+      const baseUrl = import.meta.env.PROD ? '' : 'http://localhost:8000';
+      const response = await axios.post(`${baseUrl}/vendor/portal/stores`, storeFormData, {
+        withCredentials: true,
+        headers: getHeaders(),
+      });
+      if (response.data.success) {
+        toast.success('Store added successfully!');
+        const updatedList = response.data.data || [];
+        setStores(updatedList);
+        const newlyAdded = updatedList[updatedList.length - 1];
+        if (newlyAdded) {
+          setSelectedStoreId(newlyAdded._id);
+        }
+        setIsStoreModalOpen(false);
+        setStoreFormData({
+          storeName: '',
+          phone: '',
+          storeDescription: '',
+          addressLine1: '',
+          addressLine2: '',
+          city: '',
+          state: '',
+          country: 'India',
+          pincode: '',
+          isDefault: false,
+        });
+      }
+    } catch (err) {
+      console.error('Quick add store error:', err);
+      toast.error(err.response?.data?.message || 'Failed to add store');
+    } finally {
+      setStoreSubmitting(false);
+    }
+  };
+
+  // Manufacturer Selection State (Address-Book style for vendor products)
+  const [manufacturers, setManufacturers] = useState([]);
+  const [selectedMfgId, setSelectedMfgId] = useState(null);
+  const [isMfgLoading, setIsMfgLoading] = useState(false);
+  const [isMfgModalOpen, setIsMfgModalOpen] = useState(false);
+  const [mfgSubmitting, setMfgSubmitting] = useState(false);
+  const [mfgFormData, setMfgFormData] = useState({
+    manufacturerName: '',
+    countryOfOrigin: 'India',
+    manufacturerAddress: '',
+    packer: '',
+    packerPhone: '',
+    packerAddress: '',
+    isDefault: false,
+  });
+
+  const fetchManufacturers = useCallback(async () => {
+    if (!isVendor) return;
+    try {
+      setIsMfgLoading(true);
+      const baseUrl = import.meta.env.PROD ? '' : 'http://localhost:8000';
+      const response = await axios.get(`${baseUrl}/vendor/portal/manufacturers`, {
+        withCredentials: true,
+        headers: getHeaders(),
+      });
+      if (response.data.success) {
+        const list = response.data.data || [];
+        setManufacturers(list);
+        setSelectedMfgId((prev) => {
+          if (prev) return prev;
+          const def = list.find((m) => m.isDefault);
+          return def ? def._id : (list[0]?._id || null);
+        });
+      }
+    } catch (err) {
+      console.error('Failed to load manufacturers in product form:', err);
+    } finally {
+      setIsMfgLoading(false);
+    }
+  }, [isVendor, getHeaders]);
+
+  useEffect(() => {
+    if (isVendor) {
+      fetchStores();
+      fetchManufacturers();
+    }
+  }, [isVendor, fetchStores, fetchManufacturers]);
+
+  const handleQuickAddMfg = async (e) => {
+    e.preventDefault();
+    if (!mfgFormData.manufacturerName.trim()) {
+      toast.error('Manufacturer name is required');
+      return;
+    }
+    try {
+      setMfgSubmitting(true);
+      const baseUrl = import.meta.env.PROD ? '' : 'http://localhost:8000';
+      const response = await axios.post(`${baseUrl}/vendor/portal/manufacturers`, mfgFormData, {
+        withCredentials: true,
+        headers: getHeaders(),
+      });
+      if (response.data.success) {
+        toast.success('Manufacturer added successfully!');
+        const updatedList = response.data.data || [];
+        setManufacturers(updatedList);
+        const newlyAdded = updatedList[updatedList.length - 1];
+        if (newlyAdded) {
+          setSelectedMfgId(newlyAdded._id);
+        }
+        setIsMfgModalOpen(false);
+        setMfgFormData({
+          manufacturerName: '',
+          countryOfOrigin: 'India',
+          manufacturerAddress: '',
+          packer: '',
+          packerPhone: '',
+          packerAddress: '',
+          isDefault: false,
+        });
+      }
+    } catch (err) {
+      console.error('Quick add manufacturer error:', err);
+      toast.error(err.response?.data?.message || 'Failed to add manufacturer');
+    } finally {
+      setMfgSubmitting(false);
+    }
+  };
+
   // Submit & Edit State
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(isEdit);
@@ -79,17 +255,34 @@ const ProductForm = forwardRef(({ isEdit = false, isUnifiedMode = false, onFormC
     }
   }, []);
 
-  // Notify parent of changes for contextual info
+  // Notify parent of changes for contextual info (prevent infinite loop)
+  const onFormChangeRef = useRef(onFormChange);
   useEffect(() => {
-    if (isUnifiedMode) {
+    onFormChangeRef.current = onFormChange;
+  });
+
+  const prevContextRef = useRef({ title: '', categoryId: '', brandName: '' });
+
+  useEffect(() => {
+    if (isUnifiedMode && typeof onFormChangeRef.current === 'function') {
       const brandName = brands.find(b => b._id === formData.brand)?.name || '';
-      onFormChange({
-        title: formData.title,
-        categoryId: formData.category,
-        brandName
-      });
+      const currentTitle = formData.title || '';
+      const currentCat = formData.category || '';
+
+      if (
+        prevContextRef.current.title !== currentTitle ||
+        prevContextRef.current.categoryId !== currentCat ||
+        prevContextRef.current.brandName !== brandName
+      ) {
+        prevContextRef.current = {
+          title: currentTitle,
+          categoryId: currentCat,
+          brandName
+        };
+        onFormChangeRef.current(prevContextRef.current);
+      }
     }
-  }, [formData.title, formData.category, formData.brand, brands, isUnifiedMode, onFormChange]);
+  }, [formData.title, formData.category, formData.brand, brands, isUnifiedMode]);
 
   useImperativeHandle(ref, () => ({
     validateAndGetPayload: () => {
@@ -103,6 +296,17 @@ const ProductForm = forwardRef(({ isEdit = false, isUnifiedMode = false, onFormC
       if (!formData.department) { newErrors.department = 'Department is required'; isValid = false; }
       if (!formData.category) { newErrors.category = 'Category is required'; isValid = false; }
       if (!formData.brand) { newErrors.brand = 'Brand is required'; isValid = false; }
+
+      if (isVendor) {
+        if (!selectedStoreId) {
+          newErrors.store = 'Store selection is required';
+          isValid = false;
+        }
+        if (!selectedMfgId) {
+          newErrors.manufacturer = 'Manufacturer selection is required';
+          isValid = false;
+        }
+      }
 
       const payloadAttributes = [];
       dynamicAttributesConfig.forEach(config => {
@@ -124,11 +328,38 @@ const ProductForm = forwardRef(({ isEdit = false, isUnifiedMode = false, onFormC
         return { isValid: false, errors: newErrors };
       }
 
+      const selectedStore = stores.find(s => s._id === selectedStoreId);
+      const storePayload = selectedStore ? {
+        storeName: selectedStore.storeName,
+        phone: selectedStore.phone,
+        storeDescription: selectedStore.storeDescription,
+        addressLine1: selectedStore.addressLine1,
+        addressLine2: selectedStore.addressLine2,
+        city: selectedStore.city,
+        state: selectedStore.state,
+        country: selectedStore.country,
+        pincode: selectedStore.pincode,
+      } : undefined;
+
+      const selectedMfg = manufacturers.find(m => m._id === selectedMfgId);
+      const mfgPayload = selectedMfg ? {
+        manufacturerName: selectedMfg.manufacturerName,
+        countryOfOrigin: selectedMfg.countryOfOrigin,
+        manufacturerAddress: selectedMfg.manufacturerAddress,
+        packer: selectedMfg.packer,
+        packerPhone: selectedMfg.packerPhone,
+        packerAddress: selectedMfg.packerAddress,
+      } : undefined;
+
       return {
         isValid: true,
         payload: {
           ...formData,
-          attributes: payloadAttributes
+          attributes: payloadAttributes,
+          storeId: selectedStoreId || null,
+          store: storePayload,
+          manufacturerId: selectedMfgId || null,
+          manufacturer: mfgPayload,
         }
       };
     }
@@ -161,6 +392,12 @@ const ProductForm = forwardRef(({ isEdit = false, isUnifiedMode = false, onFormC
             exchangeable: prod.returnPolicy?.exchangeable ?? true,
             returnDays: prod.returnPolicy?.returnDays ?? 7
           });
+          if (prod.storeId) {
+            setSelectedStoreId(prod.storeId);
+          }
+          if (prod.manufacturerId) {
+            setSelectedMfgId(prod.manufacturerId);
+          }
           // If product had a custom slug differing from auto-slug, mark as modified, else keep auto-typing enabled
           const autoSlug = slugify(prod.title || '');
           if (currentSlug && currentSlug !== autoSlug) {
@@ -619,9 +856,9 @@ const ProductForm = forwardRef(({ isEdit = false, isUnifiedMode = false, onFormC
       <div className="p-6 sm:p-8">
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
-           <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#4648d4] text-white font-bold text-sm">1</span>
+           <span className={`flex items-center justify-center w-8 h-8 rounded-lg ${isVendor ? 'bg-[#fe4a03]' : 'bg-[#4648d4]'} text-white font-bold text-sm`}>1</span>
            <div>
-             <h3 className="text-lg font-bold text-[#221B59]">Product Information</h3>
+             <h3 className="text-lg font-bold text-slate-900">Product Information</h3>
              <p className="text-xs text-gray-500">Basic details about your product</p>
            </div>
         </div>
@@ -639,7 +876,7 @@ const ProductForm = forwardRef(({ isEdit = false, isUnifiedMode = false, onFormC
               onChange={handleNameChange}
               onBlur={handleTitleBlur}
               placeholder="e.g. Men Solid Polo Collar T-shirt"
-              className={`w-full px-4 h-11 border ${errors.title ? 'border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-[#4648d4] focus:ring-[#4648d4]'} rounded-lg outline-none focus:ring-1 transition-colors`}
+              className={`w-full px-4 h-11 border ${errors.title ? 'border-red-500 focus:ring-red-500' : isVendor ? 'border-gray-200 focus:border-[#fe4a03] focus:ring-[#fe4a03]' : 'border-gray-200 focus:border-[#4648d4] focus:ring-[#4648d4]'} rounded-lg outline-none focus:ring-1 transition-colors`}
             />
             {errors.title && <span className="text-red-500 text-xs mt-1 block">❌ {errors.title}</span>}
           </div>
@@ -655,7 +892,7 @@ const ProductForm = forwardRef(({ isEdit = false, isUnifiedMode = false, onFormC
                     setSlugModified(false);
                     clearError('slug');
                   }}
-                  className="text-xs text-[#4648d4] hover:underline font-medium cursor-pointer"
+                  className={`text-xs ${isVendor ? 'text-[#fe4a03]' : 'text-[#4648d4]'} hover:underline font-medium cursor-pointer`}
                   title="Generate slug from product name"
                 >
                   Auto-generate
@@ -670,7 +907,7 @@ const ProductForm = forwardRef(({ isEdit = false, isUnifiedMode = false, onFormC
               onChange={handleSlugChange}
               onBlur={handleSlugBlur}
               placeholder="e.g. men-solid-polo-collar-t-shirt"
-              className={`w-full px-4 h-11 border ${errors.slug ? 'border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-[#4648d4] focus:ring-[#4648d4]'} rounded-lg outline-none focus:ring-1 transition-colors font-mono text-sm`}
+              className={`w-full px-4 h-11 border ${errors.slug ? 'border-red-500 focus:ring-red-500' : isVendor ? 'border-gray-200 focus:border-[#fe4a03] focus:ring-[#fe4a03]' : 'border-gray-200 focus:border-[#4648d4] focus:ring-[#4648d4]'} rounded-lg outline-none focus:ring-1 transition-colors font-mono text-sm`}
             />
             {errors.slug && <span className="text-red-500 text-xs mt-1 block">❌ {errors.slug}</span>}
           </div>
@@ -695,7 +932,7 @@ const ProductForm = forwardRef(({ isEdit = false, isUnifiedMode = false, onFormC
               name="status"
               value={formData.status}
               onChange={handleChange}
-              className="w-full px-4 h-11 border border-gray-200 rounded-lg outline-none focus:border-[#4648d4] focus:ring-1 focus:ring-[#4648d4] transition-colors bg-white cursor-pointer"
+              className={`w-full px-4 h-11 border border-gray-200 rounded-lg outline-none ${isVendor ? 'focus:border-[#fe4a03] focus:ring-[#fe4a03]' : 'focus:border-[#4648d4] focus:ring-[#4648d4]'} focus:ring-1 transition-colors bg-white cursor-pointer`}
             >
               <option value="Inactive">Inactive</option>
               <option value="Active">Active</option>
@@ -741,7 +978,7 @@ const ProductForm = forwardRef(({ isEdit = false, isUnifiedMode = false, onFormC
               value={formData.shortDescription}
               onChange={handleChange}
               placeholder="Brief summary of the product"
-              className={`w-full px-4 py-2 min-h-[80px] border ${errors.shortDescription ? 'border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-[#4648d4] focus:ring-[#4648d4]'} rounded-lg outline-none focus:ring-1 transition-colors resize-y`}
+              className={`w-full px-4 py-2 min-h-[80px] border ${errors.shortDescription ? 'border-red-500 focus:ring-red-500' : isVendor ? 'border-gray-200 focus:border-[#fe4a03] focus:ring-[#fe4a03]' : 'border-gray-200 focus:border-[#4648d4] focus:ring-[#4648d4]'} rounded-lg outline-none focus:ring-1 transition-colors resize-y`}
             />
             {errors.shortDescription && <span className="text-red-500 text-xs mt-1 block">❌ {errors.shortDescription}</span>}
           </div>
@@ -754,7 +991,7 @@ const ProductForm = forwardRef(({ isEdit = false, isUnifiedMode = false, onFormC
               value={formData.longDescription}
               onChange={handleChange}
               placeholder="Detailed description..."
-              className={`w-full px-4 py-2 min-h-[80px] border ${errors.longDescription ? 'border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-[#4648d4] focus:ring-[#4648d4]'} rounded-lg outline-none focus:ring-1 transition-colors resize-y`}
+              className={`w-full px-4 py-2 min-h-[80px] border ${errors.longDescription ? 'border-red-500 focus:ring-red-500' : isVendor ? 'border-gray-200 focus:border-[#fe4a03] focus:ring-[#fe4a03]' : 'border-gray-200 focus:border-[#4648d4] focus:ring-[#4648d4]'} rounded-lg outline-none focus:ring-1 transition-colors resize-y`}
             ></textarea>
             {errors.longDescription && <span className="text-red-500 text-xs mt-1 block">❌ {errors.longDescription}</span>}
           </div>
@@ -765,9 +1002,9 @@ const ProductForm = forwardRef(({ isEdit = false, isUnifiedMode = false, onFormC
       {formData.category && !isDynamicAttributesLoading && dynamicAttributesConfig.length === 0 ? (
         <div className="p-6 sm:p-8 border-t border-slate-200">
           <div className="flex items-center gap-3 mb-4">
-             <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#4648d4] text-white font-bold text-sm">2</span>
+             <span className={`flex items-center justify-center w-8 h-8 rounded-lg ${isVendor ? 'bg-[#fe4a03]' : 'bg-[#4648d4]'} text-white font-bold text-sm`}>2</span>
              <div>
-               <h3 className="text-lg font-bold text-[#221B59]">Product Variants</h3>
+               <h3 className="text-lg font-bold text-slate-900">Product Variants</h3>
                <p className="text-xs text-gray-500">Product specific variants</p>
              </div>
           </div>
@@ -786,16 +1023,16 @@ const ProductForm = forwardRef(({ isEdit = false, isUnifiedMode = false, onFormC
       ) : (
         <div className="p-6 sm:p-8 border-t border-slate-200">
           <div className="flex items-center gap-3 mb-6">
-             <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#4648d4] text-white font-bold text-sm">2</span>
+             <span className={`flex items-center justify-center w-8 h-8 rounded-lg ${isVendor ? 'bg-[#fe4a03]' : 'bg-[#4648d4]'} text-white font-bold text-sm`}>2</span>
              <div>
-               <h3 className="text-lg font-bold text-[#221B59]">Attributes</h3>
+               <h3 className="text-lg font-bold text-slate-900">Attributes</h3>
                <p className="text-xs text-gray-500">Product specific attributes</p>
              </div>
           </div>
 
           {isDynamicAttributesLoading ? (
             <div className="flex flex-col items-center justify-center py-8 px-4 bg-gray-50/50 rounded-xl">
-              <div className="w-6 h-6 border-2 border-[#4648d4] border-t-transparent rounded-full animate-spin mb-2"></div>
+              <div className={`w-6 h-6 border-2 ${isVendor ? 'border-[#fe4a03]' : 'border-[#4648d4]'} border-t-transparent rounded-full animate-spin mb-2`}></div>
               <span className="text-sm text-gray-500 font-medium">Loading attributes...</span>
             </div>
           ) : !formData.category ? (
@@ -822,9 +1059,9 @@ const ProductForm = forwardRef(({ isEdit = false, isUnifiedMode = false, onFormC
       {/* Return & Exchange Policy */}
       <div className="p-6 sm:p-8 border-t border-slate-200">
         <div className="flex items-center gap-3 mb-6">
-           <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#4648d4] text-white font-bold text-sm">3</span>
+           <span className={`flex items-center justify-center w-8 h-8 rounded-lg ${isVendor ? 'bg-[#fe4a03]' : 'bg-[#4648d4]'} text-white font-bold text-sm`}>3</span>
            <div>
-             <h3 className="text-lg font-bold text-[#221B59]">Return / Exchange</h3>
+             <h3 className="text-lg font-bold text-slate-900">Return / Exchange</h3>
              <p className="text-xs text-gray-500">Set return and exchange policy</p>
            </div>
         </div>
@@ -841,7 +1078,7 @@ const ProductForm = forwardRef(({ isEdit = false, isUnifiedMode = false, onFormC
                 onChange={handleChange}
                 className="sr-only peer" 
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#4648d4]"></div>
+              <div className={`w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all ${isVendor ? 'peer-checked:bg-[#fe4a03]' : 'peer-checked:bg-[#4648d4]'}`}></div>
             </label>
           </div>
 
@@ -856,7 +1093,7 @@ const ProductForm = forwardRef(({ isEdit = false, isUnifiedMode = false, onFormC
                 onChange={handleChange}
                 className="sr-only peer" 
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#4648d4]"></div>
+              <div className={`w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all ${isVendor ? 'peer-checked:bg-[#fe4a03]' : 'peer-checked:bg-[#4648d4]'}`}></div>
             </label>
           </div>
 
@@ -870,12 +1107,543 @@ const ProductForm = forwardRef(({ isEdit = false, isUnifiedMode = false, onFormC
               value={formData.returnDays}
               onChange={handleChange}
               disabled={!formData.returnable && !formData.exchangeable}
-              className="w-16 h-10 px-3 text-center border border-gray-200 rounded-lg outline-none focus:border-[#4648d4] focus:ring-1 focus:ring-[#4648d4] disabled:bg-gray-100 transition-colors"
+              className={`w-16 h-10 px-3 text-center border border-gray-200 rounded-lg outline-none ${isVendor ? 'focus:border-[#fe4a03] focus:ring-[#fe4a03]' : 'focus:border-[#4648d4] focus:ring-[#4648d4]'} focus:ring-1 disabled:bg-gray-100 transition-colors`}
             />
             <span className="text-sm font-medium text-gray-700">days</span>
           </div>
         </div>
       </div>
+
+      {/* 4. Store Details (Vendor Selection - Dropdown) */}
+      {isVendor && (
+        <div className="p-6 sm:p-8 border-t border-slate-200 space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <span className={`flex items-center justify-center w-8 h-8 rounded-lg ${isVendor ? 'bg-[#fe4a03]' : 'bg-[#4648d4]'} text-white font-bold text-sm`}>
+                4
+              </span>
+              <div>
+                <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                  <Store size={18} className="text-[#fe4a03]" /> Store Details
+                </h3>
+                <p className="text-xs text-gray-500">
+                  Select which store and fulfillment location supplies this product
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setIsStoreModalOpen(true)}
+              className="text-xs font-bold text-[#fe4a03] border border-[#fe4a03] px-4 py-2 rounded-xl hover:bg-orange-50 transition-colors flex items-center gap-1.5 cursor-pointer self-start sm:self-auto"
+            >
+              <Plus size={15} /> ADD NEW STORE
+            </button>
+          </div>
+
+          {isStoreLoading ? (
+            <div className="p-8 text-center flex items-center justify-center">
+              <Loader2 className="w-6 h-6 text-[#fe4a03] animate-spin" />
+            </div>
+          ) : stores.length === 0 ? (
+            <div className="p-6 text-center border border-dashed border-gray-300 rounded-xl bg-gray-50/50 space-y-3">
+              <div className="w-10 h-10 bg-orange-50 text-[#fe4a03] rounded-xl flex items-center justify-center mx-auto">
+                <Store size={20} />
+              </div>
+              <p className="text-xs text-gray-500">No stores saved yet. Add one to continue.</p>
+              <button
+                type="button"
+                onClick={() => setIsStoreModalOpen(true)}
+                className="px-4 py-2 bg-[#fe4a03] text-white rounded-lg text-xs font-bold hover:bg-[#e03f00] transition-colors cursor-pointer"
+              >
+                + Add Store
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  Select Store <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <select
+                    value={selectedStoreId || ''}
+                    onChange={(e) => {
+                      setSelectedStoreId(e.target.value);
+                      clearError('store');
+                    }}
+                    className={`w-full appearance-none bg-white px-4 py-3 pr-10 border ${errors.store ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-300'} rounded-xl text-xs sm:text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#fe4a03]/20 focus:border-[#fe4a03] transition-colors cursor-pointer`}
+                  >
+                    <option value="" disabled>-- Select Store --</option>
+                    {stores.map((st) => {
+                      const addrParts = [st.addressLine1, st.city, st.state, st.pincode].filter(Boolean);
+                      const addrStr = addrParts.join(', ');
+                      const label = addrStr ? `${st.storeName} — ${addrStr}` : st.storeName;
+                      return (
+                        <option key={st._id} value={st._id}>
+                          {label}
+                        </option>
+                      );
+                    })}
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400">
+                    <ChevronDown size={18} />
+                  </div>
+                </div>
+                {errors.store && <span className="text-red-500 text-xs mt-1 block">❌ {errors.store}</span>}
+              </div>
+
+              {/* Selected Store preview showing only store name and address */}
+              {(() => {
+                const current = stores.find((s) => s._id === selectedStoreId);
+                if (!current) return null;
+                const addrParts = [
+                  current.addressLine1,
+                  current.addressLine2,
+                  current.city,
+                  current.state,
+                  current.pincode,
+                  current.country,
+                ].filter(Boolean);
+                const fullAddr = addrParts.join(', ');
+
+                return (
+                  <div className="p-3.5 bg-orange-50/50 border border-orange-200/80 rounded-xl flex items-start gap-2.5">
+                    <div className="w-7 h-7 rounded-lg bg-[#fe4a03]/10 text-[#fe4a03] flex items-center justify-center shrink-0 mt-0.5">
+                      <Store size={15} />
+                    </div>
+                    <div className="flex-1 min-w-0 text-xs">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-bold text-slate-900">{current.storeName}</span>
+                        {current.isDefault && (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            Default Store
+                          </span>
+                        )}
+                        {current.phone && (
+                          <span className="text-[11px] text-slate-500 font-medium">
+                            • {current.phone}
+                          </span>
+                        )}
+                      </div>
+                      {fullAddr && (
+                        <div className="flex items-start gap-1 text-slate-600 mt-1">
+                          <MapPin size={13} className="text-[#fe4a03] shrink-0 mt-0.5" />
+                          <span className="leading-snug">{fullAddr}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 5. Manufacturer & Compliance Details (Vendor Selection - Dropdown) */}
+      {isVendor && (
+        <div className="p-6 sm:p-8 border-t border-slate-200 space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <span className={`flex items-center justify-center w-8 h-8 rounded-lg ${isVendor ? 'bg-[#fe4a03]' : 'bg-[#4648d4]'} text-white font-bold text-sm`}>
+                5
+              </span>
+              <div>
+                <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                  <Factory size={18} className="text-[#fe4a03]" /> Manufacturer Details
+                </h3>
+                <p className="text-xs text-gray-500">
+                  Select which manufacturer and compliance profile applies to this product
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setIsMfgModalOpen(true)}
+              className="text-xs font-bold text-[#fe4a03] border border-[#fe4a03] px-4 py-2 rounded-xl hover:bg-orange-50 transition-colors flex items-center gap-1.5 cursor-pointer self-start sm:self-auto"
+            >
+              <Plus size={15} /> ADD NEW MANUFACTURER
+            </button>
+          </div>
+
+          {isMfgLoading ? (
+            <div className="p-8 text-center flex items-center justify-center">
+              <Loader2 className="w-6 h-6 text-[#fe4a03] animate-spin" />
+            </div>
+          ) : manufacturers.length === 0 ? (
+            <div className="p-6 text-center border border-dashed border-gray-300 rounded-xl bg-gray-50/50 space-y-3">
+              <div className="w-10 h-10 bg-orange-50 text-[#fe4a03] rounded-xl flex items-center justify-center mx-auto">
+                <Factory size={20} />
+              </div>
+              <p className="text-xs text-gray-500">No manufacturers saved yet. Add one to continue.</p>
+              <button
+                type="button"
+                onClick={() => setIsMfgModalOpen(true)}
+                className="px-4 py-2 bg-[#fe4a03] text-white rounded-lg text-xs font-bold hover:bg-[#e03f00] transition-colors cursor-pointer"
+              >
+                + Add Manufacturer
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  Select Manufacturer <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <select
+                    value={selectedMfgId || ''}
+                    onChange={(e) => {
+                      setSelectedMfgId(e.target.value);
+                      clearError('manufacturer');
+                    }}
+                    className={`w-full appearance-none bg-white px-4 py-3 pr-10 border ${errors.manufacturer ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-300'} rounded-xl text-xs sm:text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#fe4a03]/20 focus:border-[#fe4a03] transition-colors cursor-pointer`}
+                  >
+                    <option value="" disabled>-- Select Manufacturer --</option>
+                    {manufacturers.map((mfg) => {
+                      const label = mfg.manufacturerAddress
+                        ? `${mfg.manufacturerName} — ${mfg.manufacturerAddress}`
+                        : mfg.manufacturerName;
+                      return (
+                        <option key={mfg._id} value={mfg._id}>
+                          {label}
+                        </option>
+                      );
+                    })}
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400">
+                    <ChevronDown size={18} />
+                  </div>
+                </div>
+                {errors.manufacturer && <span className="text-red-500 text-xs mt-1 block">❌ {errors.manufacturer}</span>}
+              </div>
+
+              {/* Selected Manufacturer preview showing only manufacturer name and address */}
+              {(() => {
+                const current = manufacturers.find((m) => m._id === selectedMfgId);
+                if (!current) return null;
+                return (
+                  <div className="p-3.5 bg-orange-50/50 border border-orange-200/80 rounded-xl flex items-start gap-2.5">
+                    <div className="w-7 h-7 rounded-lg bg-[#fe4a03]/10 text-[#fe4a03] flex items-center justify-center shrink-0 mt-0.5">
+                      <Factory size={15} />
+                    </div>
+                    <div className="flex-1 min-w-0 text-xs">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-bold text-slate-900">{current.manufacturerName}</span>
+                        {current.isDefault && (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            Default
+                          </span>
+                        )}
+                      </div>
+                      {current.manufacturerAddress && (
+                        <div className="flex items-start gap-1 text-slate-600 mt-1">
+                          <MapPin size={13} className="text-[#fe4a03] shrink-0 mt-0.5" />
+                          <span className="leading-snug">{current.manufacturerAddress}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* QUICK ADD STORE MODAL */}
+      {isStoreModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden my-8">
+            <div className="flex items-center justify-between p-5 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-orange-50 text-[#fe4a03] flex items-center justify-center">
+                  <Store size={16} />
+                </div>
+                <h3 className="text-base font-bold text-slate-900">Add New Store Location</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsStoreModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+              <div className="space-y-4 text-xs">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Store Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={storeFormData.storeName}
+                    onChange={(e) => setStoreFormData((prev) => ({ ...prev, storeName: e.target.value }))}
+                    placeholder="e.g. Acme Lifestyle Store - Bandra"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#fe4a03]/20 focus:border-[#fe4a03]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Business Phone / Support Contact
+                  </label>
+                  <input
+                    type="tel"
+                    value={storeFormData.phone}
+                    onChange={(e) => setStoreFormData((prev) => ({ ...prev, phone: e.target.value }))}
+                    placeholder="e.g. +91 9876543210"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#fe4a03]/20 focus:border-[#fe4a03]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Store Description / Tagline
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={storeFormData.storeDescription}
+                    onChange={(e) => setStoreFormData((prev) => ({ ...prev, storeDescription: e.target.value }))}
+                    placeholder="Brief description or warehouse notes..."
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#fe4a03]/20 focus:border-[#fe4a03]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Address Line 1 <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={storeFormData.addressLine1}
+                    onChange={(e) => setStoreFormData((prev) => ({ ...prev, addressLine1: e.target.value }))}
+                    placeholder="Building No., Floor, Street Name"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#fe4a03]/20 focus:border-[#fe4a03]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Address Line 2 (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={storeFormData.addressLine2}
+                    onChange={(e) => setStoreFormData((prev) => ({ ...prev, addressLine2: e.target.value }))}
+                    placeholder="Locality, Area, Landmark"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#fe4a03]/20 focus:border-[#fe4a03]"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      City <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={storeFormData.city}
+                      onChange={(e) => setStoreFormData((prev) => ({ ...prev, city: e.target.value }))}
+                      placeholder="e.g. Mumbai"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#fe4a03]/20 focus:border-[#fe4a03]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      State <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={storeFormData.state}
+                      onChange={(e) => setStoreFormData((prev) => ({ ...prev, state: e.target.value }))}
+                      placeholder="e.g. Maharashtra"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#fe4a03]/20 focus:border-[#fe4a03]"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Pincode <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={storeFormData.pincode}
+                      onChange={(e) => setStoreFormData((prev) => ({ ...prev, pincode: e.target.value }))}
+                      placeholder="e.g. 400001"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#fe4a03]/20 focus:border-[#fe4a03]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Country</label>
+                    <input
+                      type="text"
+                      value={storeFormData.country}
+                      onChange={(e) => setStoreFormData((prev) => ({ ...prev, country: e.target.value }))}
+                      placeholder="e.g. India"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#fe4a03]/20 focus:border-[#fe4a03]"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsStoreModalOpen(false)}
+                  className="px-4 py-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleQuickAddStore}
+                  disabled={storeSubmitting}
+                  className="inline-flex items-center gap-1.5 px-5 py-2 rounded-xl bg-[#fe4a03] hover:bg-[#e03f00] text-white text-xs font-bold shadow-md shadow-[#fe4a03]/20 transition-all cursor-pointer disabled:opacity-50"
+                >
+                  {storeSubmitting ? (
+                    <>
+                      <Loader2 size={13} className="animate-spin" /> Saving...
+                    </>
+                  ) : (
+                    "Save & Select"
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* QUICK ADD MANUFACTURER MODAL */}
+      {isMfgModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden my-8">
+            <div className="flex items-center justify-between p-5 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-orange-50 text-[#fe4a03] flex items-center justify-center">
+                  <Factory size={16} />
+                </div>
+                <h3 className="text-base font-bold text-slate-900">Add New Manufacturer</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsMfgModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+              <div className="space-y-4 text-xs">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Manufacturer Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={mfgFormData.manufacturerName}
+                    onChange={(e) => setMfgFormData((prev) => ({ ...prev, manufacturerName: e.target.value }))}
+                    placeholder="e.g. Acme Lifestyle Manufacturing Ltd."
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#fe4a03]/20 focus:border-[#fe4a03]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Country of Origin
+                  </label>
+                  <input
+                    type="text"
+                    value={mfgFormData.countryOfOrigin}
+                    onChange={(e) => setMfgFormData((prev) => ({ ...prev, countryOfOrigin: e.target.value }))}
+                    placeholder="e.g. India"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#fe4a03]/20 focus:border-[#fe4a03]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Manufacturer Address
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={mfgFormData.manufacturerAddress}
+                    onChange={(e) => setMfgFormData((prev) => ({ ...prev, manufacturerAddress: e.target.value }))}
+                    placeholder="Plot No., Industrial Area, City, State, Pincode"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#fe4a03]/20 focus:border-[#fe4a03]"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Packer</label>
+                    <input
+                      type="text"
+                      value={mfgFormData.packer}
+                      onChange={(e) => setMfgFormData((prev) => ({ ...prev, packer: e.target.value }))}
+                      placeholder="e.g. Acme Logistics"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#fe4a03]/20 focus:border-[#fe4a03]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Packer Phone</label>
+                    <input
+                      type="tel"
+                      value={mfgFormData.packerPhone}
+                      onChange={(e) => setMfgFormData((prev) => ({ ...prev, packerPhone: e.target.value }))}
+                      placeholder="e.g. +91 9876543210"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#fe4a03]/20 focus:border-[#fe4a03]"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Packer Address</label>
+                  <textarea
+                    rows={2}
+                    value={mfgFormData.packerAddress}
+                    onChange={(e) => setMfgFormData((prev) => ({ ...prev, packerAddress: e.target.value }))}
+                    placeholder="Fulfillment / packaging facility address..."
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#fe4a03]/20 focus:border-[#fe4a03]"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsMfgModalOpen(false)}
+                  className="px-4 py-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleQuickAddMfg}
+                  disabled={mfgSubmitting}
+                  className="inline-flex items-center gap-1.5 px-5 py-2 rounded-xl bg-[#fe4a03] hover:bg-[#e03f00] text-white text-xs font-bold shadow-md shadow-[#fe4a03]/20 transition-all cursor-pointer disabled:opacity-50"
+                >
+                  {mfgSubmitting ? (
+                    <>
+                      <Loader2 size={13} className="animate-spin" /> Saving...
+                    </>
+                  ) : (
+                    "Save & Select"
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       
       {/* Form Actions (Only in non-unified mode) */}
       {!isUnifiedMode && (
@@ -890,7 +1658,7 @@ const ProductForm = forwardRef(({ isEdit = false, isUnifiedMode = false, onFormC
           <button
             type="submit"
             disabled={isSubmitting}
-            className={`h-10 px-8 text-sm font-medium text-white bg-[#4648d4] rounded-lg shadow-sm transition-colors flex items-center justify-center min-w-[200px] ${isSubmitting ? 'opacity-70 cursor-not-allowed' : 'hover:bg-[#3b3db0]'}`}
+            className={`h-10 px-8 text-sm font-medium text-white ${isVendor ? 'bg-[#fe4a03] hover:bg-[#e03f00] shadow-[#fe4a03]/25' : 'bg-[#4648d4] hover:bg-[#3b3db0]'} rounded-lg shadow-sm transition-colors flex items-center justify-center min-w-[200px] ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}
           >
             {isSubmitting ? (
               <>

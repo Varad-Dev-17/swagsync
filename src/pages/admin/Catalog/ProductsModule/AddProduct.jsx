@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
@@ -19,9 +19,18 @@ const AddProduct = () => {
     brandName: ''
   });
 
-  const handleFormChange = (contextData) => {
-    setProductContext(contextData);
-  };
+  const handleFormChange = useCallback((contextData) => {
+    setProductContext((prev) => {
+      if (
+        prev.categoryId === contextData.categoryId &&
+        prev.title === contextData.title &&
+        prev.brandName === contextData.brandName
+      ) {
+        return prev;
+      }
+      return contextData;
+    });
+  }, []);
 
   const handleFinalSave = async () => {
     if (isSubmitting) return;

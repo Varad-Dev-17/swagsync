@@ -999,9 +999,11 @@ const ProductVariants = forwardRef(({ isUnifiedMode = false, categoryId = null, 
       {isUnifiedMode && (
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div className="flex items-center gap-3">
-             <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#4648d4] text-white font-bold text-sm">4</span>
+             <span className={`flex items-center justify-center w-8 h-8 rounded-lg ${isVendor ? 'bg-[#fe4a03]' : 'bg-[#4648d4]'} text-white font-bold text-sm`}>
+               {isVendor ? '6' : '4'}
+             </span>
              <div>
-               <h3 className="text-lg font-bold text-[#221B59]">Product Variants</h3>
+               <h3 className="text-lg font-bold text-slate-900">Product Variants</h3>
                <p className="text-xs text-gray-500">
                  {isSharedImageMode 
                    ? `Shared image mode for ${mappedAttributes[0]?.name || 'package sizes'}` 
@@ -1010,17 +1012,17 @@ const ProductVariants = forwardRef(({ isUnifiedMode = false, categoryId = null, 
              </div>
           </div>
           <div className="flex gap-4">
-             <div className="bg-[#4648d4]/5 px-4 py-1.5 rounded-lg border border-[#4648d4]/10 text-center min-w-[80px]">
-               <span className="text-[10px] font-bold text-[#4648d4] uppercase tracking-wider block mb-0.5">{isSharedImageMode ? 'Product' : 'Groups'}</span>
-               <span className="text-lg font-bold text-[#221B59] leading-none">{totalGroupsCount}</span>
+             <div className={`${isVendor ? 'bg-[#fe4a03]/5 border-[#fe4a03]/15' : 'bg-[#4648d4]/5 border-[#4648d4]/10'} px-4 py-1.5 rounded-lg border text-center min-w-[80px]`}>
+               <span className={`text-[10px] font-bold ${isVendor ? 'text-[#fe4a03]' : 'text-[#4648d4]'} uppercase tracking-wider block mb-0.5`}>{isSharedImageMode ? 'Product' : 'Groups'}</span>
+               <span className="text-lg font-bold text-slate-900 leading-none">{totalGroupsCount}</span>
              </div>
-             <div className="bg-[#4648d4]/5 px-4 py-1.5 rounded-lg border border-[#4648d4]/10 text-center min-w-[80px]">
-               <span className="text-[10px] font-bold text-[#4648d4] uppercase tracking-wider block mb-0.5">{isSharedImageMode ? 'Sizes' : 'Variants'}</span>
-               <span className="text-lg font-bold text-[#221B59] leading-none">{totalVariantsCount}</span>
+             <div className={`${isVendor ? 'bg-[#fe4a03]/5 border-[#fe4a03]/15' : 'bg-[#4648d4]/5 border-[#4648d4]/10'} px-4 py-1.5 rounded-lg border text-center min-w-[80px]`}>
+               <span className={`text-[10px] font-bold ${isVendor ? 'text-[#fe4a03]' : 'text-[#4648d4]'} uppercase tracking-wider block mb-0.5`}>{isSharedImageMode ? 'Sizes' : 'Variants'}</span>
+               <span className="text-lg font-bold text-slate-900 leading-none">{totalVariantsCount}</span>
              </div>
-             <div className="bg-[#4648d4]/5 px-4 py-1.5 rounded-lg border border-[#4648d4]/10 text-center min-w-[80px]">
-               <span className="text-[10px] font-bold text-[#4648d4] uppercase tracking-wider block mb-0.5">Total Stock</span>
-               <span className="text-lg font-bold text-[#221B59] leading-none">{totalStock}</span>
+             <div className={`${isVendor ? 'bg-[#fe4a03]/5 border-[#fe4a03]/15' : 'bg-[#4648d4]/5 border-[#4648d4]/10'} px-4 py-1.5 rounded-lg border text-center min-w-[80px]`}>
+               <span className={`text-[10px] font-bold ${isVendor ? 'text-[#fe4a03]' : 'text-[#4648d4]'} uppercase tracking-wider block mb-0.5`}>Total Stock</span>
+               <span className="text-lg font-bold text-slate-900 leading-none">{totalStock}</span>
              </div>
           </div>
         </div>
@@ -1072,14 +1074,11 @@ const ProductVariants = forwardRef(({ isUnifiedMode = false, categoryId = null, 
       {/* Main Form Section */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 sm:gap-6 mb-6">
         
-        {/* ========================================================================= */}
-        {/* MODE A: SHARED IMAGE MODE (Skincare, Shampoos, Serums, Single-Spec items) */}
-        {/* ========================================================================= */}
         {isSharedImageMode ? (
           <div className={`xl:col-span-7 ${isUnifiedMode ? 'bg-slate-50/40 border border-slate-100 rounded-xl' : 'bg-white rounded-[20px] shadow-sm border border-gray-100'} p-5 sm:p-6 flex flex-col`}>
             <div className="pb-3 border-b border-gray-100 mb-4 flex items-center justify-between">
               <div>
-                <h2 className="text-base font-bold text-[#221B59]">Product Photos & Media</h2>
+                <h2 className="text-base font-bold text-slate-900">Product Photos & Media</h2>
                 <p className="text-xs text-gray-500">Shared across all package sizes ({mappedAttributes[0]?.name})</p>
               </div>
               <span className="text-[11px] font-semibold bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full border border-blue-100">
@@ -1100,7 +1099,7 @@ const ProductVariants = forwardRef(({ isUnifiedMode = false, categoryId = null, 
 
             {/* Photos Upload Area */}
             <div className="space-y-4">
-              <h3 className="text-xs font-bold text-[#221B59]">Product Images</h3>
+              <h3 className="text-xs font-bold text-slate-900">Product Images</h3>
               <div className="flex flex-wrap gap-6 items-start">
                 {/* Main Cover Photo */}
                 <div className="flex flex-col shrink-0">
@@ -1122,8 +1121,8 @@ const ProductVariants = forwardRef(({ isUnifiedMode = false, categoryId = null, 
                     </div>
                   ) : (
                     <label className="flex flex-col items-center justify-center w-28 h-28 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer bg-gray-50/80 hover:bg-gray-100 transition-colors group">
-                      <UploadCloud className="w-7 h-7 text-gray-400 group-hover:text-[#4648d4] transition-colors mb-1.5" />
-                      <span className="text-[11px] font-semibold text-gray-600 group-hover:text-[#4648d4]">Upload Cover</span>
+                      <UploadCloud className={`w-7 h-7 text-gray-400 ${isVendor ? 'group-hover:text-[#fe4a03]' : 'group-hover:text-[#4648d4]'} transition-colors mb-1.5`} />
+                      <span className={`text-[11px] font-semibold text-gray-600 ${isVendor ? 'group-hover:text-[#fe4a03]' : 'group-hover:text-[#4648d4]'}`}>Upload Cover</span>
                       <span className="text-[9px] text-gray-400">JPG, PNG, WebP</span>
                       <input type="file" className="hidden" accept="image/*" onChange={(e) => handleSharedMainImageUpload(e.target.files[0])} />
                     </label>
@@ -1150,8 +1149,8 @@ const ProductVariants = forwardRef(({ isUnifiedMode = false, categoryId = null, 
                     ))}
                     {(sharedImages.galleryImages?.length || 0) < 5 && (
                       <label className="w-20 h-20 border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center cursor-pointer bg-gray-50/80 hover:bg-gray-100 transition-colors shrink-0 group">
-                        <Plus size={20} className="text-gray-400 group-hover:text-[#4648d4] transition-colors mb-0.5" />
-                        <span className="text-[10px] font-semibold text-gray-500 group-hover:text-[#4648d4]">Add More</span>
+                        <Plus size={20} className={`text-gray-400 ${isVendor ? 'group-hover:text-[#fe4a03]' : 'group-hover:text-[#4648d4]'} transition-colors mb-0.5`} />
+                        <span className={`text-[10px] font-semibold text-gray-500 ${isVendor ? 'group-hover:text-[#fe4a03]' : 'group-hover:text-[#4648d4]'}`}>Add More</span>
                         <input type="file" multiple className="hidden" accept="image/*" onChange={(e) => handleSharedGalleryUpload(e.target.files)} />
                       </label>
                     )}
@@ -1161,19 +1160,16 @@ const ProductVariants = forwardRef(({ isUnifiedMode = false, categoryId = null, 
             </div>
           </div>
         ) : (
-          /* ========================================================================= */
-          /* MODE B: VISUAL GROUP MODE (Apparel, Footwear, Makeup, Fragrances)          */
-          /* ========================================================================= */
           <div className={`xl:col-span-7 ${isUnifiedMode ? 'bg-slate-50/40 border border-slate-100 rounded-xl' : 'bg-white rounded-[20px] shadow-sm border border-gray-100'} p-5 sm:p-6 flex flex-col`}>
              <div className="pb-3 border-b border-gray-100 mb-4 flex items-center justify-between">
-                <h2 className="text-base font-bold text-[#221B59]">
+                <h2 className="text-base font-bold text-slate-900">
                   {editingPrimaryOption !== null ? `Edit ${groupTerm}` : `Add ${groupTerm}`}
                 </h2>
                 {lastSavedGroup && editingPrimaryOption === null && (
                   <button
                     type="button"
                     onClick={handleCopyImagesFromGroup}
-                    className="text-xs font-semibold text-[#4648d4] hover:text-[#3b3db0] bg-[#4648d4]/10 hover:bg-[#4648d4]/15 px-3 py-1 rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer"
+                    className={`text-xs font-semibold ${isVendor ? 'text-[#fe4a03] hover:text-[#e03f00] bg-[#fe4a03]/10 hover:bg-[#fe4a03]/15' : 'text-[#4648d4] hover:text-[#3b3db0] bg-[#4648d4]/10 hover:bg-[#4648d4]/15'} px-3 py-1 rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer`}
                     title="Copy photos from previous group"
                   >
                     <Copy size={13} /> Copy Images from Previous Group
@@ -1198,13 +1194,13 @@ const ProductVariants = forwardRef(({ isUnifiedMode = false, categoryId = null, 
                  <div>
                    <div className="grid grid-cols-1 gap-4 max-w-sm">
                       <div>
-                        <label className="block text-xs font-bold text-[#221B59] mb-1">
+                        <label className="block text-xs font-bold text-slate-900 mb-1">
                           Select {groupTerm} <span className="text-red-500">*</span>
                         </label>
                         <select
                           value={currentGroup.primaryOption}
                           onChange={(e) => updateCurrentGroup('primaryOption', e.target.value)}
-                          className="w-full px-3 h-10 text-sm border border-gray-200 rounded-lg outline-none focus:border-[#3A36DB] focus:ring-1 focus:ring-[#3A36DB] bg-white transition-colors text-gray-900 font-medium"
+                          className={`w-full px-3 h-10 text-sm border border-gray-200 rounded-lg outline-none ${isVendor ? 'focus:border-[#fe4a03] focus:ring-[#fe4a03]' : 'focus:border-[#3A36DB] focus:ring-[#3A36DB]'} focus:ring-1 bg-white transition-colors text-gray-900 font-medium`}
                         >
                           <option value="">Select {groupTerm}</option>
                           {(attributeOptionsMap[primaryAttribute._id] || []).map(opt => (
@@ -1217,7 +1213,7 @@ const ProductVariants = forwardRef(({ isUnifiedMode = false, categoryId = null, 
 
                  {/* Variant Images */}
                  <div className="pt-4 border-t border-gray-100">
-                   <h3 className="text-xs font-bold text-[#221B59] mb-3">{groupTerm} Images</h3>
+                   <h3 className="text-xs font-bold text-slate-900 mb-3">{groupTerm} Images</h3>
                    <div className="flex gap-6">
                      <div className="flex flex-col shrink-0">
                        <label className="block text-xs font-medium text-gray-600 mb-1">Main Image <span className="text-red-500">*</span></label>
@@ -1233,7 +1229,7 @@ const ProductVariants = forwardRef(({ isUnifiedMode = false, categoryId = null, 
                          </div>
                        ) : (
                          <label className="flex flex-col items-center justify-center w-24 h-24 border border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
-                           <UploadCloud className="w-5 h-5 text-[#4648d4] mb-1" />
+                           <UploadCloud className={`w-5 h-5 ${isVendor ? 'text-[#fe4a03]' : 'text-[#4648d4]'} mb-1`} />
                            <span className="text-[10px] font-medium text-gray-700">Upload</span>
                            <input type="file" className="hidden" accept="image/*" onChange={(e) => handleMainImageUpload(e.target.files[0])} />
                          </label>
@@ -1273,7 +1269,7 @@ const ProductVariants = forwardRef(({ isUnifiedMode = false, categoryId = null, 
         {/* ========================================================================= */}
         <div className={`xl:col-span-5 ${isUnifiedMode ? 'bg-slate-50/40 border border-slate-100 rounded-xl' : 'bg-white rounded-[20px] shadow-sm border border-gray-100'} p-5 sm:p-6 flex flex-col`}>
            <div className="pb-3 border-b border-gray-100 mb-4 flex items-center justify-between">
-              <h2 className="text-base font-bold text-[#221B59]">Customer Live Preview</h2>
+              <h2 className="text-base font-bold text-slate-900">Customer Live Preview</h2>
               <span className="text-[11px] font-medium text-gray-500">Real-time view</span>
            </div>
 
@@ -1293,7 +1289,7 @@ const ProductVariants = forwardRef(({ isUnifiedMode = false, categoryId = null, 
                        return all[previewImageIndex]?.url || all[0]?.url;
                      })()} 
                      alt="Preview" 
-                     className="w-full h-full object-cover transition-all"
+                     className="w-full h-full object-cover transition-all" 
                      loading="lazy" 
                      decoding="async" 
                    />
@@ -1329,7 +1325,7 @@ const ProductVariants = forwardRef(({ isUnifiedMode = false, categoryId = null, 
                            key={item.id || idx}
                            type="button"
                            onClick={() => setSelectedSharedPreviewIdx(idx)}
-                           className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${isSelected ? 'border-[#4648d4] bg-[#4648d4]/10 text-[#4648d4] shadow-xs' : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'}`}
+                           className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${isSelected ? (isVendor ? 'border-[#fe4a03] bg-[#fe4a03]/10 text-[#fe4a03] shadow-xs' : 'border-[#4648d4] bg-[#4648d4]/10 text-[#4648d4] shadow-xs') : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'}`}
                          >
                            {optName}
                          </button>
@@ -1418,7 +1414,7 @@ const ProductVariants = forwardRef(({ isUnifiedMode = false, categoryId = null, 
                               </button>
                               <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2">
                                 {images.map((_, idx) => (
-                                  <div key={idx} className={`w-2 h-2 rounded-full transition-all ${idx === previewImageIndex ? 'bg-[#4648d4]' : 'bg-gray-300'}`} />
+                                  <div key={idx} className={`w-2 h-2 rounded-full transition-all ${idx === previewImageIndex ? (isVendor ? 'bg-[#fe4a03]' : 'bg-[#4648d4]') : 'bg-gray-300'}`} />
                                 ))}
                               </div>
                             </>
@@ -1464,13 +1460,13 @@ const ProductVariants = forwardRef(({ isUnifiedMode = false, categoryId = null, 
         <div className={`${isUnifiedMode ? 'border-t border-slate-200 pt-6 mt-6 w-full mb-6' : 'bg-white rounded-[20px] shadow-sm border border-gray-100 p-5 sm:p-6 w-full mb-6'}`}>
           <div className="flex justify-between items-center mb-4">
             <div>
-              <h3 className="text-base font-bold text-[#221B59]">Package Sizes & Inventory Table</h3>
+              <h3 className="text-base font-bold text-slate-900">Package Sizes & Inventory Table</h3>
               <p className="text-xs text-gray-500">Configure prices, MRP, stock and SKU for each package size</p>
             </div>
             <button 
               type="button" 
               onClick={addSharedRow}
-              className="text-[11px] font-semibold text-[#4648d4] border border-[#4648d4]/30 hover:bg-[#4648d4]/5 px-3.5 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors uppercase tracking-wide cursor-pointer"
+              className={`text-[11px] font-semibold ${isVendor ? 'text-[#fe4a03] border-[#fe4a03]/30 hover:bg-[#fe4a03]/5' : 'text-[#4648d4] border-[#4648d4]/30 hover:bg-[#4648d4]/5'} px-3.5 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors uppercase tracking-wide cursor-pointer`}
             >
               <Plus size={14} /> Add Another Size
             </button>
@@ -1591,7 +1587,7 @@ const ProductVariants = forwardRef(({ isUnifiedMode = false, categoryId = null, 
                 type="button"
                 onClick={handleSaveSharedVariants}
                 disabled={isSubmitting}
-                className="px-6 py-2 bg-[#4648d4] hover:bg-[#3b3db0] text-white rounded-xl font-bold transition-all disabled:opacity-50 flex items-center gap-2 text-sm shadow-sm shadow-[#4648d4]/20 cursor-pointer"
+                className={`px-6 py-2 ${isVendor ? 'bg-[#fe4a03] hover:bg-[#e03f00] shadow-[#fe4a03]/20' : 'bg-[#4648d4] hover:bg-[#3b3db0] shadow-[#4648d4]/20'} text-white rounded-xl font-bold transition-all disabled:opacity-50 flex items-center gap-2 text-sm shadow-sm cursor-pointer`}
               >
                 {isSubmitting ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Save size={16} />}
                 Save Sizes & Variants
@@ -1605,11 +1601,11 @@ const ProductVariants = forwardRef(({ isUnifiedMode = false, categoryId = null, 
           <div className={`${isUnifiedMode ? 'border-t border-slate-200 pt-6 mt-6 w-full mb-6' : 'bg-white rounded-[20px] shadow-sm border border-gray-100 p-5 sm:p-6 w-full mb-6'}`}>
                  <div>
                    <div className="flex justify-between items-center mb-4">
-                     <h3 className="text-base font-bold text-[#221B59]">Inventory Configurations</h3>
+                     <h3 className="text-base font-bold text-slate-900">Inventory Configurations</h3>
                      <button 
                        type="button" 
                        onClick={addRow}
-                       className="text-[11px] font-semibold text-[#4648d4] border border-[#4648d4]/30 hover:bg-[#4648d4]/5 px-3 py-1.5 rounded-md flex items-center gap-1 transition-colors uppercase tracking-wide cursor-pointer"
+                       className={`text-[11px] font-semibold ${isVendor ? 'text-[#fe4a03] border-[#fe4a03]/30 hover:bg-[#fe4a03]/5' : 'text-[#4648d4] border-[#4648d4]/30 hover:bg-[#4648d4]/5'} px-3 py-1.5 rounded-md flex items-center gap-1 transition-colors uppercase tracking-wide cursor-pointer`}
                      >
                        <Plus size={14} /> {secondaryAddButtonLabel}
                      </button>
@@ -1714,7 +1710,7 @@ const ProductVariants = forwardRef(({ isUnifiedMode = false, categoryId = null, 
                          type="button"
                          onClick={() => handleSave(false)}
                          disabled={isSubmitting}
-                         className="px-6 py-1.5 bg-[#4648d4] hover:bg-[#3b3db0] text-white rounded-lg font-medium transition-colors disabled:opacity-50 flex items-center justify-center min-w-[120px] text-[13px] cursor-pointer"
+                         className={`px-6 py-1.5 ${isVendor ? 'bg-[#fe4a03] hover:bg-[#e03f00]' : 'bg-[#4648d4] hover:bg-[#3b3db0]'} text-white rounded-lg font-medium transition-colors disabled:opacity-50 flex items-center justify-center min-w-[120px] text-[13px] cursor-pointer`}
                        >
                          {isSubmitting ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : `Update ${groupTerm}`}
                        </button>
@@ -1732,7 +1728,7 @@ const ProductVariants = forwardRef(({ isUnifiedMode = false, categoryId = null, 
                          type="button"
                          onClick={() => handleSave(true)}
                          disabled={isSubmitting}
-                         className="px-4 py-1.5 border border-[#4648d4] text-[#4648d4] rounded-lg font-medium hover:bg-[#4648d4]/5 transition-colors disabled:opacity-50 text-[13px] cursor-pointer"
+                         className={`px-4 py-1.5 border ${isVendor ? 'border-[#fe4a03] text-[#fe4a03] hover:bg-[#fe4a03]/5' : 'border-[#4648d4] text-[#4648d4] hover:bg-[#4648d4]/5'} rounded-lg font-medium transition-colors disabled:opacity-50 text-[13px] cursor-pointer`}
                        >
                          Save & Add Another {groupTerm}
                        </button>
@@ -1740,7 +1736,7 @@ const ProductVariants = forwardRef(({ isUnifiedMode = false, categoryId = null, 
                          type="button"
                          onClick={() => handleSave(false)}
                          disabled={isSubmitting}
-                         className="px-6 py-1.5 bg-[#4648d4] hover:bg-[#3b3db0] text-white rounded-lg font-medium transition-colors disabled:opacity-50 flex items-center justify-center min-w-[100px] text-[13px] cursor-pointer"
+                         className={`px-6 py-1.5 ${isVendor ? 'bg-[#fe4a03] hover:bg-[#e03f00]' : 'bg-[#4648d4] hover:bg-[#3b3db0]'} text-white rounded-lg font-medium transition-colors disabled:opacity-50 flex items-center justify-center min-w-[100px] text-[13px] cursor-pointer`}
                        >
                          {isSubmitting ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : `Save ${groupTerm}`}
                        </button>
@@ -1757,11 +1753,11 @@ const ProductVariants = forwardRef(({ isUnifiedMode = false, categoryId = null, 
       {!isSharedImageMode && (
         <div className={`${isUnifiedMode ? 'border-t border-slate-200 pt-6 mt-6 w-full' : 'bg-white rounded-[20px] shadow-sm border border-gray-100 p-5 sm:p-6 w-full'}`}>
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-base font-bold text-[#221B59]">Saved {groupTerm}s</h2>
+            <h2 className="text-base font-bold text-slate-900">Saved {groupTerm}s</h2>
             {!isUnifiedMode && (
             <div className="flex gap-4">
-              <span className="text-xs font-semibold text-[#4648d4] bg-[#4648d4]/10 px-3 py-1 rounded-full">{groupTerm}s: {groupedVariants.length}</span>
-              <span className="text-xs font-semibold text-[#4648d4] bg-[#4648d4]/10 px-3 py-1 rounded-full">Variants: {variants.length}</span>
+              <span className={`text-xs font-semibold ${isVendor ? 'text-[#fe4a03] bg-[#fe4a03]/10' : 'text-[#4648d4] bg-[#4648d4]/10'} px-3 py-1 rounded-full`}>{groupTerm}s: {groupedVariants.length}</span>
+              <span className={`text-xs font-semibold ${isVendor ? 'text-[#fe4a03] bg-[#fe4a03]/10' : 'text-[#4648d4] bg-[#4648d4]/10'} px-3 py-1 rounded-full`}>Variants: {variants.length}</span>
             </div>
             )}
           </div>
@@ -1791,7 +1787,7 @@ const ProductVariants = forwardRef(({ isUnifiedMode = false, categoryId = null, 
                      const isEditing = editingPrimaryOption === group.primaryOption;
                      
                      return (
-                       <tr key={group.primaryOption || index} className={`hover:bg-gray-50/50 transition-colors ${isEditing ? 'bg-[#4648d4]/5' : ''}`}>
+                       <tr key={group.primaryOption || index} className={`hover:bg-gray-50/50 transition-colors ${isEditing ? (isVendor ? 'bg-[#fe4a03]/5' : 'bg-[#4648d4]/5') : ''}`}>
                          <td className="p-3">
                            <div className="flex items-center gap-3">
                               <div className="w-10 h-10 rounded-md overflow-hidden bg-gray-100 flex-shrink-0">
@@ -1813,7 +1809,7 @@ const ProductVariants = forwardRef(({ isUnifiedMode = false, categoryId = null, 
                            <button 
                              onClick={() => handleEditGroup(group)}
                              disabled={isEditing}
-                             className={`p-1.5 rounded-md transition-colors ${isEditing ? 'text-[#4648d4] bg-[#4648d4]/10 cursor-not-allowed' : 'text-gray-500 hover:text-[#4648d4] hover:bg-[#4648d4]/10 cursor-pointer'}`}
+                             className={`p-1.5 rounded-md transition-colors ${isEditing ? (isVendor ? 'text-[#fe4a03] bg-[#fe4a03]/10 cursor-not-allowed' : 'text-[#4648d4] bg-[#4648d4]/10 cursor-not-allowed') : (isVendor ? 'text-gray-500 hover:text-[#fe4a03] hover:bg-[#fe4a03]/10 cursor-pointer' : 'text-gray-500 hover:text-[#4648d4] hover:bg-[#4648d4]/10 cursor-pointer')}`}
                              title="Edit"
                            >
                              <Edit2 size={16} />

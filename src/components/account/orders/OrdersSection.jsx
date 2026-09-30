@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Package, Loader2, Filter, ChevronRight, X, CheckCircle2, Truck, Clock, ShoppingBag, ShieldCheck, RefreshCw, Star } from 'lucide-react';
+import { Package, Loader2, Filter, ChevronRight, X, XCircle, CheckCircle2, Truck, Clock, ShoppingBag, ShieldCheck, RefreshCw, Star } from 'lucide-react';
 import axios from 'axios';
 import { useAuth } from '../../../context/AuthContext';
 import ReturnExchangeButton from './returnexchange/ReturnExchangeButton';
@@ -244,21 +244,22 @@ const OrdersSection = () => {
             const brandName = item.product?.brand?.name;
             const statusDisplay = order.status.charAt(0).toUpperCase() + order.status.slice(1);
             
-            const activeRequest = returnRequests.find(req => 
-              (req.order?._id || req.order) === order._id && 
-              (req.product?._id || req.product) === (item.product?._id || item.product) &&
-              (req.originalVariant?._id || req.originalVariant) === (item.variant?._id || item.variant) &&
-              !['rejected', 'refunded', 'exchanged'].includes(req.status)
+            // Find all return requests for this specific item in the order, sorted by newest first
+            const itemRequests = returnRequests
+              .filter(req => 
+                (req.order?._id || req.order) === order._id && 
+                (req.product?._id || req.product) === (item.product?._id || item.product)
+              )
+              .sort((a, b) => new Date(b.updatedAt || b.createdAt || 0) - new Date(a.updatedAt || a.createdAt || 0));
+
+            const latestRequest = itemRequests[0] || null;
+
+            const isRefundCompleted = latestRequest && (
+              latestRequest.status === 'refunded' || 
+              (latestRequest.type === 'return' && latestRequest.status === 'completed')
             );
             
-            const completedRequest = returnRequests.find(req => 
-              (req.order?._id || req.order) === order._id && 
-              (req.product?._id || req.product) === (item.product?._id || item.product) &&
-              (req.originalVariant?._id || req.originalVariant) === (item.variant?._id || item.variant) &&
-              ['refunded', 'exchanged'].includes(req.status)
-            );
-            
-            const eligibility = getReturnEligibility(order, item, activeRequest);
+            const eligibility = getReturnEligibility(order, item, latestRequest);
             const deliveryDate = order.deliveredAt || order.updatedAt || order.createdAt;
 
             const unitPrice = Number(item?.sellingPrice ?? item?.price ?? item?.mrp ?? item?.variant?.price ?? 0) || 0;
@@ -349,21 +350,52 @@ const OrdersSection = () => {
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      {/* Status Tag Pill Badge above title */}
+                      {/* Status Tag Pill Badge above title - Always shows the latest updated status */}
                       <div className="mb-2">
-                        {activeRequest ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider bg-[#FFF5ED] text-[#FD7100] border border-orange-200">
-                            <RefreshCw className="w-3 h-3 animate-spin-slow text-[#FD7100]" />
-                            {activeRequest.type === 'exchange' ? 'Exchange' : 'Return'} Requested
-                          </span>
-                        ) : completedRequest ? (
-                          <span className={`inline-flex items-center px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider border ${
-                            completedRequest.status === 'exchanged' 
-                              ? 'bg-purple-50 text-purple-700 border-purple-300' 
-                              : 'bg-green-50 text-green-700 border-green-300'
-                          }`}>
-                            {completedRequest.status === 'exchanged' ? 'Exchanged' : 'Returned & Refunded'}
-                          </span>
+                        {latestRequest ? (
+                          <div className="flex flex-wrap items-center gap-2">
+                            {latestRequest.status === 'rejected' ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider bg-rose-50 text-rose-700 border border-rose-300">
+                                <XCircle className="w-3.5 h-3.5 text-rose-600" />
+                                {latestRequest.type === 'exchange' ? 'Exchange Rejected' : 'Return Rejected'}
+                              </span>
+                            ) : latestRequest.status === 'completed' || latestRequest.status === 'exchanged' ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider bg-purple-50 text-purple-700 border border-purple-300">
+                                <CheckCircle2 className="w-3.5 h-3.5 text-purple-600" />
+                                {latestRequest.type === 'exchange' ? 'Exchange Completed' : 'Return Completed'}
+                              </span>
+                            ) : latestRequest.status === 'refunded' ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider bg-green-50 text-green-700 border border-green-300">
+                                <CheckCircle2 className="w-3.5 h-3.5 text-green-600" />
+                                Returned & Refunded
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider bg-[#FFF5ED] text-[#FD7100] border border-orange-200">
+                                <RefreshCw className="w-3.5 h-3.5 animate-spin-slow text-[#FD7100]" />
+                                {latestRequest.status === 'approved' 
+                                  ? `${latestRequest.type === 'exchange' ? 'Exchange' : 'Return'} Approved`
+                                  : latestRequest.status === 'pickup_scheduled'
+                                    ? 'Pickup Scheduled'
+                                    : latestRequest.status === 'pickup_replace' || latestRequest.status === 'replace_and_exchange'
+                                      ? 'Replace and Exchange'
+                                      : latestRequest.status === 'received'
+                                        ? 'Item Received at Facility'
+                                        : `${latestRequest.type === 'exchange' ? 'Exchange' : 'Return'} Requested`
+                                }
+                              </span>
+                            )}
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/account/orders/${order._id}`, { state: { scrollToTracking: true } });
+                              }}
+                              className="text-[11px] font-bold text-gray-500 hover:text-[#FD7100] flex items-center gap-0.5 transition-colors cursor-pointer"
+                            >
+                              <span>Track</span>
+                              <ChevronRight className="w-3 h-3" />
+                            </button>
+                          </div>
                         ) : effStatus === 'delivered' ? (
                           <span className="inline-flex items-center px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider bg-green-50 text-green-700 border border-green-300">
                             Delivered
@@ -437,7 +469,7 @@ const OrdersSection = () => {
                       </button>
                     )}
 
-                    {effStatus === 'delivered' && !completedRequest && (
+                    {effStatus === 'delivered' && !isRefundCompleted && (
                       <>
                         <ReturnExchangeButton 
                           orderId={order._id} 
