@@ -299,14 +299,17 @@ export default function VendorOrders() {
       align: "center",
       headerAlign: "center",
       render: (row) => {
-        const method = row.paymentMethod || "cod";
-        let longText = "Cash on Delivery";
-        if (method === "upi" || method === "card") longText = "Online Payment";
+        const method = (row.paymentMethod || "").toLowerCase();
+        const isRazorpay = method === "razorpay" || Boolean(row.razorpayPaymentId) || (method !== "cod" && method !== "cash" && method !== "");
+        const displayLabel = isRazorpay ? "Razorpay" : "Cash on Delivery";
+        const badgeClasses = isRazorpay
+          ? "bg-blue-50 text-blue-700 border border-blue-200"
+          : "bg-orange-50 text-[#fe4a03] font-medium border border-orange-100";
 
         return (
           <div className="flex items-center justify-center">
-            <span className="text-xs px-2.5 py-1 rounded-full bg-orange-50 text-[#fe4a03] font-medium border border-orange-100 whitespace-nowrap">
-              {longText}
+            <span className={`text-xs px-2.5 py-1 rounded-full font-medium whitespace-nowrap ${badgeClasses}`}>
+              {displayLabel}
             </span>
           </div>
         );
@@ -450,9 +453,8 @@ export default function VendorOrders() {
                 className="px-3 py-2 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-[#fe4a03]/20 text-xs text-slate-700 cursor-pointer w-[150px] font-medium shadow-2xs"
               >
                 <option value="">All Methods</option>
+                <option value="razorpay">Razorpay</option>
                 <option value="cod">Cash on Delivery</option>
-                <option value="upi">UPI / Online</option>
-                <option value="card">Credit/Debit Card</option>
               </select>
             </div>
 

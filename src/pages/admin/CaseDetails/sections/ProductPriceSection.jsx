@@ -340,7 +340,11 @@ const ProductPriceSection = ({
                           <span className="text-emerald-700 font-black text-base font-mono">₹{Number(computedGrandTotal || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span>
                         </div>
                         <div className="text-[10px] text-slate-400 font-medium">
-                          Paid • {formatDate(order.createdAt)} • {order.paymentMethod?.toUpperCase() || 'ONLINE'}
+                          Paid • {formatDate(order.createdAt)} • {(() => {
+                            const method = (order?.paymentMethod || "").toLowerCase();
+                            const isRazorpay = method === "razorpay" || Boolean(order?.razorpayPaymentId) || (method !== "cod" && method !== "cash" && method !== "");
+                            return isRazorpay ? "Razorpay" : "Cash on Delivery";
+                          })()}
                         </div>
                       </div>
 

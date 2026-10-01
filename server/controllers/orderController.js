@@ -41,7 +41,26 @@ export const getAllOrders = async (req, res) => {
 
     if (status) query.status = status;
     if (paymentStatus) query.paymentStatus = paymentStatus;
-    if (paymentMethod) query.paymentMethod = paymentMethod;
+    if (paymentMethod) {
+      const pm = paymentMethod.trim().toLowerCase();
+      if (pm === "razorpay") {
+        query.$or = [
+          { paymentMethod: "razorpay" },
+          { paymentMethod: "upi" },
+          { paymentMethod: "card" },
+          { razorpayPaymentId: { $exists: true, $ne: null, $ne: "" } }
+        ];
+      } else if (pm === "cod") {
+        query.$or = [
+          { paymentMethod: "cod" },
+          { paymentMethod: "cash" },
+          { paymentMethod: null },
+          { paymentMethod: { $exists: false } }
+        ];
+      } else {
+        query.paymentMethod = paymentMethod;
+      }
+    }
     if (startDate || endDate) {
       query.createdAt = {};
       if (startDate) query.createdAt.$gte = new Date(startDate);
@@ -159,7 +178,12 @@ export const getUserOrders = async (req, res) => {
     const { page = 1, limit = 10, status, time } = req.query;
 
     const query = { user: userId };
-    if (status && status !== 'all') query.status = status;
+    if (status && status !== 'all') {
+      query.status = status;
+    } else {
+      // Exclude cancelled orders from "All Orders" view
+      query.status = { $ne: 'cancelled' };
+    }
 
     if (time && time !== 'anytime') {
       const now = new Date();
@@ -976,6 +1000,7 @@ export const cancelOrder = async (req, res) => {
 
     const Variant = (await import("../models/variant.js")).default;
     for (const item of order.items) {
+      item.status = "cancelled";
       if (item.variant) {
         await Variant.findByIdAndUpdate(item.variant, {
           $inc: { stock: item.quantity },

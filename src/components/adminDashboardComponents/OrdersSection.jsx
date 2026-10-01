@@ -279,13 +279,16 @@ const OrdersSection = () => {
       align: 'center',
       headerAlign: 'center',
       render: (row) => {
-        const method = row.paymentMethod || 'cod';
-        let longText = 'Cash on Delivery';
-        if (method === 'upi' || method === 'card') { longText = 'Online Payment'; } 
+        const method = (row.paymentMethod || '').toLowerCase();
+        const isRazorpay = method === 'razorpay' || Boolean(row.razorpayPaymentId) || (method !== 'cod' && method !== 'cash' && method !== '');
+        const displayLabel = isRazorpay ? 'Razorpay' : 'Cash on Delivery';
+        const badgeClasses = isRazorpay 
+          ? 'bg-blue-50 text-blue-700 border border-blue-200' 
+          : 'bg-purple-50 text-purple-700 border border-purple-200';
         
         return (
           <div className="flex items-center justify-center">
-            <span className="text-xs px-2.5 py-1 rounded-full bg-purple-50 text-purple-600 font-medium whitespace-nowrap">{longText}</span>
+            <span className={`text-xs px-2.5 py-1 rounded-full font-medium whitespace-nowrap ${badgeClasses}`}>{displayLabel}</span>
           </div>
         );
       }
@@ -416,9 +419,8 @@ const OrdersSection = () => {
                   className="px-3 py-2 bg-white border border-gray-200 rounded-lg outline-none focus:ring-1 focus:ring-[#4648d4] text-[13px] text-gray-700 cursor-pointer w-[160px]"
                 >
                   <option value="">All Methods</option>
+                  <option value="razorpay">Razorpay</option>
                   <option value="cod">Cash on Delivery</option>
-                  <option value="upi">UPI / Online</option>
-                  <option value="card">Credit/Debit Card</option>
                 </select>
               </div>
 

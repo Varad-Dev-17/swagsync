@@ -71,7 +71,9 @@ const CaseSidebarCards = ({
   const orderItems = Array.isArray(order?.items) ? order.items : [];
   const itemsCount = orderItems.length || 1;
   const deliveryFee = order?.shippingAmount !== undefined ? order.shippingAmount : (isReturnView ? 49 : 0);
-  const paymentMethod = (order?.paymentMethod || (typeof returnRequest?.order === "object" && returnRequest?.order?.paymentMethod) || "COD").toUpperCase();
+  const rawMethod = (order?.paymentMethod || (typeof returnRequest?.order === "object" && returnRequest?.order?.paymentMethod) || "").toLowerCase();
+  const isRazorpay = rawMethod === "razorpay" || Boolean(order?.razorpayPaymentId) || (rawMethod !== "cod" && rawMethod !== "cash" && rawMethod !== "");
+  const paymentMethod = isRazorpay ? "Razorpay" : "Cash on Delivery";
 
   // Return view vs Order view financials
   const itemPrice = isReturnView

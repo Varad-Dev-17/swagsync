@@ -1886,7 +1886,24 @@ export const getVendorOrders = async (req, res) => {
     }
 
     if (paymentMethod && paymentMethod.trim()) {
-      orderMatchQuery.paymentMethod = paymentMethod.trim();
+      const pm = paymentMethod.trim().toLowerCase();
+      if (pm === "razorpay") {
+        orderMatchQuery.$or = [
+          { paymentMethod: "razorpay" },
+          { paymentMethod: "upi" },
+          { paymentMethod: "card" },
+          { razorpayPaymentId: { $exists: true, $ne: null, $ne: "" } }
+        ];
+      } else if (pm === "cod") {
+        orderMatchQuery.$or = [
+          { paymentMethod: "cod" },
+          { paymentMethod: "cash" },
+          { paymentMethod: null },
+          { paymentMethod: { $exists: false } }
+        ];
+      } else {
+        orderMatchQuery.paymentMethod = paymentMethod.trim();
+      }
     }
 
     if (startDate || endDate) {

@@ -166,7 +166,7 @@ const OrderDetails = () => {
               const eligibility = getReturnEligibility(order, item, latestRequest);
               const itemFin = calculateItemPaid(item, order);
 
-              const currentItemStatus = (item.status || order.status || "pending").toLowerCase();
+              const currentItemStatus = (order.status === "cancelled" ? "cancelled" : (item.status || order.status || "pending")).toLowerCase();
               const itemStatusDisplay = statusDisplayMap[currentItemStatus] || (currentItemStatus ? (currentItemStatus.charAt(0).toUpperCase() + currentItemStatus.slice(1).replace(/_/g, " ")) : "");
               const statusDotColor = currentItemStatus === "delayed" ? "bg-amber-500" : currentItemStatus === "cancelled" ? "bg-rose-500" : "bg-emerald-500";
               const statusTextColor = currentItemStatus === "delayed" ? "text-amber-800 font-extrabold" : currentItemStatus === "cancelled" ? "text-rose-700 font-extrabold" : "text-slate-700";
@@ -241,9 +241,25 @@ const OrderDetails = () => {
 
                     {/* Price & Actions Right Column */}
                     <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-3 border-t sm:border-t-0 pt-3 sm:pt-0 border-gray-100 shrink-0">
-                        <div className="text-sm font-extrabold text-slate-700">
-                          Paid: ₹{itemFin.netPaid.toLocaleString("en-IN", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
-                        </div>
+                      <div className="text-sm font-extrabold text-slate-700">
+                        {(() => {
+                          const method = (order?.paymentMethod || "").toLowerCase();
+                          const isRazorpay = method === "razorpay" || Boolean(order?.razorpayPaymentId) || (method !== "cod" && method !== "cash" && method !== "");
+                          const itemDelivered = (item.status || order.status || "").toLowerCase() === "delivered";
+                          const isItemCancelled = (item.status || order.status || "").toLowerCase() === "cancelled";
+
+                          if (isRazorpay) {
+                            return <span>Paid: ₹{itemFin.netPaid.toLocaleString("en-IN", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}</span>;
+                          }
+                          if (isItemCancelled) {
+                            return <span className="text-rose-600">Cancelled: ₹{itemFin.netPaid.toLocaleString("en-IN", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}</span>;
+                          }
+                          if (itemDelivered) {
+                            return <span className="text-emerald-700">COD Paid: ₹{itemFin.netPaid.toLocaleString("en-IN", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}</span>;
+                          }
+                          return <span className="text-amber-700">Pending: ₹{itemFin.netPaid.toLocaleString("en-IN", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}</span>;
+                        })()}
+                      </div>
 
                       <div className="shrink-0">
                         <ReturnExchangeButton 
@@ -363,7 +379,19 @@ const OrderDetails = () => {
                 </div>
                 
                 <div className="flex justify-between items-center pt-0.5">
-                  <h3 className="font-extrabold text-[15px] text-slate-700">Total Amount Paid</h3>
+                  <h3 className="font-extrabold text-[15px] text-slate-700">
+                    {(() => {
+                      const method = (order?.paymentMethod || "").toLowerCase();
+                      const isRazorpay = method === "razorpay" || Boolean(order?.razorpayPaymentId) || (method !== "cod" && method !== "cash" && method !== "");
+                      const isDelivered = (order?.status || "").toLowerCase() === "delivered";
+                      const isCancelled = (order?.status || "").toLowerCase() === "cancelled";
+
+                      if (isRazorpay) return "Total Amount Paid";
+                      if (isCancelled) return "Total Amount (Cancelled)";
+                      if (isDelivered) return "Total Amount (COD Paid)";
+                      return "Total Amount to Pay (Pending)";
+                    })()}
+                  </h3>
                   <p className="font-black text-[18px] text-[#FD7100] font-mono">₹{totalPaid.toLocaleString('en-IN')}</p>
                 </div>
                 {totalSavings > 0 && (
@@ -376,10 +404,54 @@ const OrderDetails = () => {
           })()}
           
           <div className="bg-gray-50 rounded-none p-3 flex items-center gap-3 text-[13px] text-gray-700 border border-gray-100 font-medium">
-            <div className="bg-white px-2 py-1 rounded-none text-[10px] font-extrabold text-gray-500 border border-gray-200 uppercase tracking-wider">
-              {order.paymentMethod === "cod" ? "COD" : "UPI"}
-            </div>
-            <span>Paid by {order.paymentMethod === "cod" ? "Cash on Delivery" : "Online Payment"}</span>
+            {(() => {
+              const method = (order?.paymentMethod || "").toLowerCase();
+              const isRazorpay = method === "razorpay" || Boolean(order?.razorpayPaymentId) || (method !== "cod" && method !== "cash" && method !== "");
+              const isDelivered = (order?.status || "").toLowerCase() === "delivered";
+              const isCancelled = (order?.status || "").toLowerCase() === "cancelled";
+
+              if (isRazorpay) {
+                return (
+                  <>
+                    <div className="bg-blue-50 text-blue-700 border border-blue-200 px-2 py-1 text-[10px] font-extrabold uppercase tracking-wider">
+                      RAZORPAY
+                    </div>
+                    <span className="font-semibold text-slate-700">Paid by Razorpay</span>
+                  </>
+                );
+              }
+
+              if (isCancelled) {
+                return (
+                  <>
+                    <div className="bg-rose-50 text-rose-700 border border-rose-200 px-2 py-1 text-[10px] font-extrabold uppercase tracking-wider">
+                      COD
+                    </div>
+                    <span className="font-semibold text-slate-600">Cash on Delivery (Cancelled)</span>
+                  </>
+                );
+              }
+
+              if (isDelivered) {
+                return (
+                  <>
+                    <div className="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-1 text-[10px] font-extrabold uppercase tracking-wider">
+                      COD PAID
+                    </div>
+                    <span className="font-semibold text-emerald-700">COD Paid</span>
+                  </>
+                );
+              }
+
+              return (
+                <>
+                  <div className="bg-amber-50 text-amber-700 border border-amber-200 px-2 py-1 text-[10px] font-extrabold uppercase tracking-wider">
+                    COD
+                  </div>
+                  <span className="font-semibold text-amber-800">Pending (Pay Cash on Delivery)</span>
+                </>
+              );
+            })()}
           </div>
           <p className="text-[11px] text-gray-400 mt-4 mb-3 font-medium">Item sold by: SwagSync Retail</p>
           <button className="w-full py-2.5 border border-gray-200 rounded-none text-[13px] font-bold text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer">

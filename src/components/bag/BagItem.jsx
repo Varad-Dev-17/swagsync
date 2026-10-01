@@ -1,14 +1,10 @@
-import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Trash2, ChevronDown, X, Heart } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { Trash2, Plus, Minus, Heart } from "lucide-react";
+import { motion } from "framer-motion";
 import { useWishlist } from "../../context/WishlistContext";
 import toast from "react-hot-toast";
 
 const BagItem = ({ item, isSelected, toggleSelection, updateQuantity, removeItem }) => {
-  const [isQtyModalOpen, setIsQtyModalOpen] = useState(false);
-  const [tempQty, setTempQty] = useState(item.quantity);
-
   const { addToWishlist } = useWishlist();
 
   // Format price helper
@@ -22,14 +18,6 @@ const BagItem = ({ item, isSelected, toggleSelection, updateQuantity, removeItem
 
   const isOutOfStock = item.stock < 1;
   const maxQty = Math.min(10, item.stock || 10);
-  const qtyOptions = Array.from({ length: maxQty }, (_, i) => i + 1);
-
-  const handleDone = () => {
-    if (tempQty !== item.quantity) {
-      updateQuantity(item._id, tempQty);
-    }
-    setIsQtyModalOpen(false);
-  };
 
   const hasDiscount = item.mrp > item.price;
   const discountAmount = item.mrp - item.price;
@@ -120,16 +108,41 @@ const BagItem = ({ item, isSelected, toggleSelection, updateQuantity, removeItem
                 </span>
                 
                 {!isOutOfStock ? (
-                  <button
-                    onClick={() => {
-                      setTempQty(item.quantity);
-                      setIsQtyModalOpen(true);
-                    }}
-                    className="flex items-center gap-1.5 bg-[#f5f5f6] hover:bg-gray-200 rounded px-2.5 py-1 text-[13px] font-bold text-[#282c3f] transition-colors cursor-pointer"
-                  >
-                    Qty: {item.quantity}
-                    <ChevronDown size={14} className="text-gray-500" />
-                  </button>
+                  <div className="flex items-center bg-[#f5f5f6] border border-gray-200/90 rounded px-1.5 py-0.5 gap-1 shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (item.quantity > 1) {
+                          updateQuantity(item._id, item.quantity - 1);
+                        }
+                      }}
+                      disabled={item.quantity <= 1}
+                      className="w-5 h-5 flex items-center justify-center text-[#282c3f] hover:text-[#FD7100] hover:bg-gray-200 rounded transition-colors disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-[#282c3f] disabled:cursor-not-allowed cursor-pointer"
+                      title="Decrease quantity"
+                    >
+                      <Minus size={12} strokeWidth={2.5} />
+                    </button>
+
+                    <span className="text-[13px] font-bold text-[#282c3f] px-1 select-none whitespace-nowrap">
+                      Qty: {item.quantity}
+                    </span>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (item.quantity < maxQty) {
+                          updateQuantity(item._id, item.quantity + 1);
+                        } else {
+                          toast.error(`Maximum available stock reached (${maxQty})`);
+                        }
+                      }}
+                      disabled={item.quantity >= maxQty}
+                      className="w-5 h-5 flex items-center justify-center text-[#282c3f] hover:text-[#FD7100] hover:bg-gray-200 rounded transition-colors disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-[#282c3f] disabled:cursor-not-allowed cursor-pointer"
+                      title="Increase quantity"
+                    >
+                      <Plus size={12} strokeWidth={2.5} />
+                    </button>
+                  </div>
                 ) : (
                   <span className="text-red-500 font-bold text-[13px] px-2 py-1 bg-red-50 rounded">Out of Stock</span>
                 )}
@@ -160,63 +173,6 @@ const BagItem = ({ item, isSelected, toggleSelection, updateQuantity, removeItem
           </div>
         </div>
       </motion.div>
-
-      {/* Quantity Selection Modal */}
-      <AnimatePresence>
-        {isQtyModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center">
-            {/* Backdrop */}
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsQtyModalOpen(false)}
-              className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-            />
-            
-            {/* Modal Content */}
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="relative bg-white rounded-[12px] p-6 w-[340px] max-w-[90%] shadow-2xl z-10"
-            >
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-[16px] font-bold text-[#282c3f]">Select Quantity</h3>
-                <button 
-                  onClick={() => setIsQtyModalOpen(false)}
-                  className="text-gray-400 hover:text-[#111827] transition-colors"
-                >
-                  <X size={20} strokeWidth={2} />
-                </button>
-              </div>
-
-              <div className="grid grid-cols-5 gap-3 mb-6">
-                {qtyOptions.map(num => (
-                  <button 
-                    key={num}
-                    onClick={() => setTempQty(num)}
-                    className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-[15px] transition-colors border-2 ${
-                      tempQty === num 
-                        ? 'border-[#FD7100] text-[#FD7100] bg-[#FD7100]/5' 
-                        : 'border-gray-200 text-[#282c3f] hover:border-[#FD7100]'
-                    }`}
-                  >
-                    {num}
-                  </button>
-                ))}
-              </div>
-
-              <button 
-                onClick={handleDone}
-                className="w-full bg-[#FD7100] text-white font-bold text-[14px] py-3.5 rounded-[4px] hover:bg-[#E06400] transition-colors"
-              >
-                DONE
-              </button>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
     </>
   );
 };

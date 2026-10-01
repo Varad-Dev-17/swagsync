@@ -111,6 +111,18 @@ const OrdersSection = () => {
   const orderItems = [];
   orders.forEach(order => {
     order.items.forEach(item => {
+      const isCancelled = (order.status === 'cancelled' || item.status === 'cancelled');
+
+      // Do not show cancelled orders under 'All Orders'
+      if (activeFilterStatus === 'all' && isCancelled) {
+        return;
+      }
+
+      // If 'cancelled' tab is selected, only show cancelled items
+      if (activeFilterStatus === 'cancelled' && !isCancelled) {
+        return;
+      }
+
       const returnRequest = returnRequests.find(req => 
         (req.order?._id || req.order) === order._id && 
         (req.product?._id || req.product) === (item.product?._id || item.product) &&
@@ -274,7 +286,7 @@ const OrdersSection = () => {
               : 0;
             const itemNetPaid = Math.max(0, grossTotal - proportionalDiscount);
             const itemGst = Number(item?.gstAmount || 0) * itemQty;
-            const effStatus = (item.status || order.status || 'pending').toLowerCase();
+            const effStatus = (order.status === 'cancelled' ? 'cancelled' : (item.status || order.status || 'pending')).toLowerCase();
             const prodId = String(item.product?._id || item.product || "");
             const varId = String(typeof item.variant === 'object' ? (item.variant?._id || '') : (item.variant || ''));
             const existingRev = varId ? (myReviews[`${prodId}_${varId}`] || null) : (myReviews[prodId] || null);
@@ -408,6 +420,10 @@ const OrdersSection = () => {
                           <span className="inline-flex items-center px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider bg-purple-50 text-purple-700 border border-purple-300">
                             Shipped
                           </span>
+                        ) : effStatus === 'cancelled' ? (
+                          <span className="inline-flex items-center px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider bg-red-50 text-red-700 border border-red-300">
+                            Cancelled
+                          </span>
                         ) : effStatus === 'delayed' ? (
                           <span className="inline-flex items-center px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider bg-amber-50 text-amber-800 border border-amber-300">
                             ⚠️ Delayed
@@ -460,7 +476,7 @@ const OrdersSection = () => {
 
                   {/* Right Actions Column - Button Stack */}
                   <div className="w-full sm:w-52 shrink-0 flex flex-col gap-2.5 justify-center border-t sm:border-t-0 pt-4 sm:pt-0 border-gray-100">
-                    {(effStatus === 'pending' || effStatus === 'processing' || effStatus === 'packed') && (
+                    {effStatus !== 'cancelled' && order.status !== 'cancelled' && (effStatus === 'pending' || effStatus === 'processing' || effStatus === 'packed') && (
                       <button
                         onClick={(e) => handleCancelOrder(e, order._id)}
                         className="w-full py-2 px-4 text-xs font-bold uppercase tracking-wider text-red-600 border border-red-300 hover:bg-red-50 transition-colors cursor-pointer"

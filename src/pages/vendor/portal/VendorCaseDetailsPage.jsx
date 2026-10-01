@@ -1127,8 +1127,12 @@ export default function VendorCaseDetailsPage() {
             <div className="space-y-2 text-xs">
               <div className="flex justify-between items-center text-slate-600">
                 <span>Payment Mode:</span>
-                <span className="font-bold text-slate-900 uppercase">
-                  {orderData?.paymentMethod || "COD"}
+                <span className="font-bold text-slate-900">
+                  {(() => {
+                    const method = (orderData?.paymentMethod || "").toLowerCase();
+                    const isRazorpay = method === "razorpay" || Boolean(orderData?.razorpayPaymentId) || (method !== "cod" && method !== "cash" && method !== "");
+                    return isRazorpay ? "Razorpay" : "Cash on Delivery";
+                  })()}
                 </span>
               </div>
               <div className="flex justify-between items-center text-slate-600">
