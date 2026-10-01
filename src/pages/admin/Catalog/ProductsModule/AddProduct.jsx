@@ -81,6 +81,7 @@ const AddProduct = () => {
       }
 
       toast.success('Product and variants saved successfully!');
+      try { sessionStorage.removeItem('swagsync_product_draft_admin'); } catch (_) {}
       setTimeout(() => {
         window.location.href = '/admin/products';
       }, 500);
@@ -132,7 +133,10 @@ const AddProduct = () => {
               <div className="flex justify-center items-center gap-3">
                 <button
                   type="button"
-                  onClick={() => navigate('/admin/products')}
+                  onClick={() => {
+                    try { sessionStorage.removeItem('swagsync_product_draft_admin'); } catch (_) {}
+                    navigate('/admin/products');
+                  }}
                   className="h-10 px-6 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors shadow-sm"
                 >
                   Cancel

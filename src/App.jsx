@@ -87,10 +87,14 @@ const AdminVendorDetailsPage = lazy(() => import("./pages/admin/Vendors/AdminVen
 // Vendor Portal Pages
 const VendorRegister = lazy(() => import("./pages/vendor/VendorRegister"));
 const VendorLogin = lazy(() => import("./pages/vendor/VendorLogin"));
+const VendorForgotPassword = lazy(() => import("./pages/vendor/VendorForgotPassword"));
 const VendorLayout = lazy(() => import("./layouts/VendorLayout"));
 const VendorDashboard = lazy(() => import("./pages/vendor/portal/VendorDashboard"));
 const VendorStore = lazy(() => import("./pages/vendor/portal/VendorStore"));
 const VendorCatalog = lazy(() => import("./pages/vendor/portal/VendorCatalog"));
+const VendorAddCategory = lazy(() => import("./pages/vendor/portal/catalog/VendorAddCategory"));
+const VendorAddBrand = lazy(() => import("./pages/vendor/portal/catalog/VendorAddBrand"));
+const VendorAddAttribute = lazy(() => import("./pages/vendor/portal/catalog/VendorAddAttribute"));
 const VendorProductsList = lazy(() => import("./pages/vendor/portal/products/VendorProductsList"));
 const VendorAddProduct = lazy(() => import("./pages/vendor/portal/products/VendorAddProduct"));
 const VendorEditProduct = lazy(() => import("./pages/vendor/portal/products/VendorEditProduct"));
@@ -181,6 +185,7 @@ const AppRoutes = () => {
       {/* Vendor Routes */}
       <Route path="/vendor/register" element={<VendorRegister />} />
       <Route path="/vendor/login" element={<VendorLogin />} />
+      <Route path="/vendor/forgot-password" element={<VendorForgotPassword />} />
       {/* Vendor Portal (Phase 2) */}
       <Route
         path="/vendor/portal"
@@ -194,6 +199,9 @@ const AppRoutes = () => {
         <Route path="dashboard" element={<Navigate to="/vendor/portal" replace />} />
         <Route path="store" element={<VendorStore />} />
         <Route path="catalog" element={<VendorCatalog />} />
+        <Route path="catalog/categories/add" element={<VendorAddCategory />} />
+        <Route path="catalog/brands/add" element={<VendorAddBrand />} />
+        <Route path="catalog/attributes/add" element={<VendorAddAttribute />} />
         <Route path="products">
           <Route index element={<VendorProductsList />} />
           <Route path="add" element={<VendorAddProduct />} />

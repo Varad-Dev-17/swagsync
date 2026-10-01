@@ -293,6 +293,59 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const sendVendorForgotPasswordCode = async (email) => {
+    try {
+      const response = await api.post("/vendor/send-forgot-password-code", {
+        email,
+      });
+      return {
+        success: true,
+        message: response.data.message,
+        code: response.data.code,
+      };
+    } catch (err) {
+      return {
+        success: false,
+        message: err.response?.data?.message || "Failed to send reset code",
+      };
+    }
+  };
+
+  const verifyVendorForgotPasswordCode = async (email, providedCode, newPassword) => {
+    try {
+      const response = await api.post("/vendor/verify-forgot-password-code", {
+        email,
+        providedCode,
+        newPassword,
+      });
+      return {
+        success: true,
+        message: response.data.message,
+      };
+    } catch (err) {
+      return {
+        success: false,
+        message: err.response?.data?.message || "Failed to reset password",
+      };
+    }
+  };
+
+  const changeVendorPassword = async (oldPassword, newPassword) => {
+    try {
+      const response = await api.patch(
+        "/vendor/change-password",
+        { oldPassword, newPassword },
+        getAuthHeaders()
+      );
+      return { success: true, message: response.data.message };
+    } catch (err) {
+      return {
+        success: false,
+        message: err.response?.data?.message || "Failed to change password",
+      };
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -300,6 +353,9 @@ export const AuthProvider = ({ children }) => {
         login,
         adminLogin,
         vendorLogin,
+        sendVendorForgotPasswordCode,
+        verifyVendorForgotPasswordCode,
+        changeVendorPassword,
         logout,
         loading,
         getAuthHeaders,

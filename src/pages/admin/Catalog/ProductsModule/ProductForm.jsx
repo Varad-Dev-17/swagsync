@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
@@ -23,6 +23,8 @@ const slugify = (text = '', preserveTrailingDash = false) => {
 const ProductForm = forwardRef(({ isEdit = false, isUnifiedMode = false, onFormChange = () => {}, isVendor = false }, ref) => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
+  const draftKey = `swagsync_product_draft_${isVendor ? 'vendor' : 'admin'}`;
 
   const getHeaders = useCallback(() => {
     if (isVendor) {
@@ -63,6 +65,103 @@ const ProductForm = forwardRef(({ isEdit = false, isUnifiedMode = false, onFormC
   // Dynamic Attributes State
   const [dynamicAttributesConfig, setDynamicAttributesConfig] = useState([]);
   const [dynamicAttributes, setDynamicAttributes] = useState([]);
+
+  // Save current form state as draft and navigate to create missing catalog data
+  const handleRedirectToAdd = (type) => {
+    const draftData = {
+      formData,
+      slugModified,
+      selectedStoreId,
+      selectedMfgId,
+      dynamicAttributes
+    };
+    try {
+      sessionStorage.setItem(draftKey, JSON.stringify(draftData));
+    } catch (e) {
+      console.error('Failed to save draft to sessionStorage', e);
+    }
+
+    const returnUrl = isVendor ? '/vendor/portal/products/add' : '/admin/products/add';
+
+    if (type === 'category') {
+      if (!formData.department) {
+        toast.error('Please select a Department first.');
+        return;
+      }
+      const targetUrl = isVendor
+        ? `/vendor/portal/catalog/categories/add?departmentId=${formData.department}&returnTo=${encodeURIComponent(returnUrl)}`
+        : `/admin/catalog/categories/add?departmentId=${formData.department}&returnTo=${encodeURIComponent(returnUrl)}`;
+      navigate(targetUrl);
+    } else if (type === 'brand') {
+      if (!formData.department) {
+        toast.error('Please select a Department first.');
+        return;
+      }
+      const targetUrl = isVendor
+        ? `/vendor/portal/catalog/brands/add?departmentId=${formData.department}&returnTo=${encodeURIComponent(returnUrl)}`
+        : `/admin/catalog/brands/add?departmentId=${formData.department}&returnTo=${encodeURIComponent(returnUrl)}`;
+      navigate(targetUrl);
+    } else if (type === 'attribute') {
+      if (!formData.category) {
+        toast.error('Please select a Category first.');
+        return;
+      }
+      const targetUrl = isVendor
+        ? `/vendor/portal/catalog/attributes/add?categoryId=${formData.category}&usage=Product&returnTo=${encodeURIComponent(returnUrl)}`
+        : `/admin/catalog/attributes/add?categoryId=${formData.category}&usage=Product&returnTo=${encodeURIComponent(returnUrl)}`;
+      navigate(targetUrl);
+    }
+  };
+
+  // Restore draft state and check for newly created catalog entities from query params
+  useEffect(() => {
+    if (isEdit) return;
+
+    const savedDraft = sessionStorage.getItem(draftKey);
+    let draft = null;
+    if (savedDraft) {
+      try {
+        draft = JSON.parse(savedDraft);
+      } catch (e) {
+        console.error('Failed to parse draft from sessionStorage', e);
+      }
+    }
+
+    const newCategoryId = searchParams.get('newCategoryId');
+    const newBrandId = searchParams.get('newBrandId');
+    const newAttributeId = searchParams.get('newAttributeId');
+    const newDeptId = searchParams.get('newDeptId');
+    const newCatId = searchParams.get('newCatId');
+
+    if (draft || newCategoryId || newBrandId || newAttributeId) {
+      setFormData(prev => {
+        const next = draft ? { ...prev, ...draft.formData } : { ...prev };
+        if (newDeptId) next.department = newDeptId;
+        if (newCategoryId) next.category = newCategoryId;
+        if (newBrandId) next.brand = newBrandId;
+        if (newCatId) next.category = newCatId;
+        return next;
+      });
+
+      if (draft?.slugModified !== undefined) {
+        setSlugModified(draft.slugModified);
+      }
+      if (draft?.selectedStoreId) {
+        setSelectedStoreId(draft.selectedStoreId);
+      }
+      if (draft?.selectedMfgId) {
+        setSelectedMfgId(draft.selectedMfgId);
+      }
+      if (draft?.dynamicAttributes && !newAttributeId) {
+        setDynamicAttributes(draft.dynamicAttributes);
+      }
+
+      if (newCategoryId || newBrandId || newAttributeId) {
+        const cleanUrl = window.location.pathname;
+        window.history.replaceState({}, '', cleanUrl);
+      }
+    }
+  }, [isEdit, draftKey, searchParams]);
 
   // Store Selection State (Address-Book style for vendor products)
   const [stores, setStores] = useState([]);
@@ -814,37 +913,68 @@ const ProductForm = forwardRef(({ isEdit = false, isUnifiedMode = false, onFormC
         );
         const resolvedVal = matchedOpt ? matchedOpt.storedValue : currentValue;
         return (
-          <select
-            value={resolvedVal}
-            onChange={(e) => handleValueChange(e.target.value)}
-            className={`w-full px-4 h-12 border ${borderClass} rounded-lg outline-none focus:ring-1 transition-colors bg-white cursor-pointer`}
-          >
-            <option value="">-- Select {config.name} --</option>
-            {config.options.map(opt => (
-              <option key={opt._id} value={opt.storedValue}>{opt.displayName}</option>
-            ))}
-          </select>
+          <div className="flex items-center gap-2">
+            <select
+              value={resolvedVal}
+              onChange={(e) => handleValueChange(e.target.value)}
+              className={`flex-1 min-w-0 px-4 h-12 border ${borderClass} rounded-lg outline-none focus:ring-1 transition-colors bg-white cursor-pointer text-sm`}
+            >
+              <option value="">-- Select {config.name} --</option>
+              {config.options.map(opt => (
+                <option key={opt._id} value={opt.storedValue}>{opt.displayName}</option>
+              ))}
+            </select>
+            <button
+              type="button"
+              onClick={() => handleRedirectToAdd('attribute')}
+              title={`Add new options or edit ${config.name}`}
+              className={`h-12 w-12 shrink-0 rounded-xl border flex items-center justify-center transition-all ${
+                isVendor
+                  ? 'border-gray-200 text-[#fe4a03] hover:bg-[#fe4a03]/5 hover:border-[#fe4a03]'
+                  : 'border-gray-200 text-[#4648d4] hover:bg-[#4648d4]/5 hover:border-[#4648d4]'
+              } cursor-pointer shadow-sm`}
+            >
+              <Plus size={16} />
+            </button>
+          </div>
         );
       case 'color':
         return (
-          <div className={`flex flex-wrap gap-2 p-2 rounded-lg border ${hasError ? 'border-red-500 bg-red-50' : 'border-transparent'}`}>
-            {config.options.map(opt => (
+          <div className="flex flex-col gap-2">
+            <div className={`flex flex-wrap gap-2 p-2 rounded-lg border ${hasError ? 'border-red-500 bg-red-50' : 'border-transparent'}`}>
+              {config.options.map(opt => (
+                <button
+                  key={opt._id}
+                  type="button"
+                  onClick={() => handleValueChange(opt.storedValue)}
+                  className={`flex items-center gap-2 px-3 h-12 rounded-lg border transition-all ${currentValue === opt.storedValue
+                      ? isVendor
+                        ? 'border-[#fe4a03] bg-[#fe4a03]/5 ring-1 ring-[#fe4a03]'
+                        : 'border-[#4648d4] bg-[#4648d4]/5 ring-1 ring-[#4648d4]'
+                      : 'border-gray-200 hover:border-gray-300 bg-white'
+                    }`}
+                >
+                  <div
+                    className="w-4 h-4 rounded-full border border-gray-200 shadow-sm"
+                    style={{ backgroundColor: opt.storedValue }}
+                  />
+                  <span className="text-sm font-medium text-gray-700">{opt.displayName}</span>
+                </button>
+              ))}
               <button
-                key={opt._id}
                 type="button"
-                onClick={() => handleValueChange(opt.storedValue)}
-                className={`flex items-center gap-2 px-3 h-12 rounded-lg border transition-all ${currentValue === opt.storedValue
-                    ? 'border-[#4648d4] bg-[#4648d4]/5 ring-1 ring-[#4648d4]'
-                    : 'border-gray-200 hover:border-gray-300 bg-white'
-                  }`}
+                onClick={() => handleRedirectToAdd('attribute')}
+                title="Add new options or edit color attribute"
+                className={`flex items-center gap-1.5 px-3 h-12 rounded-lg border border-dashed text-xs font-semibold transition-all ${
+                  isVendor
+                    ? 'border-gray-300 text-[#fe4a03] hover:bg-[#fe4a03]/5 hover:border-[#fe4a03]'
+                    : 'border-gray-300 text-[#4648d4] hover:bg-[#4648d4]/5 hover:border-[#4648d4]'
+                } cursor-pointer`}
               >
-                <div
-                  className="w-4 h-4 rounded-full border border-gray-200 shadow-sm"
-                  style={{ backgroundColor: opt.storedValue }}
-                />
-                <span className="text-sm font-medium text-gray-700">{opt.displayName}</span>
+                <Plus size={14} />
+                <span>Add Option</span>
               </button>
-            ))}
+            </div>
           </div>
         );
       default:
@@ -942,28 +1072,60 @@ const ProductForm = forwardRef(({ isEdit = false, isUnifiedMode = false, onFormC
           {/* Row 2 */}
           <div ref={setRef('category')}>
             <label className="block text-sm font-medium text-gray-700 mb-1">Category <span className="text-red-500">*</span></label>
-            <SearchableSelect
-              value={formData.category}
-              onChange={(val) => {
-                setFormData(prev => ({ ...prev, category: val }));
-                clearError('category');
-              }}
-              disabled={!formData.department || isCategoriesLoading}
-              options={[{ value: '', label: !formData.department ? "-- Department First --" : isCategoriesLoading ? "Loading..." : "-- Select --" }, ...categories.map(c => ({ value: c._id, label: c.name }))]}
-            />
+            <div className="flex items-center gap-2">
+              <div className="flex-1 min-w-0">
+                <SearchableSelect
+                  value={formData.category}
+                  onChange={(val) => {
+                    setFormData(prev => ({ ...prev, category: val }));
+                    clearError('category');
+                  }}
+                  disabled={!formData.department || isCategoriesLoading}
+                  options={[{ value: '', label: !formData.department ? "-- Department First --" : isCategoriesLoading ? "Loading..." : "-- Select --" }, ...categories.map(c => ({ value: c._id, label: c.name }))]}
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => handleRedirectToAdd('category')}
+                title="Add new Category"
+                className={`h-11 w-11 shrink-0 rounded-xl border flex items-center justify-center transition-all ${
+                  isVendor
+                    ? 'border-gray-200 text-[#fe4a03] hover:bg-[#fe4a03]/5 hover:border-[#fe4a03]'
+                    : 'border-gray-200 text-[#4648d4] hover:bg-[#4648d4]/5 hover:border-[#4648d4]'
+                } cursor-pointer shadow-sm`}
+              >
+                <Plus size={18} />
+              </button>
+            </div>
             {errors.category && <span className="text-red-500 text-xs mt-1 block">❌ {errors.category}</span>}
           </div>
           <div ref={setRef('brand')}>
             <label className="block text-sm font-medium text-gray-700 mb-1">Brand <span className="text-red-500">*</span></label>
-            <SearchableSelect
-              value={formData.brand}
-              onChange={(val) => {
-                setFormData(prev => ({ ...prev, brand: val }));
-                clearError('brand');
-              }}
-              disabled={!formData.department || isBrandsLoading}
-              options={[{ value: '', label: !formData.department ? "-- Department First --" : isBrandsLoading ? "Loading..." : "-- Select --" }, ...brands.map(b => ({ value: b._id, label: b.name }))]}
-            />
+            <div className="flex items-center gap-2">
+              <div className="flex-1 min-w-0">
+                <SearchableSelect
+                  value={formData.brand}
+                  onChange={(val) => {
+                    setFormData(prev => ({ ...prev, brand: val }));
+                    clearError('brand');
+                  }}
+                  disabled={!formData.department || isBrandsLoading}
+                  options={[{ value: '', label: !formData.department ? "-- Department First --" : isBrandsLoading ? "Loading..." : "-- Select --" }, ...brands.map(b => ({ value: b._id, label: b.name }))]}
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => handleRedirectToAdd('brand')}
+                title="Add new Brand"
+                className={`h-11 w-11 shrink-0 rounded-xl border flex items-center justify-center transition-all ${
+                  isVendor
+                    ? 'border-gray-200 text-[#fe4a03] hover:bg-[#fe4a03]/5 hover:border-[#fe4a03]'
+                    : 'border-gray-200 text-[#4648d4] hover:bg-[#4648d4]/5 hover:border-[#4648d4]'
+                } cursor-pointer shadow-sm`}
+              >
+                <Plus size={18} />
+              </button>
+            </div>
             {errors.brand && <span className="text-red-500 text-xs mt-1 block">❌ {errors.brand}</span>}
           </div>
         </div>
@@ -1001,15 +1163,30 @@ const ProductForm = forwardRef(({ isEdit = false, isUnifiedMode = false, onFormC
       {/* Dynamic Attributes or Info Card */}
       {formData.category && !isDynamicAttributesLoading && dynamicAttributesConfig.length === 0 ? (
         <div className="p-6 sm:p-8 border-t border-slate-200">
-          <div className="flex items-center gap-3 mb-4">
-             <span className={`flex items-center justify-center w-8 h-8 rounded-lg ${isVendor ? 'bg-[#fe4a03]' : 'bg-[#4648d4]'} text-white font-bold text-sm`}>2</span>
-             <div>
-               <h3 className="text-lg font-bold text-slate-900">Product Variants</h3>
-               <p className="text-xs text-gray-500">Product specific variants</p>
-             </div>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+               <span className={`flex items-center justify-center w-8 h-8 rounded-lg ${isVendor ? 'bg-[#fe4a03]' : 'bg-[#4648d4]'} text-white font-bold text-sm`}>2</span>
+               <div>
+                 <h3 className="text-lg font-bold text-slate-900">Attributes</h3>
+                 <p className="text-xs text-gray-500">Product specific attributes</p>
+               </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => handleRedirectToAdd('attribute')}
+              title="Add new Attribute with Options"
+              className={`h-9 px-3.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                isVendor
+                  ? 'border-gray-200 text-[#fe4a03] hover:bg-[#fe4a03]/5 hover:border-[#fe4a03] cursor-pointer'
+                  : 'border-gray-200 text-[#4648d4] hover:bg-[#4648d4]/5 hover:border-[#4648d4] cursor-pointer'
+              } shadow-sm`}
+            >
+              <Plus size={15} />
+              <span>Add Attribute</span>
+            </button>
           </div>
-          <p className="text-sm font-medium text-gray-800 mb-2">This product uses variants.</p>
-          <p className="text-sm text-gray-600 mb-3">After saving the product you will configure:</p>
+          <p className="text-sm font-medium text-gray-800 mb-2">No product attributes mapped to this category yet.</p>
+          <p className="text-sm text-gray-600 mb-3">You can click <strong>"Add Attribute"</strong> above to define custom attributes, or continue below to configure variants:</p>
           <ul className="text-sm text-gray-600 mb-4 ml-1 space-y-1">
             <li>• Color</li>
             <li>• Size</li>
@@ -1018,16 +1195,33 @@ const ProductForm = forwardRef(({ isEdit = false, isUnifiedMode = false, onFormC
             <li>• Images</li>
             <li>• Price</li>
           </ul>
-          <p className="text-sm text-gray-500 font-medium italic">Click "Save Product & Add Variants" to continue.</p>
         </div>
       ) : (
         <div className="p-6 sm:p-8 border-t border-slate-200">
-          <div className="flex items-center gap-3 mb-6">
-             <span className={`flex items-center justify-center w-8 h-8 rounded-lg ${isVendor ? 'bg-[#fe4a03]' : 'bg-[#4648d4]'} text-white font-bold text-sm`}>2</span>
-             <div>
-               <h3 className="text-lg font-bold text-slate-900">Attributes</h3>
-               <p className="text-xs text-gray-500">Product specific attributes</p>
-             </div>
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+               <span className={`flex items-center justify-center w-8 h-8 rounded-lg ${isVendor ? 'bg-[#fe4a03]' : 'bg-[#4648d4]'} text-white font-bold text-sm`}>2</span>
+               <div>
+                 <h3 className="text-lg font-bold text-slate-900">Attributes</h3>
+                 <p className="text-xs text-gray-500">Product specific attributes</p>
+               </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => handleRedirectToAdd('attribute')}
+              disabled={!formData.category}
+              title={!formData.category ? "Select a Category first to add attributes" : "Add new Attribute with Options"}
+              className={`h-9 px-3.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                !formData.category
+                  ? 'border-gray-200 text-gray-400 bg-gray-50 cursor-not-allowed opacity-60'
+                  : isVendor
+                  ? 'border-gray-200 text-[#fe4a03] hover:bg-[#fe4a03]/5 hover:border-[#fe4a03] cursor-pointer'
+                  : 'border-gray-200 text-[#4648d4] hover:bg-[#4648d4]/5 hover:border-[#4648d4] cursor-pointer'
+              } shadow-sm`}
+            >
+              <Plus size={15} />
+              <span>Add Attribute</span>
+            </button>
           </div>
 
           {isDynamicAttributesLoading ? (

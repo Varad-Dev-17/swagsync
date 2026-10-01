@@ -77,6 +77,7 @@ const VendorAddProduct = () => {
       }
 
       toast.success('Product and variants saved successfully!');
+      try { sessionStorage.removeItem('swagsync_product_draft_vendor'); } catch (_) {}
       setTimeout(() => {
         navigate('/vendor/portal/products');
       }, 500);
@@ -130,7 +131,10 @@ const VendorAddProduct = () => {
               <div className="flex justify-center items-center gap-3">
                 <button
                   type="button"
-                  onClick={() => navigate('/vendor/portal/products')}
+                  onClick={() => {
+                    try { sessionStorage.removeItem('swagsync_product_draft_vendor'); } catch (_) {}
+                    navigate('/vendor/portal/products');
+                  }}
                   className="h-10 px-6 text-xs font-bold text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors shadow-sm cursor-pointer"
                 >
                   Cancel

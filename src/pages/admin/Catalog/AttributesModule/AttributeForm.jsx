@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { Trash2, Plus } from 'lucide-react';
@@ -30,14 +30,18 @@ const COMMON_COLORS = {
   'navy': '#000080'
 };
 
-const AttributeForm = ({ initialData = null, isEdit = false }) => {
+const AttributeForm = ({ initialData = null, isEdit = false, isVendor = false }) => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const categoryIdParam = searchParams.get('categoryId');
+  const usageParam = searchParams.get('usage');
+  const returnTo = searchParams.get('returnTo');
   
   const [formData, setFormData] = useState({
     categoryIds: [],
     name: '',
     fieldType: 'select',
-    usage: 'Product',
+    usage: usageParam || 'Product',
     status: 'Active'
   });
   
@@ -49,14 +53,24 @@ const AttributeForm = ({ initialData = null, isEdit = false }) => {
   // Refs to handle auto-focus
   const lastOptionInputRef = useRef(null);
 
+  const getHeaders = () => {
+    if (isVendor) {
+      const token = localStorage.getItem('token');
+      return token ? { Authorization: `Bearer ${token}` } : {};
+    }
+    return {};
+  };
+
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await axios.get(`${(import.meta.env.PROD ? '' : 'http://localhost:8000')}/categories`, {
-          params: { status: 'Active', limit: 1000 }
+        const baseUrl = import.meta.env.PROD ? '' : 'http://localhost:8000';
+        const response = await axios.get(`${baseUrl}/categories`, {
+          params: { status: 'Active', limit: 1000 },
+          headers: getHeaders()
         });
         if (response.data.success) {
-          setCategories(response.data.categories);
+          setCategories(response.data.categories || response.data.data || []);
         }
       } catch (error) {
         console.error('Failed to fetch categories', error);
@@ -64,11 +78,25 @@ const AttributeForm = ({ initialData = null, isEdit = false }) => {
       }
     };
     fetchCategories();
-  }, []);
+  }, [isVendor]);
+
+  // Pre-select category & usage if provided via searchParams
+  useEffect(() => {
+    if (!initialData) {
+      setFormData(prev => ({
+        ...prev,
+        categoryIds: categoryIdParam && prev.categoryIds.length === 0 ? [categoryIdParam] : prev.categoryIds,
+        usage: usageParam || prev.usage
+      }));
+    }
+  }, [categoryIdParam, usageParam, initialData]);
 
   const fetchExistingOptions = async (attributeId) => {
     try {
-      const response = await axios.get(`${(import.meta.env.PROD ? '' : 'http://localhost:8000')}/attribute-options/attribute/${attributeId}?limit=1000`);
+      const baseUrl = import.meta.env.PROD ? '' : 'http://localhost:8000';
+      const response = await axios.get(`${baseUrl}/attribute-options/attribute/${attributeId}?limit=1000`, {
+        headers: getHeaders()
+      });
       if (response.data.success && response.data.options) {
         setOptions(response.data.options.map(opt => ({
           _id: opt._id,
@@ -232,17 +260,23 @@ const AttributeForm = ({ initialData = null, isEdit = false }) => {
 
     setIsLoading(true);
     try {
+      const baseUrl = import.meta.env.PROD ? '' : 'http://localhost:8000';
+      const headers = getHeaders();
       let attributeId;
       
       // 1. Save Attribute
       if (isEdit) {
-        const response = await axios.put(`${(import.meta.env.PROD ? '' : 'http://localhost:8000')}/admin/attributes/${initialData._id}`, formData, {
-          withCredentials: true
+        const updateUrl = isVendor ? `${baseUrl}/vendor/portal/attributes/${initialData._id}` : `${baseUrl}/admin/attributes/${initialData._id}`;
+        const response = await axios.put(updateUrl, formData, {
+          withCredentials: true,
+          headers
         });
         attributeId = response.data.attribute._id;
       } else {
-        const response = await axios.post(`${(import.meta.env.PROD ? '' : 'http://localhost:8000')}/admin/attributes`, formData, {
-          withCredentials: true
+        const createUrl = isVendor ? `${baseUrl}/vendor/portal/attributes` : `${baseUrl}/admin/attributes`;
+        const response = await axios.post(createUrl, formData, {
+          withCredentials: true,
+          headers
         });
         attributeId = response.data.attribute._id;
       }
@@ -251,8 +285,9 @@ const AttributeForm = ({ initialData = null, isEdit = false }) => {
       if (['select', 'color'].includes(formData.fieldType)) {
         // Delete removed options
         if (deletedOptionIds.length > 0) {
+          const deleteBase = isVendor ? `${baseUrl}/vendor/portal/attribute-options/` : `${baseUrl}/admin/attribute-options/`;
           await Promise.all(deletedOptionIds.map(id => 
-            axios.delete(`${(import.meta.env.PROD ? '' : 'http://localhost:8000')}/admin/attribute-options/${id}`, { withCredentials: true })
+            axios.delete(`${deleteBase}${id}`, { withCredentials: true, headers })
           ));
         }
 
@@ -272,9 +307,11 @@ const AttributeForm = ({ initialData = null, isEdit = false }) => {
           }
 
           if (opt._id) {
-            updatePromises.push(axios.put(`${(import.meta.env.PROD ? '' : 'http://localhost:8000')}/admin/attribute-options/${opt._id}`, payload, { withCredentials: true }));
+            const updateOptUrl = isVendor ? `${baseUrl}/vendor/portal/attribute-options/${opt._id}` : `${baseUrl}/admin/attribute-options/${opt._id}`;
+            updatePromises.push(axios.put(updateOptUrl, payload, { withCredentials: true, headers }));
           } else {
-            createPromises.push(axios.post(`${(import.meta.env.PROD ? '' : 'http://localhost:8000')}/admin/attribute-options`, payload, { withCredentials: true }));
+            const createOptUrl = isVendor ? `${baseUrl}/vendor/portal/attribute-options` : `${baseUrl}/admin/attribute-options`;
+            createPromises.push(axios.post(createOptUrl, payload, { withCredentials: true, headers }));
           }
         });
 
@@ -282,7 +319,15 @@ const AttributeForm = ({ initialData = null, isEdit = false }) => {
       }
 
       toast.success(isEdit ? 'Attribute and options updated!' : 'Attribute created successfully!');
-      navigate('/admin/catalog/attributes');
+
+      if (returnTo) {
+        const sep = returnTo.includes('?') ? '&' : '?';
+        const firstCat = formData.categoryIds[0] || '';
+        navigate(`${returnTo}${sep}newAttributeId=${attributeId}&newCatId=${firstCat}`);
+        return;
+      }
+
+      navigate(isVendor ? '/vendor/portal/catalog' : '/admin/catalog/attributes');
 
     } catch (error) {
       console.error(error);
@@ -295,10 +340,15 @@ const AttributeForm = ({ initialData = null, isEdit = false }) => {
 
   const showOptions = ['select', 'color'].includes(formData.fieldType);
 
+  const primaryText = isVendor ? 'text-[#fe4a03]' : 'text-[#4648d4]';
+  const primaryBg = isVendor ? 'bg-[#fe4a03] hover:bg-[#e03f00]' : 'bg-[#4648d4] hover:bg-[#3b3db0]';
+  const primaryRing = isVendor ? 'focus:border-[#fe4a03] focus:ring-[#fe4a03]' : 'focus:border-[#4648d4] focus:ring-[#4648d4]';
+  const primarySoftBg = isVendor ? 'text-[#fe4a03] hover:text-[#e03f00] hover:bg-[#fe4a03]/5' : 'text-[#4648d4] hover:text-[#3b3db0] hover:bg-[#4648d4]/5';
+
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 w-full">
       <div className="mb-6">
-        <h2 className="text-xl font-bold text-[#4648d4]">{isEdit ? 'Edit Attribute' : 'Add Attribute'}</h2>
+        <h2 className={`text-xl font-bold ${primaryText}`}>{isEdit ? 'Edit Attribute' : 'Add Attribute'}</h2>
       </div>
       <div className="space-y-4">
         <div>
@@ -314,19 +364,19 @@ const AttributeForm = ({ initialData = null, isEdit = false }) => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div>
-            <label className="block text-sm font-medium text-[#4648d4] mb-1.5">Attribute Name *</label>
+            <label className={`block text-sm font-medium ${primaryText} mb-1.5`}>Attribute Name *</label>
             <input
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               placeholder="e.g. Color, Size, Material"
-              className="w-full px-3 h-12 border border-gray-200 rounded-lg outline-none focus:border-[#4648d4] focus:ring-1 focus:ring-[#4648d4] transition-colors text-sm"
+              className={`w-full px-3 h-12 border border-gray-200 rounded-lg outline-none ${primaryRing} focus:ring-1 transition-colors text-sm`}
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-[#4648d4] mb-1.5">Field Type *</label>
+            <label className={`block text-sm font-medium ${primaryText} mb-1.5`}>Field Type *</label>
             <select
               value={formData.fieldType}
               onChange={(e) => setFormData({ ...formData, fieldType: e.target.value })}
@@ -450,7 +500,7 @@ const AttributeForm = ({ initialData = null, isEdit = false }) => {
           <button
             type="button"
             onClick={handleAddOption}
-            className="mt-3 flex items-center gap-1.5 text-sm font-medium text-[#4648d4] hover:text-[#3b3db0] transition-colors px-3 py-1.5 hover:bg-[#4648d4]/5 rounded-md w-max"
+            className={`mt-3 flex items-center gap-1.5 text-sm font-medium ${primarySoftBg} transition-colors px-3 py-1.5 rounded-md w-max cursor-pointer`}
           >
             <Plus size={16} />
             Add Option
@@ -462,7 +512,7 @@ const AttributeForm = ({ initialData = null, isEdit = false }) => {
       {['text', 'number'].includes(formData.fieldType) && (
         <div className="mt-6 pt-6 border-t border-gray-100">
           <div className="bg-gray-50/50 border border-gray-200 border-dashed rounded-xl p-6 flex flex-col items-center justify-center text-center">
-            <h3 className="text-[#4648d4] text-sm font-medium mb-1">
+            <h3 className={`${primaryText} text-sm font-medium mb-1`}>
               {formData.fieldType === 'text' 
                 ? "This attribute accepts free text during product creation." 
                 : "This attribute accepts numeric values during product creation."}
@@ -480,16 +530,19 @@ const AttributeForm = ({ initialData = null, isEdit = false }) => {
       <div className="flex justify-end gap-3 pt-5 mt-6 border-t border-gray-100">
         <button
           type="button"
-          onClick={() => navigate('/admin/catalog/attributes')}
+          onClick={() => {
+            if (returnTo) navigate(returnTo);
+            else navigate(isVendor ? '/vendor/portal/catalog' : '/admin/catalog/attributes');
+          }}
           disabled={isLoading}
-          className="h-12 px-6 border border-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
+          className="h-12 px-6 border border-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-colors disabled:opacity-50 cursor-pointer"
         >
           Cancel
         </button>
         <button
           onClick={handleSubmit}
           disabled={isLoading}
-          className="h-12 px-6 bg-[#4648d4] hover:bg-[#3b3db0] text-white rounded-xl font-medium transition-colors disabled:opacity-50 flex items-center justify-center min-w-[150px]"
+          className={`h-12 px-6 ${primaryBg} text-white rounded-xl font-medium transition-colors disabled:opacity-50 flex items-center justify-center min-w-[150px] cursor-pointer`}
         >
           {isLoading ? (
             <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />

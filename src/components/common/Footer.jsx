@@ -143,198 +143,195 @@ const Footer = () => {
 
   return (
     <footer className="bg-white border-t border-gray-200 pt-12 pb-8 text-gray-700">
-        <div className="max-w-[1500px] mx-auto px-8 sm:px-10 lg:px-16">
-          <div className="flex flex-col lg:flex-row justify-between gap-8 lg:gap-0">
-            {/* Column 1: Brand Info & Socials */}
-            <div className="lg:w-[25%] lg:pr-5 flex flex-col justify-between">
-              <div>
-                <Link to="/" onClick={handleNavClick} className="inline-block">
-                  <img
-                    src="/Logo/logo.png"
-                    alt="SwagSync"
-                    className="h-21 w-auto object-contain"
-                  />
-                </Link>
-                <p className="mt-4 text-[14.5px] leading-relaxed text-gray-500 max-w-sm">
-                  Your one-stop destination for fashion, lifestyle, electronics and more.
-                  Shop from trusted sellers and get the best deals on premium products.
-                </p>
-              </div>
-
-              {/* Social Icons */}
-              <div className="flex items-center gap-2.5 mt-6">
-                {socialLinks.map(({ Icon, label, href, bgColor, textColor, hoverBg }) => (
-                  <a
-                    key={label}
-                    href={href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label={label}
-                    className={`w-9 h-9 rounded-full ${bgColor} ${textColor} ${hoverBg} flex items-center justify-center transition-all duration-200 hover:scale-110 shadow-xs`}
-                  >
-                    <Icon />
-                  </a>
-                ))}
-              </div>
-            </div>
-
-            {/* Column 2: Shop By Category (REAL EXISTING ACTIVE DEPARTMENTS) */}
-            <div className="lg:w-[15%] lg:px-4">
-              <h3 className="text-[16px] font-bold text-gray-900 mb-4 tracking-tight">
-                Shop By Category
-              </h3>
-              <ul className="space-y-3 text-[14.5px]">
-                {departments.map((dept) => (
-                  <li key={dept._id || dept.name}>
-                    <Link
-                      to={`/products?department=${encodeURIComponent(dept.name)}`}
-                      onClick={handleNavClick}
-                      className="text-gray-500 hover:text-[#FD7100] transition-colors block"
-                    >
-                      {dept.name}
-                    </Link>
-                  </li>
-                ))}
-                <li className="pt-1">
-                  <Link
-                    to="/products"
-                    onClick={handleNavClick}
-                    className="inline-flex items-center gap-1.5 font-medium text-gray-900 hover:text-[#FD7100] transition-colors group text-[14.5px]"
-                  >
-                    <span>View All Categories</span>
-                    <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
-                  </Link>
-                </li>
-              </ul>
-            </div>
-
-            {/* Column 3: Customer Service (REAL WORKING LINKS) */}
-            <div className="lg:w-[16%] lg:border-l lg:border-gray-200 lg:pl-5 lg:pr-3">
-              <h3 className="text-[16px] font-bold text-gray-900 mb-4 tracking-tight">
-                Customer Service
-              </h3>
-              <ul className="space-y-3 text-[14.5px]">
-                <li>
-                  <Link
-                    to="/account/orders"
-                    onClick={handleNavClick}
-                    className="text-gray-500 hover:text-[#FD7100] transition-colors block"
-                  >
-                    Track Your Order
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    to="/account/orders"
-                    onClick={handleNavClick}
-                    className="text-gray-500 hover:text-[#FD7100] transition-colors block"
-                  >
-                    Returns & Refunds
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    to="#"
-                    onClick={(e) => e.preventDefault()}
-                    className="text-gray-500 hover:text-[#FD7100] transition-colors block"
-                  >
-                    Shipping Policy
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    to="/account/support"
-                    onClick={handleNavClick}
-                    className="text-gray-500 hover:text-[#FD7100] transition-colors block"
-                  >
-                    Contact Us
-                  </Link>
-                </li>
-              </ul>
-            </div>
-
-            {/* Column 4: About SwagSync (REAL WORKING INFORMATION) */}
-            <div className="lg:w-[16%] lg:border-l lg:border-gray-200 lg:pl-5 lg:pr-3">
-              <h3 className="text-[16px] font-bold text-gray-900 mb-4 tracking-tight">
-                About SwagSync
-              </h3>
-              <ul className="space-y-3 text-[14.5px]">
-                <li>
-                  <Link
-                    to="#"
-                    onClick={(e) => e.preventDefault()}
-                    className="text-gray-500 hover:text-[#FD7100] transition-colors block"
-                  >
-                    About Us
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    to="#"
-                    onClick={(e) => e.preventDefault()}
-                    className="text-gray-500 hover:text-[#FD7100] transition-colors block"
-                  >
-                    Terms of Service
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    to="#"
-                    onClick={(e) => e.preventDefault()}
-                    className="text-gray-500 hover:text-[#FD7100] transition-colors block"
-                  >
-                    Privacy Policy
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    to="/vendor/register"
-                    onClick={handleNavClick}
-                    className="text-gray-500 hover:text-[#FD7100] transition-colors block"
-                  >
-                    Become a Seller
-                  </Link>
-                </li>
-              </ul>
-            </div>
-
-            {/* Column 5: Subscribe to Our Newsletter */}
-            <div className="lg:w-[28%] lg:border-l lg:border-gray-200 lg:pl-6">
-              <h3 className="text-[16px] font-bold text-gray-900 mb-2 tracking-tight">
-                Subscribe to Our Newsletter
-              </h3>
-              <p className="text-[14.5px] text-gray-500 leading-relaxed mb-4">
-                Get the latest offers, new arrivals and exclusive deals delivered to your inbox.
+      <div className="max-w-[1500px] mx-auto px-8 sm:px-10 lg:px-16">
+        <div className="flex flex-col lg:flex-row justify-between gap-8 lg:gap-0">
+          {/* Brand Info & Socials */}
+          <div className="lg:w-[25%] lg:pr-5 flex flex-col justify-between">
+            <div>
+              <Link to="/" onClick={handleNavClick} className="inline-block">
+                <img
+                  src="/Logo/logo.png"
+                  alt="SwagSync"
+                  className="h-21 w-auto object-contain"
+                />
+              </Link>
+              <p className="mt-4 text-[14.5px] leading-relaxed text-gray-500 max-w-sm">
+                Your one-stop destination for fashion, lifestyle, electronics and more.
+                Shop from trusted sellers and get the best deals on premium products.
               </p>
+            </div>
 
-              <form onSubmit={handleSubscribe} className="flex items-center gap-2">
-                <div className="relative flex-1 min-w-0 border border-gray-200 rounded-lg px-3.5 py-2.5 flex items-center bg-white focus-within:border-[#FD7100] focus-within:ring-1 focus-within:ring-[#FD7100] transition-all">
-                  <Mail className="w-4 h-4 text-gray-400 mr-2 flex-shrink-0" />
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Enter your email address"
-                    className="w-full text-[14px] text-gray-700 placeholder-gray-400 outline-none bg-transparent min-w-0"
-                    aria-label="Email address"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  className="bg-[#FD7100] hover:bg-[#ea580c] text-white text-[14px] font-medium px-4.5 py-2.5 rounded-lg transition-colors cursor-pointer shadow-xs whitespace-nowrap active:scale-95 flex-shrink-0"
+            {/* Social Icons */}
+            <div className="flex items-center gap-2.5 mt-6">
+              {socialLinks.map(({ Icon, label, href, bgColor, textColor, hoverBg }) => (
+                <a
+                  key={label}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={label}
+                  className={`w-9 h-9 rounded-full ${bgColor} ${textColor} ${hoverBg} flex items-center justify-center transition-all duration-200 hover:scale-110 shadow-xs`}
                 >
-                  Subscribe
-                </button>
-              </form>
+                  <Icon />
+                </a>
+              ))}
             </div>
           </div>
 
-        {/* ========================================================= */}
-        {/* ROW 2: VALUE PROPOSITIONS / TRUST BADGES                   */}
-        {/* ========================================================= */}
+          {/* Shop By Category */}
+          <div className="lg:w-[15%] lg:px-4">
+            <h3 className="text-[16px] font-bold text-gray-900 mb-4 tracking-tight">
+              Shop By Category
+            </h3>
+            <ul className="space-y-3 text-[14.5px]">
+              {departments.map((dept) => (
+                <li key={dept._id || dept.name}>
+                  <Link
+                    to={`/products?department=${encodeURIComponent(dept.name)}`}
+                    onClick={handleNavClick}
+                    className="text-gray-500 hover:text-[#FD7100] transition-colors block"
+                  >
+                    {dept.name}
+                  </Link>
+                </li>
+              ))}
+              <li className="pt-1">
+                <Link
+                  to="/products"
+                  onClick={handleNavClick}
+                  className="inline-flex items-center gap-1.5 font-medium text-gray-900 hover:text-[#FD7100] transition-colors group text-[14.5px]"
+                >
+                  <span>View All Categories</span>
+                  <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Customer Service */}
+          <div className="lg:w-[16%] lg:border-l lg:border-gray-200 lg:pl-5 lg:pr-3">
+            <h3 className="text-[16px] font-bold text-gray-900 mb-4 tracking-tight">
+              Customer Service
+            </h3>
+            <ul className="space-y-3 text-[14.5px]">
+              <li>
+                <Link
+                  to="/account/orders"
+                  onClick={handleNavClick}
+                  className="text-gray-500 hover:text-[#FD7100] transition-colors block"
+                >
+                  Track Your Order
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/account/orders"
+                  onClick={handleNavClick}
+                  className="text-gray-500 hover:text-[#FD7100] transition-colors block"
+                >
+                  Returns & Refunds
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="#"
+                  onClick={(e) => e.preventDefault()}
+                  className="text-gray-500 hover:text-[#FD7100] transition-colors block"
+                >
+                  Shipping Policy
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/account/support"
+                  onClick={handleNavClick}
+                  className="text-gray-500 hover:text-[#FD7100] transition-colors block"
+                >
+                  Contact Us
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* About SwagSync */}
+          <div className="lg:w-[16%] lg:border-l lg:border-gray-200 lg:pl-5 lg:pr-3">
+            <h3 className="text-[16px] font-bold text-gray-900 mb-4 tracking-tight">
+              About SwagSync
+            </h3>
+            <ul className="space-y-3 text-[14.5px]">
+              <li>
+                <Link
+                  to="#"
+                  onClick={(e) => e.preventDefault()}
+                  className="text-gray-500 hover:text-[#FD7100] transition-colors block"
+                >
+                  About Us
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="#"
+                  onClick={(e) => e.preventDefault()}
+                  className="text-gray-500 hover:text-[#FD7100] transition-colors block"
+                >
+                  Terms of Service
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="#"
+                  onClick={(e) => e.preventDefault()}
+                  className="text-gray-500 hover:text-[#FD7100] transition-colors block"
+                >
+                  Privacy Policy
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/vendor/register"
+                  onClick={handleNavClick}
+                  className="text-gray-500 hover:text-[#FD7100] transition-colors block"
+                >
+                  Become a Seller
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Subscribe to Our Newsletter */}
+          <div className="lg:w-[28%] lg:border-l lg:border-gray-200 lg:pl-6">
+            <h3 className="text-[16px] font-bold text-gray-900 mb-2 tracking-tight">
+              Subscribe to Our Newsletter
+            </h3>
+            <p className="text-[14.5px] text-gray-500 leading-relaxed mb-4">
+              Get the latest offers, new arrivals and exclusive deals delivered to your inbox.
+            </p>
+
+            <form onSubmit={handleSubscribe} className="flex items-center gap-2">
+              <div className="relative flex-1 min-w-0 border border-gray-200 rounded-lg px-3.5 py-2.5 flex items-center bg-white focus-within:border-[#FD7100] focus-within:ring-1 focus-within:ring-[#FD7100] transition-all">
+                <Mail className="w-4 h-4 text-gray-400 mr-2 flex-shrink-0" />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter your email address"
+                  className="w-full text-[14px] text-gray-700 placeholder-gray-400 outline-none bg-transparent min-w-0"
+                  aria-label="Email address"
+                />
+              </div>
+              <button
+                type="submit"
+                className="bg-[#FD7100] hover:bg-[#ea580c] text-white text-[14px] font-medium px-4.5 py-2.5 rounded-lg transition-colors cursor-pointer shadow-xs whitespace-nowrap active:scale-95 flex-shrink-0"
+              >
+                Subscribe
+              </button>
+            </form>
+          </div>
+        </div>
+
         <div className="border-t border-b border-gray-200 mt-12 mb-8 py-7">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-4 lg:gap-0 lg:divide-x lg:divide-gray-200">
-            {/* Feature 1: Free Delivery */}
+            {/* Free Delivery */}
             <div className="flex items-center gap-3.5 px-2 lg:px-4 justify-start lg:justify-center">
               <div className="flex-shrink-0">
                 <svg
@@ -387,7 +384,7 @@ const Footer = () => {
               </div>
             </div>
 
-            {/* Feature 2: Secure Payments */}
+            {/* Secure Payments */}
             <div className="flex items-center gap-3.5 px-2 lg:px-4 justify-start lg:justify-center">
               <div className="flex-shrink-0">
                 <svg
@@ -425,7 +422,7 @@ const Footer = () => {
               </div>
             </div>
 
-            {/* Feature 3: Easy Returns */}
+            {/* Easy Returns */}
             <div className="flex items-center gap-3.5 px-2 lg:px-4 justify-start lg:justify-center">
               <div className="flex-shrink-0">
                 <svg
@@ -471,7 +468,7 @@ const Footer = () => {
               </div>
             </div>
 
-            {/* Feature 4: 24/7 Support */}
+            {/* 24/7 Support */}
             <div className="flex items-center gap-3.5 px-2 lg:px-4 justify-start lg:justify-center">
               <div className="flex-shrink-0">
                 <svg
@@ -529,139 +526,10 @@ const Footer = () => {
             </div>
           </div>
         </div>
-
-        {/* ========================================================= */}
-        {/* ROW 3: COPYRIGHT, PAYMENT METHODS, LEGAL LINKS            */}
-        {/* ========================================================= */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-5 text-gray-500 text-[14px]">
-          {/* Left: Copyright */}
-          <p className="text-center md:text-left order-2 md:order-1">
+        <div className="flex items-center justify-center text-gray-500 text-[14px] text-center">
+          <p className="text-center">
             © 2026 SwagSync Premium. All rights reserved.
           </p>
-
-          {/* Center: Payment Method Badges */}
-          <div className="flex items-center flex-wrap justify-center gap-2 order-1 md:order-2">
-            {/* VISA */}
-            <div
-              className="bg-white border border-gray-200/90 rounded px-2.5 py-1 h-7 flex items-center justify-center shadow-2xs hover:border-gray-300 transition-colors"
-              title="Visa"
-            >
-              <svg className="h-3 w-auto" viewBox="0 0 50 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path
-                  d="M19.78 0.5L12.97 15.5H8.52L5.2 3.82C5 3.03 4.41 2.33 3.65 1.95C2.26 1.25 0.5 0.65 0 0.5V0.5H7.13C8.03 0.5 8.82 1.09 9.02 2.11L10.74 10.89L15.35 0.5H19.78ZM37.28 10.55C37.3 6.55 31.42 6.33 31.46 4.54C31.48 4 32.01 3.42 33.15 3.27C33.72 3.19 35.29 3.13 37.03 3.9L37.72 0.84C36.78 0.52 35.56 0.22 34.02 0.22C29.89 0.22 26.97 2.31 26.93 5.31C26.89 7.52 28.96 8.76 30.54 9.49C32.16 10.24 32.71 10.72 32.7 11.4C32.68 12.44 31.39 12.9 30.19 12.92C28.08 12.95 26.85 12.38 25.88 11.95L25.17 15.11C26.13 15.53 27.91 15.89 29.74 15.91C34.14 15.91 37.26 13.84 37.28 10.55ZM48.24 15.5H52.12L48.74 0.5H45.14C44.34 0.5 43.67 0.94 43.37 1.63L37.07 15.5H41.52L42.4 13.19H47.83L48.24 15.5ZM43.62 10.02L45.85 4.19L47.14 10.02H43.62ZM26.24 0.5L22.78 15.5H18.54L22 0.5H26.24Z"
-                  fill="#1434CB"
-                />
-              </svg>
-            </div>
-
-            {/* Mastercard */}
-            <div
-              className="bg-white border border-gray-200/90 rounded px-2.5 py-1 h-7 flex items-center justify-center shadow-2xs hover:border-gray-300 transition-colors"
-              title="Mastercard"
-            >
-              <svg className="h-4.5 w-auto" viewBox="0 0 36 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="12" cy="12" r="10" fill="#EB001B" />
-                <circle cx="24" cy="12" r="10" fill="#F79E1B" />
-                <path
-                  d="M18 4.87A10 10 0 0 1 21.87 12 10 10 0 0 1 18 19.13 10 10 0 0 1 14.13 12 10 10 0 0 1 18 4.87Z"
-                  fill="#FF5F00"
-                />
-              </svg>
-            </div>
-
-            {/* RuPay */}
-            <div
-              className="bg-white border border-gray-200/90 rounded px-2.5 py-1 h-7 flex items-center justify-center shadow-2xs hover:border-gray-300 transition-colors"
-              title="RuPay"
-            >
-              <svg className="h-3 w-auto" viewBox="0 0 54 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <text x="0" y="13" fontFamily="Montserrat, sans-serif" fontWeight="800" fontSize="13" fill="#092B65">
-                  RuPay
-                </text>
-                <path d="M43 3L47 8L43 13H46L50 8L46 3H43Z" fill="#1A51A5" />
-                <path d="M47 3L51 8L47 13H50L54 8L50 3H47Z" fill="#F37021" />
-              </svg>
-            </div>
-
-            {/* UPI */}
-            <div
-              className="bg-white border border-gray-200/90 rounded px-2.5 py-1 h-7 flex items-center justify-center shadow-2xs hover:border-gray-300 transition-colors"
-              title="UPI"
-            >
-              <svg className="h-3.5 w-auto" viewBox="0 0 46 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M2 13L9 2H15L8 13H2Z" fill="#097939" />
-                <path d="M10 13L17 2H23L16 13H10Z" fill="#ED752E" />
-                <text x="21" y="13" fontFamily="sans-serif" fontWeight="900" fontStyle="italic" fontSize="13" fill="#000000">
-                  UPI
-                </text>
-              </svg>
-            </div>
-
-            {/* Paytm */}
-            <div
-              className="bg-white border border-gray-200/90 rounded px-2.5 py-1 h-7 flex items-center justify-center shadow-2xs hover:border-gray-300 transition-colors"
-              title="Paytm"
-            >
-              <svg className="h-3.5 w-auto" viewBox="0 0 46 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <text x="0" y="13" fontFamily="sans-serif" fontWeight="900" fontSize="14" fill="#00BAF2">
-                  pay
-                </text>
-                <text x="26" y="13" fontFamily="sans-serif" fontWeight="900" fontSize="14" fill="#002970">
-                  tm
-                </text>
-              </svg>
-            </div>
-
-            {/* Apple Pay */}
-            <div
-              className="bg-white border border-gray-200/90 rounded px-2.5 py-1 h-7 flex items-center justify-center shadow-2xs hover:border-gray-300 transition-colors"
-              title="Apple Pay"
-            >
-              <svg className="h-3.5 w-auto" viewBox="0 0 54 20" fill="currentColor">
-                <path
-                  d="M9.16 7.64c-.58.7-1.42 1.16-2.34 1.1-.12-1.04.38-2.1 1-2.7.6-.72 1.52-1.18 2.36-1.12.12 1.07-.44 2.02-1.02 2.72zm.98 1.48c-1.44-.08-2.66.82-3.34.82-.68 0-1.74-.78-2.88-.76-1.48.02-2.84.86-3.6 2.18-1.54 2.66-.4 6.6 1.1 8.78.74 1.06 1.6 2.24 2.74 2.2 1.1-.04 1.52-.72 2.86-.72 1.32 0 1.7.72 2.86.7 1.18-.02 1.94-1.06 2.66-2.12.84-1.22 1.18-2.4 1.2-2.46-.02-.02-2.32-.88-2.34-3.52-.02-2.22 1.8-3.28 1.88-3.34-1.04-1.52-2.64-1.7-3.14-1.74z"
-                  fill="#000000"
-                />
-                <text
-                  x="18"
-                  y="15"
-                  fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
-                  fontWeight="600"
-                  fontSize="13"
-                  fill="#000000"
-                >
-                  Pay
-                </text>
-              </svg>
-            </div>
-          </div>
-
-          {/* Right: Legal Links */}
-          <div className="flex items-center gap-3 text-center md:text-right order-3">
-            <Link
-              to="#"
-              onClick={(e) => e.preventDefault()}
-              className="hover:text-gray-900 transition-colors"
-            >
-              Terms of Service
-            </Link>
-            <span className="text-gray-300">|</span>
-            <Link
-              to="#"
-              onClick={(e) => e.preventDefault()}
-              className="hover:text-gray-900 transition-colors"
-            >
-              Privacy Policy
-            </Link>
-            <span className="text-gray-300">|</span>
-            <Link
-              to="/products"
-              onClick={handleNavClick}
-              className="hover:text-gray-900 transition-colors"
-            >
-              Sitemap
-            </Link>
-          </div>
         </div>
       </div>
     </footer>

@@ -7,6 +7,9 @@ import {
   vendorLogin,
   getVendorProfile,
   uploadVendorDocument,
+  sendVendorForgotPasswordCode,
+  verifyVendorForgotPasswordCode,
+  changeVendorPassword,
 } from "../controllers/vendorAuthController.js";
 import { identifier } from "../middlewares/identification.js";
 import { isApprovedVendor } from "../middlewares/isApprovedVendor.js";
@@ -43,8 +46,13 @@ router.post("/verify-email", verifyVendorEmail);
 router.post("/resend-otp", resendVendorOtp);
 router.post("/login", vendorLogin);
 router.post("/upload-document", upload.single("document"), uploadVendorDocument);
+router.post("/send-forgot-password-code", sendVendorForgotPasswordCode);
+router.patch("/verify-forgot-password-code", verifyVendorForgotPasswordCode);
+router.post("/verify-forgot-password-code", verifyVendorForgotPasswordCode);
 
 // Protected Vendor Portal Routes (Phase 1: Profile & Access validation)
 router.get("/me", identifier, isApprovedVendor, getVendorProfile);
+router.patch("/change-password", identifier, isApprovedVendor, changeVendorPassword);
+router.post("/change-password", identifier, isApprovedVendor, changeVendorPassword);
 
 export default router;

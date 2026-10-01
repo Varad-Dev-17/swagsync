@@ -45,9 +45,16 @@ import {
 } from "../controllers/vendorPortalController.js";
 import { identifier } from "../middlewares/identification.js";
 import { isApprovedVendor } from "../middlewares/isApprovedVendor.js";
-import { getMappedAttributes } from "../controllers/attributeMappingController.js";
+import { getMappedAttributes, mapAttributes } from "../controllers/attributeMappingController.js";
 import { getAllVariantGroups } from "../controllers/productController.js";
 import { getVariantGroupAnalytics } from "../controllers/variantAnalyticsController.js";
+import { createCategory } from "../controllers/categoryController.js";
+import { createBrand } from "../controllers/brandController.js";
+import { createAttribute } from "../controllers/attributeController.js";
+import {
+  createAttributeOption,
+  updateAttributeOption,
+} from "../controllers/attributeOptionController.js";
 
 const router = express.Router();
 
@@ -75,9 +82,15 @@ router.put("/manufacturers/:id", updateVendorManufacturer);
 router.delete("/manufacturers/:id", deleteVendorManufacturer);
 router.patch("/manufacturers/:id/default", setDefaultVendorManufacturer);
 
-// 3. Catalog (Master Catalog View for Vendor)
+// 3. Catalog (Master Catalog View & Creation for Vendor)
 router.get("/catalog", getVendorMasterCatalog);
 router.get("/categories/:id/attributes", getMappedAttributes);
+router.post("/categories", createCategory);
+router.post("/brands", createBrand);
+router.post("/attributes", createAttribute);
+router.post("/attribute-options", createAttributeOption);
+router.put("/attribute-options/:id", updateAttributeOption);
+router.post("/categories/:id/attributes", mapAttributes);
 
 // 4. Products (Scoped to Vendor)
 router.get("/products/variants/groups", getAllVariantGroups);

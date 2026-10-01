@@ -2,6 +2,7 @@ import Vendor from "../models/vendor.js";
 import User from "../models/user.js";
 import { hashPassword, doHashValidation, hmacProcess } from "../utils/hash.js";
 import { verificationEmailTemplate } from "../utils/verificationEmailTemplate.js";
+import { forgotPasswordEmailTemplate } from "../utils/forgotPasswordEmailTemplate.js";
 import { getNextSequence } from "../utils/counterHelper.js";
 import transport from "../middlewares/sendMail.js";
 import jwt from "jsonwebtoken";
@@ -686,6 +687,163 @@ export const getVendorProfile = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Server error fetching vendor profile.",
+    });
+  }
+};
+
+/**
+ * 6. Send Vendor Forgot Password OTP Code
+ */
+export const sendVendorForgotPasswordCode = async (req, res) => {
+  const { email } = req.body;
+  try {
+    if (!email) {
+      return res.status(400).json({ success: false, message: "Email is required." });
+    }
+    const normalizedEmail = email.toLowerCase().trim();
+    const vendor = await Vendor.findOne({ email: normalizedEmail });
+    if (!vendor) {
+      return res.status(404).json({ success: false, message: "Vendor account does not exist with this email." });
+    }
+
+    const codeValue = Math.floor(100000 + Math.random() * 900000).toString();
+    const info = await transport.sendMail({
+      from: `"SwagSync" <${process.env.NODE_CODE_SENDING_EMAIL_ADDRESS}>`,
+      to: vendor.email,
+      subject: "SwagSync Vendor - Password Reset Code",
+      html: forgotPasswordEmailTemplate(codeValue, vendor.vendorProfile?.fullName || vendor.username),
+    });
+
+    const hashedCodeValue = hmacProcess(
+      codeValue,
+      process.env.HMAC_VERIFICATION_CODE_SECRET
+    );
+    vendor.forgotPasswordCode = hashedCodeValue;
+    vendor.forgotPasswordCodeValidation = Date.now();
+    await vendor.save();
+
+    return res.status(200).json({
+      success: true,
+      message: info?.simulated
+        ? "Password reset code generated (Render Free Tier blocks SMTP, code provided)."
+        : "Password reset code sent to your email!",
+      code: info?.simulated ? codeValue : undefined,
+    });
+  } catch (error) {
+    console.error("[Vendor Forgot Password] Error:", error);
+    return res.status(500).json({ success: false, message: "Server error sending reset code." });
+  }
+};
+
+/**
+ * 7. Verify Vendor Forgot Password Code & Update Password
+ */
+export const verifyVendorForgotPasswordCode = async (req, res) => {
+  const { email, providedCode, newPassword } = req.body;
+  try {
+    if (!email || !providedCode || !newPassword) {
+      return res.status(400).json({ success: false, message: "Email, reset code, and new password are required." });
+    }
+
+    if (newPassword.length < 8) {
+      return res.status(400).json({ success: false, message: "Password must be at least 8 characters long." });
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+    const vendor = await Vendor.findOne({ email: normalizedEmail }).select(
+      "+forgotPasswordCode +forgotPasswordCodeValidation"
+    );
+
+    if (!vendor) {
+      return res.status(404).json({ success: false, message: "Vendor account not found." });
+    }
+
+    if (!vendor.forgotPasswordCode || !vendor.forgotPasswordCodeValidation) {
+      return res.status(400).json({
+        success: false,
+        message: "No reset code found. Please request a new code.",
+      });
+    }
+
+    if (Date.now() - vendor.forgotPasswordCodeValidation > 5 * 60 * 1000) {
+      return res.status(400).json({ success: false, message: "Reset code has expired. Request a new one." });
+    }
+
+    const hashedCodeValue = hmacProcess(
+      providedCode.toString().trim(),
+      process.env.HMAC_VERIFICATION_CODE_SECRET
+    );
+
+    if (hashedCodeValue !== vendor.forgotPasswordCode) {
+      return res.status(400).json({ success: false, message: "Invalid reset code. Please check and try again." });
+    }
+
+    const hashedPassword = await hashPassword(newPassword, 12);
+    vendor.password = hashedPassword;
+    vendor.forgotPasswordCode = undefined;
+    vendor.forgotPasswordCodeValidation = undefined;
+    await vendor.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Password reset successfully! You can now log in with your new password.",
+    });
+  } catch (error) {
+    console.error("[Vendor Verify FP Code] Error:", error);
+    return res.status(500).json({ success: false, message: "Server error resetting password." });
+  }
+};
+
+/**
+ * 8. Change Vendor Password (Authenticated)
+ */
+export const changeVendorPassword = async (req, res) => {
+  const vendorId = req.vendor?._id || req.user?.userId;
+  const { oldPassword, newPassword } = req.body;
+
+  try {
+    if (!oldPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Current password and new password are required.",
+      });
+    }
+
+    if (newPassword.length < 8) {
+      return res.status(400).json({
+        success: false,
+        message: "New password must be at least 8 characters long.",
+      });
+    }
+
+    const vendor = await Vendor.findById(vendorId).select("+password");
+    if (!vendor) {
+      return res.status(404).json({
+        success: false,
+        message: "Vendor account not found.",
+      });
+    }
+
+    const isMatch = await doHashValidation(oldPassword, vendor.password);
+    if (!isMatch) {
+      return res.status(401).json({
+        success: false,
+        message: "Current password is incorrect.",
+      });
+    }
+
+    vendor.password = await hashPassword(newPassword, 12);
+    await vendor.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Password changed successfully!",
+    });
+  } catch (error) {
+    console.error("[Change Vendor Password] Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error changing password.",
     });
   }
 };
