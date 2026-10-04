@@ -1134,9 +1134,9 @@ export const getVendorMasterCatalog = async (req, res) => {
       await Promise.all([
         Department.find({ status: "Active" }).select("name slug description").lean(),
         Category.find({ status: "Active" }).populate("departmentIds", "name").lean(),
-        Brand.find({ status: "Active" }).select("name slug logo").lean(),
-        Attribute.find({ status: "Active" }).select("name fieldType isRequired").lean(),
-        AttributeOption.find({ status: "active" }).select("attribute displayName storedValue").lean(),
+        Brand.find({ status: "Active" }).select("name slug logo vendorId").lean(),
+        Attribute.find({ status: "Active" }).select("name fieldType isRequired vendorId categoryIds").lean(),
+        AttributeOption.find({ status: "active" }).select("attribute displayName storedValue vendorId").lean(),
       ]);
 
     const categories = rawCategories.map((c) => ({
@@ -1153,6 +1153,7 @@ export const getVendorMasterCatalog = async (req, res) => {
         brands,
         attributes,
         attributeOptions,
+        currentVendorId: req.vendor?._id || null,
       },
     });
   } catch (error) {

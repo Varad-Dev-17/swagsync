@@ -31,6 +31,12 @@ const AttributeOptionSchema = new mongoose.Schema(
       default: "active",
     },
 
+    vendorId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Vendor",
+      default: null,
+      index: true,
+    },
   },
   { timestamps: true }
 );

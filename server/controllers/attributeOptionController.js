@@ -223,7 +223,8 @@ export const createAttributeOption = async (req, res) => {
       displayName: displayName.trim(),
       storedValue: storedValue.trim(),
       hex: hex ? hex.trim() : undefined,
-      status: status || "active"
+      status: status || "active",
+      vendorId: req.vendor?._id || null,
     });
 
     res.status(201).json({
@@ -252,6 +253,14 @@ export const updateAttributeOption = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: "Attribute option not found.",
+      });
+    }
+
+    // Vendor authorization check
+    if (req.vendor && String(option.vendorId || "") !== String(req.vendor._id)) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not authorized to update this attribute option.",
       });
     }
 
@@ -305,9 +314,25 @@ export const deleteAttributeOption = async (req, res) => {
       });
     }
 
+    // Vendor authorization check
+    if (req.vendor && String(option.vendorId || "") !== String(req.vendor._id)) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not authorized to delete this attribute option.",
+      });
+    }
+
     // Validation 1: Check if any ProductVariants depend on this Option
-    // Example: { "attributes.optionId": id }
-    // We will implement this constraint once the ProductVariant schema is finalized.
+    const variantCount = await Variant.countDocuments({
+      "attributes.option": id,
+    });
+
+    if (variantCount > 0) {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot delete: Attribute option is currently used by ${variantCount} variant(s).`,
+      });
+    }
 
     await AttributeOption.findByIdAndDelete(id);
 

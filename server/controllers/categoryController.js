@@ -169,6 +169,7 @@ export const createCategory = async (req, res) => {
       slug: slug.trim().toLowerCase(),
       status: status || "Active",
       image: image || undefined,
+      vendorId: req.vendor?._id || null,
     });
 
     res.status(201).json({
@@ -196,6 +197,55 @@ export const updateCategory = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: "Category not found.",
+      });
+    }
+
+    // Vendor permission:
+    // If category was NOT created by this vendor (existing/system or another vendor):
+    // Vendor cannot rename, modify slug, or remove existing departments, but CAN add new departments.
+    if (req.vendor && String(category.vendorId || '') !== String(req.vendor._id)) {
+      if (name && name.trim() !== category.name) {
+        return res.status(400).json({
+          success: false,
+          message: "Cannot modify the name of an existing category.",
+        });
+      }
+      if (slug && slug.trim().toLowerCase() !== category.slug) {
+        return res.status(400).json({
+          success: false,
+          message: "Cannot modify the slug of an existing category.",
+        });
+      }
+
+      if (departmentIds) {
+        const existingDeptIds = (category.departmentIds || []).map((d) => d.toString());
+        const incomingDeptIds = departmentIds.map((d) => d.toString());
+        const removedDepts = existingDeptIds.filter((d) => !incomingDeptIds.includes(d));
+        if (removedDepts.length > 0) {
+          return res.status(400).json({
+            success: false,
+            message: "Cannot remove existing departments from an existing category.",
+          });
+        }
+
+        const newlyAdded = incomingDeptIds.filter((d) => !existingDeptIds.includes(d));
+        if (newlyAdded.length > 0) {
+          const departmentsExist = await Department.find({ _id: { $in: newlyAdded } });
+          if (departmentsExist.length !== newlyAdded.length) {
+            return res.status(404).json({
+              success: false,
+              message: "One or more departments not found.",
+            });
+          }
+          category.departmentIds = Array.from(new Set([...existingDeptIds, ...newlyAdded]));
+        }
+      }
+
+      await category.save();
+      return res.status(200).json({
+        success: true,
+        message: "Category updated successfully.",
+        category,
       });
     }
 
@@ -264,12 +314,20 @@ export const deleteCategory = async (req, res) => {
       });
     }
 
+    // Vendor permission: Vendors can only delete their own categories
+    if (req.vendor && String(category.vendorId || '') !== String(req.vendor._id)) {
+      return res.status(403).json({
+        success: false,
+        message: "Unauthorized: You can only delete categories created by your vendor account.",
+      });
+    }
+
     // Validation 1: Check if any Products are linked
     const productCount = await Product.countDocuments({ category: id });
     if (productCount > 0) {
       return res.status(400).json({
         success: false,
-        message: "Cannot delete: Products exist under this Category.",
+        message: `Cannot delete: ${productCount} product(s) are currently associated with this Category.`,
       });
     }
 

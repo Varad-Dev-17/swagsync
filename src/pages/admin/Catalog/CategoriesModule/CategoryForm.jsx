@@ -1,14 +1,35 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import { UploadCloud, X } from 'lucide-react';
+import { UploadCloud, X, Lock, Info } from 'lucide-react';
 
 const CategoryForm = ({ initialData = null, isEdit = false, isVendor = false }) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const departmentIdParam = searchParams.get('departmentId');
   const returnTo = searchParams.get('returnTo');
+
+  const token = localStorage.getItem('token');
+  let currentVendorId = null;
+  if (token) {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      currentVendorId = payload.vendorId;
+    } catch (e) {}
+  }
+
+  const isCategoryOwned = useMemo(() => {
+    if (!isEdit || !isVendor) return true;
+    if (!initialData?.vendorId) return false;
+    const vId = typeof initialData.vendorId === 'object' ? initialData.vendorId._id || initialData.vendorId : initialData.vendorId;
+    return String(vId) === String(currentVendorId);
+  }, [isEdit, isVendor, initialData, currentVendorId]);
+
+  const initialDeptIds = useMemo(() => {
+    if (!isEdit || !initialData?.departmentIds) return [];
+    return initialData.departmentIds.map(d => (d._id || d).toString());
+  }, [isEdit, initialData]);
   
   const [formData, setFormData] = useState({
     departmentIds: [],
@@ -89,6 +110,10 @@ const CategoryForm = ({ initialData = null, isEdit = false, isVendor = false }) 
   };
 
   const handleDepartmentChange = (departmentId) => {
+    if (isVendor && !isCategoryOwned && initialDeptIds.includes(departmentId.toString())) {
+      toast.error("Existing departments cannot be removed from this category.");
+      return;
+    }
     setFormData(prev => {
       const isSelected = prev.departmentIds.includes(departmentId);
       if (isSelected) {
@@ -200,28 +225,54 @@ const CategoryForm = ({ initialData = null, isEdit = false, isVendor = false }) 
       <div className="mb-6">
         <h2 className={`text-xl font-bold ${primaryText}`}>{isEdit ? 'Edit Category' : 'Add Category'}</h2>
       </div>
+
+      {isVendor && isEdit && !isCategoryOwned && (
+        <div className="mb-6 p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs sm:text-sm flex items-start gap-2.5">
+          <Info className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+          <div>
+            <p className="font-bold">System Category (Partial Editing Mode)</p>
+            <p className="text-amber-700 text-xs mt-0.5">
+              Previous existing fields (Category Name, Status, Image) and assigned departments cannot be modified or removed. You can assign additional departments below.
+            </p>
+          </div>
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className="space-y-8">
         <div>
           <label className={`block text-sm font-medium ${primaryText} mb-2`}>Departments *</label>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {departments.map(dept => (
-              <label 
-                key={dept._id} 
-                className={`flex items-center gap-3 p-3 border rounded-xl cursor-pointer transition-colors ${
-                  formData.departmentIds.includes(dept._id) 
-                    ? primaryBorderActive 
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
-              >
-                <input
-                  type="checkbox"
-                  className={`w-4 h-4 rounded ${checkboxColor}`}
-                  checked={formData.departmentIds.includes(dept._id)}
-                  onChange={() => handleDepartmentChange(dept._id)}
-                />
-                <span className="text-sm font-medium text-gray-700">{dept.name}</span>
-              </label>
-            ))}
+            {departments.map(dept => {
+              const isPreExisting = isVendor && isEdit && !isCategoryOwned && initialDeptIds.includes(dept._id.toString());
+              return (
+                <label 
+                  key={dept._id} 
+                  className={`flex items-center gap-3 p-3 border rounded-xl transition-colors ${
+                    isPreExisting
+                      ? 'border-gray-200 bg-gray-50 cursor-not-allowed opacity-85'
+                      : formData.departmentIds.includes(dept._id) 
+                      ? primaryBorderActive + ' cursor-pointer'
+                      : 'border-gray-200 hover:border-gray-300 cursor-pointer'
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    disabled={isPreExisting}
+                    className={`w-4 h-4 rounded ${checkboxColor} ${isPreExisting ? 'cursor-not-allowed opacity-60' : ''}`}
+                    checked={formData.departmentIds.includes(dept._id)}
+                    onChange={() => handleDepartmentChange(dept._id)}
+                  />
+                  <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                    <span className="text-sm font-medium text-gray-700 truncate">{dept.name}</span>
+                    {isPreExisting && (
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-gray-200 text-gray-600 shrink-0 ml-auto">
+                        <Lock size={10} /> Existing
+                      </span>
+                    )}
+                  </div>
+                </label>
+              );
+            })}
           </div>
           {departments.length === 0 && (
             <p className="text-sm text-gray-500">No active departments found. Please create one first.</p>
@@ -230,23 +281,43 @@ const CategoryForm = ({ initialData = null, isEdit = false, isVendor = false }) 
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div>
-            <label className={`block text-sm font-medium ${primaryText} mb-2`}>Category Name *</label>
+            <label className={`block text-sm font-medium ${primaryText} mb-2 flex items-center justify-between`}>
+              <span>Category Name *</span>
+              {isVendor && isEdit && !isCategoryOwned && (
+                <span className="text-xs text-slate-400 font-normal flex items-center gap-1">
+                  <Lock size={12} /> System field (read-only)
+                </span>
+              )}
+            </label>
             <input
               type="text"
               value={formData.name}
               onChange={handleNameChange}
+              disabled={isVendor && isEdit && !isCategoryOwned}
               placeholder="e.g. Shirts"
-              className={`w-full px-4 h-12 border border-gray-200 rounded-xl outline-none ${primaryRing} focus:ring-1 transition-colors`}
+              className={`w-full px-4 h-12 border border-gray-200 rounded-xl outline-none ${primaryRing} focus:ring-1 transition-colors ${
+                isVendor && isEdit && !isCategoryOwned ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''
+              }`}
               required
             />
           </div>
 
           <div>
-            <label className={`block text-sm font-medium ${primaryText} mb-2`}>Status</label>
+            <label className={`block text-sm font-medium ${primaryText} mb-2 flex items-center justify-between`}>
+              <span>Status</span>
+              {isVendor && isEdit && !isCategoryOwned && (
+                <span className="text-xs text-slate-400 font-normal flex items-center gap-1">
+                  <Lock size={12} /> System field (read-only)
+                </span>
+              )}
+            </label>
             <select
               value={formData.status}
+              disabled={isVendor && isEdit && !isCategoryOwned}
               onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-              className={`w-full px-4 h-12 border border-gray-200 rounded-xl outline-none ${primaryRing} focus:ring-1 transition-colors bg-white cursor-pointer`}
+              className={`w-full px-4 h-12 border border-gray-200 rounded-xl outline-none ${primaryRing} focus:ring-1 transition-colors bg-white ${
+                isVendor && isEdit && !isCategoryOwned ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : 'cursor-pointer'
+              }`}
             >
               <option value="Active">Active</option>
               <option value="Inactive">Inactive</option>
@@ -259,19 +330,29 @@ const CategoryForm = ({ initialData = null, isEdit = false, isVendor = false }) 
           {formData.image ? (
             <div className="relative w-32 h-32 border border-gray-200 rounded-xl overflow-hidden group">
               <img src={formData.image.url} alt="Category" className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                <button
-                  type="button"
-                  onClick={() => setFormData(prev => ({ ...prev, image: null }))}
-                  className="w-8 h-8 bg-white text-red-500 rounded-full flex items-center justify-center hover:bg-red-50 transition-colors shadow-sm"
-                >
-                  <X size={16} />
-                </button>
-              </div>
+              {(!isVendor || isCategoryOwned) && (
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <button
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, image: null }))}
+                    className="w-8 h-8 bg-white text-red-500 rounded-full flex items-center justify-center hover:bg-red-50 transition-colors shadow-sm"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
-            <label className={`flex flex-col items-center justify-center w-32 h-32 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:bg-gray-50 hover:${isVendor ? 'border-[#fe4a03]' : 'border-[#4648d4]'} transition-colors`}>
-              <input type="file" className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e.target.files[0])} />
+            <label className={`flex flex-col items-center justify-center w-32 h-32 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:bg-gray-50 hover:${isVendor ? 'border-[#fe4a03]' : 'border-[#4648d4]'} transition-colors ${
+              isVendor && isEdit && !isCategoryOwned ? 'pointer-events-none opacity-60' : ''
+            }`}>
+              <input 
+                type="file" 
+                className="hidden" 
+                accept="image/*" 
+                disabled={isVendor && isEdit && !isCategoryOwned}
+                onChange={(e) => handleImageUpload(e.target.files[0])} 
+              />
               <UploadCloud className="w-8 h-8 text-gray-400 mb-2" />
               <span className="text-xs font-medium text-gray-600">Upload</span>
             </label>

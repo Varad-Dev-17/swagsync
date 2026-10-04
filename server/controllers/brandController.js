@@ -139,6 +139,7 @@ export const createBrand = async (req, res) => {
       name: name.trim(),
       slug: slug.trim().toLowerCase(),
       status: status || "Active",
+      vendorId: req.vendor?._id || null,
     });
 
     res.status(201).json({
@@ -167,6 +168,55 @@ export const updateBrand = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: "Brand not found.",
+      });
+    }
+
+    // Vendor permission:
+    // If brand was NOT created by this vendor (existing/system or another vendor):
+    // Vendor cannot rename, modify slug, or remove existing departments, but CAN add new departments.
+    if (req.vendor && String(brand.vendorId || '') !== String(req.vendor._id)) {
+      if (name && name.trim() !== brand.name) {
+        return res.status(400).json({
+          success: false,
+          message: "Cannot modify the name of an existing brand.",
+        });
+      }
+      if (slug && slug.trim().toLowerCase() !== brand.slug) {
+        return res.status(400).json({
+          success: false,
+          message: "Cannot modify the slug of an existing brand.",
+        });
+      }
+
+      if (departmentIds) {
+        const existingDeptIds = (brand.departmentIds || []).map((d) => d.toString());
+        const incomingDeptIds = departmentIds.map((d) => d.toString());
+        const removedDepts = existingDeptIds.filter((d) => !incomingDeptIds.includes(d));
+        if (removedDepts.length > 0) {
+          return res.status(400).json({
+            success: false,
+            message: "Cannot remove existing departments from an existing brand.",
+          });
+        }
+
+        const newlyAdded = incomingDeptIds.filter((d) => !existingDeptIds.includes(d));
+        if (newlyAdded.length > 0) {
+          const departmentsExist = await Department.find({ _id: { $in: newlyAdded } });
+          if (departmentsExist.length !== newlyAdded.length) {
+            return res.status(404).json({
+              success: false,
+              message: "One or more departments not found.",
+            });
+          }
+          brand.departmentIds = Array.from(new Set([...existingDeptIds, ...newlyAdded]));
+        }
+      }
+
+      await brand.save();
+      return res.status(200).json({
+        success: true,
+        message: "Brand updated successfully.",
+        brand,
       });
     }
 
@@ -231,12 +281,20 @@ export const deleteBrand = async (req, res) => {
       });
     }
 
+    // Vendor permission: Vendors can only delete their own brands
+    if (req.vendor && String(brand.vendorId || '') !== String(req.vendor._id)) {
+      return res.status(403).json({
+        success: false,
+        message: "Unauthorized: You can only delete brands created by your vendor account.",
+      });
+    }
+
     // Validation: Check if any Products use this Brand
     const productCount = await Product.countDocuments({ brand: id });
     if (productCount > 0) {
       return res.status(400).json({
         success: false,
-        message: "Cannot delete: Products depend on this Brand.",
+        message: `Cannot delete: ${productCount} product(s) depend on this Brand.`,
       });
     }
 

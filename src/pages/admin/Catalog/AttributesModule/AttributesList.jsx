@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import { Plus, Edit2, Trash2, X, Check } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Check, Sliders, Eye, ChevronDown, ChevronUp } from 'lucide-react';
 import DataTable from '../../../../components/admin/ui/DataTable';
 import CatalogDetailsModal from '../../../../components/admin/ui/CatalogDetailsModal';
 
@@ -37,6 +37,21 @@ const AttributesList = () => {
 
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [selectedAttributeForDetails, setSelectedAttributeForDetails] = useState(null);
+
+  // Expanded attributes accordion state
+  const [expandedAttributeIds, setExpandedAttributeIds] = useState(new Set());
+
+  const toggleExpand = (attrId) => {
+    setExpandedAttributeIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(attrId)) {
+        next.delete(attrId);
+      } else {
+        next.add(attrId);
+      }
+      return next;
+    });
+  };
 
 
 
@@ -171,82 +186,143 @@ const AttributesList = () => {
       header: 'Sr. No.',
       accessor: 'srNo',
       align: 'center',
+      headerAlign: 'center',
       render: (_, rowIndex) => (
-        <span className="text-gray-500 font-medium">
-          {(currentPage - 1) * limit + rowIndex + 1}
+        <span className="font-bold text-[#4648d4] text-xs">
+          {String((currentPage - 1) * limit + rowIndex + 1).padStart(2, '0')}
         </span>
       )
     },
     {
-      header: 'Name',
+      header: 'Attribute Name',
       accessor: 'name',
+      align: 'left',
+      headerAlign: 'left',
       render: (row) => (
-        <button
-          onClick={() => { setSelectedAttributeForDetails(row); setIsDetailsModalOpen(true); }}
-          className="font-medium text-[#4648d4] hover:underline text-left focus:outline-none"
-        >
-          {row.name}
-        </button>
+        <div className="flex items-center gap-3 py-1">
+          <div className="w-9 h-9 rounded-xl bg-[#4648d4]/10 border border-[#4648d4]/20 text-[#4648d4] flex items-center justify-center shrink-0">
+            <Sliders size={18} />
+          </div>
+          <div>
+            <p
+              onClick={() => { setSelectedAttributeForDetails(row); setIsDetailsModalOpen(true); }}
+              className="font-bold text-slate-900 text-sm hover:text-[#4648d4] hover:underline cursor-pointer transition-colors"
+            >
+              {row.name}
+            </p>
+            <p className="text-xs text-slate-400 font-medium">Field Type: {row.fieldType || 'select'}</p>
+          </div>
+        </div>
       )
     },
     {
-      header: 'Field Type',
-      accessor: 'fieldType',
-      render: (row) => getFieldTypeBadge(row.fieldType)
+      header: 'Available Options',
+      align: 'left',
+      headerAlign: 'left',
+      render: (row) => {
+        const opts = row.options || [];
+
+        if (!['select', 'color', 'multiselect'].includes(row.fieldType) || (opts.length === 0 && (!row.optionsCount || row.optionsCount === 0))) {
+          return <span className="text-slate-400 text-xs italic">No preset options</span>;
+        }
+
+        const isExpanded = expandedAttributeIds.has(row._id?.toString());
+        const displayOpts = isExpanded ? opts : opts.slice(0, 5);
+        const hasMore = opts.length > 5;
+        const moreCount = opts.length - 5;
+
+        return (
+          <div className="py-1">
+            <div className="flex flex-wrap items-center gap-1.5 max-w-lg transition-all duration-200">
+              {displayOpts.map((opt) => (
+                <span
+                  key={opt._id}
+                  className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200"
+                >
+                  {row.fieldType === 'color' && opt.storedValue && (
+                    <span
+                      className="w-2.5 h-2.5 rounded-full border border-slate-300 shrink-0 shadow-xs"
+                      style={{ backgroundColor: opt.storedValue }}
+                    />
+                  )}
+                  <span>{opt.displayName || opt.storedValue}</span>
+                </span>
+              ))}
+
+              {hasMore && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleExpand(row._id?.toString());
+                  }}
+                  className="inline-flex items-center gap-1 text-[11px] text-[#4648d4] font-bold hover:underline cursor-pointer bg-[#4648d4]/5 hover:bg-[#4648d4]/10 px-2 py-0.5 rounded-md border border-[#4648d4]/20 transition-colors"
+                >
+                  {isExpanded ? (
+                    <>
+                      <ChevronUp size={12} />
+                      <span>Show less</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>+{moreCount} more</span>
+                      <ChevronDown size={12} />
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
+          </div>
+        );
+      }
     },
     {
       header: 'Used In',
       accessor: 'usage',
       align: 'center',
+      headerAlign: 'center',
       render: (row) => (
-        <span className="font-medium text-gray-700">
+        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-[#4648d4]/10 text-[#4648d4] border border-[#4648d4]/20">
           {row.usage || 'Product'}
         </span>
       )
     },
     {
-      header: 'Options Count',
-      accessor: 'optionsCount',
-      render: (row) => {
-        const isClickable = ['select', 'color'].includes(row.fieldType) && row.optionsCount > 0;
-        return (
-          <span
-            onClick={() => isClickable && handleOptionsClick(row)}
-            className={`${isClickable ? 'text-[#4648d4] hover:underline cursor-pointer font-medium' : 'text-gray-500'}`}
-          >
-            {['select', 'color'].includes(row.fieldType)
-              ? `${row.optionsCount || 0} Options`
-              : '-'}
-          </span>
-        );
-      }
-    },
-    {
       header: 'Status',
       accessor: 'status',
-      render: (row) => <StatusBadge status={row.status} />
+      align: 'center',
+      headerAlign: 'center',
+      render: (row) => <StatusBadge status={row.status || 'Active'} />
     },
     {
       header: 'Actions',
       align: 'center',
+      headerAlign: 'center',
       render: (row) => (
-        <div className="flex items-center justify-center gap-2">
+        <div className="flex items-center justify-center gap-1.5">
           <button
             onClick={() => handleToggleStatus(row)}
-            className="text-xs font-medium text-gray-500 hover:text-[#4648d4] bg-gray-50 hover:bg-[#4648d4]/10 px-2 py-1 rounded transition-colors"
+            className="text-xs font-medium text-gray-500 hover:text-[#4648d4] bg-gray-50 hover:bg-[#4648d4]/10 px-2 py-1 rounded transition-colors cursor-pointer"
           >
             {row.status === 'Active' ? 'Disable' : 'Enable'}
           </button>
           <button
+            onClick={() => { setSelectedAttributeForDetails(row); setIsDetailsModalOpen(true); }}
+            className="p-1.5 text-gray-400 hover:text-[#4648d4] hover:bg-[#4648d4]/10 rounded-lg transition-colors cursor-pointer"
+            title="View Details"
+          >
+            <Eye size={16} />
+          </button>
+          <button
             onClick={() => navigate(`/admin/catalog/attributes/${row._id}/edit`)}
-            className="p-1.5 text-gray-400 hover:text-[#4648d4] hover:bg-[#4648d4]/10 rounded-lg transition-colors"
+            className="p-1.5 text-gray-400 hover:text-[#4648d4] hover:bg-[#4648d4]/10 rounded-lg transition-colors cursor-pointer"
             title="Edit"
           >
             <Edit2 size={16} />
           </button>
           <button
             onClick={() => handleDeleteClick(row)}
-            className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+            className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
             title="Delete"
           >
             <Trash2 size={16} />

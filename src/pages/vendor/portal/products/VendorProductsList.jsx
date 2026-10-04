@@ -147,6 +147,21 @@ const VendorProductsList = () => {
 
   const columns = [
     {
+      header: 'Product ID',
+      accessor: 'productId',
+      align: 'center',
+      headerAlign: 'center',
+      render: (row) => (
+        <button
+          onClick={() => navigate(`/vendor/portal/products/${row._id}/view`)}
+          className="font-bold text-[#fe4a03] hover:underline font-mono text-xs cursor-pointer"
+          title="View Product"
+        >
+          {row.productId || (row._id ? `#${row._id.slice(-8).toUpperCase()}` : 'N/A')}
+        </button>
+      ),
+    },
+    {
       header: 'Product',
       accessor: 'title',
       align: 'center',
@@ -229,10 +244,18 @@ const VendorProductsList = () => {
 
   const variantColumns = [
     {
-      header: 'ID',
-      accessor: 'productDisplayId',
+      header: 'Variant ID',
+      accessor: 'variantId',
+      align: 'center',
+      headerAlign: 'center',
       render: (row) => (
-        <span className="text-xs font-medium text-gray-500">{row.productDisplayId || row.productId}</span>
+        <button
+          onClick={() => navigate(`/vendor/portal/products/${row.productId}/variant-group/${row.primaryOptionId}/view`)}
+          className="font-bold text-[#fe4a03] hover:underline font-mono text-xs cursor-pointer"
+          title="View Variant Group"
+        >
+          {row.variantDisplayId || row.sku || (row.variantId ? `VAR-${row.variantId.toString().slice(-6).toUpperCase()}` : (row.primaryOptionId && row.primaryOptionId !== 'default' ? `VAR-${row.primaryOptionId.slice(-6).toUpperCase()}` : (row.id ? `VAR-${row.id.slice(-6).toUpperCase()}` : 'N/A')))}
+        </button>
       ),
     },
     {
@@ -329,8 +352,8 @@ const VendorProductsList = () => {
   ];
 
   return (
-    <div className="flex flex-col flex-1 overflow-hidden p-4 lg:pl-7 lg:pr-7">
-      <div className="bg-white rounded-[20px] shadow-sm border border-gray-100 flex flex-col flex-1 overflow-hidden">
+    <div className="flex flex-col flex-1 p-4 lg:pl-7 lg:pr-7 min-h-[calc(100vh-4rem)]">
+      <div className="bg-white rounded-[20px] shadow-sm border border-gray-100 flex flex-col flex-1 min-h-[calc(100vh-6rem)] relative">
         <SearchToolbar
           leftSlot={
             <div className="flex items-center">

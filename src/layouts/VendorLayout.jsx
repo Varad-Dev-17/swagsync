@@ -15,7 +15,6 @@ import {
   Menu,
   X,
   ChevronDown,
-  ShieldCheck,
   ExternalLink,
   User as UserIcon,
   Bell,
@@ -148,29 +147,12 @@ const VendorLayout = () => {
                     Vendor
                   </span>
                 </div>
-                <span className="text-[11px] text-slate-400 font-medium hidden sm:inline leading-none">
-                  Partner Portal
-                </span>
               </div>
             </Link>
           </div>
 
-          {/* Right: Store Badge, Status, Profile Dropdown */}
+          {/* Right: Profile Dropdown */}
           <div className="flex items-center gap-3 sm:gap-4">
-            {/* Store Identification Badge */}
-            <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100/80 border border-slate-200/80 text-xs">
-              <Store size={14} className="text-[#fe4a03]" />
-              <span className="font-bold text-slate-800 max-w-[160px] truncate">{storeName}</span>
-              <span className="text-slate-300">|</span>
-              <span className="font-mono text-slate-500 font-medium">{vendorId}</span>
-            </div>
-
-            {/* Approved Badge */}
-            <div className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-bold">
-              <ShieldCheck size={13} className="text-emerald-600" />
-              <span>Approved</span>
-            </div>
-
             {/* Profile Dropdown */}
             <div className="relative" ref={dropdownRef}>
               <button
@@ -330,17 +312,7 @@ const VendorLayout = () => {
             })}
           </nav>
 
-          {/* Sidebar Footer info */}
-          {!isCollapsed && (
-            <div className="p-3 m-3 rounded-2xl bg-orange-50/70 border border-orange-100 text-xs text-orange-950 shrink-0">
-              <div className="font-bold flex items-center gap-1.5 text-[#fe4a03]">
-                <ShieldCheck size={15} /> Verified Merchant
-              </div>
-              <p className="text-[11px] text-orange-900/80 mt-1 leading-snug">
-                Vendor-scoped isolation active. Products and inventory belong strictly to your store.
-              </p>
-            </div>
-          )}
+
         </aside>
 
         {/* Mobile Sidebar Overlay */}
@@ -436,7 +408,7 @@ const VendorLayout = () => {
 
         {/* Content Outlet */}
         <main
-          className={`flex-1 min-w-0 transition-all duration-300 ${
+          className={`flex-1 min-w-0 flex flex-col min-h-[calc(100vh-4rem)] transition-all duration-300 ${
             isCollapsed ? "lg:ml-20" : "lg:ml-64"
           }`}
         >

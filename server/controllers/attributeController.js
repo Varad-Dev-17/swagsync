@@ -3,6 +3,7 @@ import AttributeOption from "../models/attributeOption.js";
 import AttributeMapping from "../models/attributeMapping.js";
 import Category from "../models/category.js";
 import Product from "../models/product.js";
+import Variant from "../models/variant.js";
 
 // GET All Attributes (with search, pagination, options count)
 export const getAttributes = async (req, res) => {
@@ -44,12 +45,19 @@ export const getAttributes = async (req, res) => {
       {
         $addFields: {
           optionsCount: { $size: "$options" },
-          id: "$_id"
-        }
-      },
-      {
-        $project: {
-          options: 0 // exclude the massive array of options, just keep count
+          id: "$_id",
+          options: {
+            $map: {
+              input: "$options",
+              as: "opt",
+              in: {
+                _id: "$$opt._id",
+                displayName: "$$opt.displayName",
+                storedValue: "$$opt.storedValue",
+                hex: "$$opt.hex"
+              }
+            }
+          }
         }
       }
     ]);
@@ -171,6 +179,7 @@ export const createAttribute = async (req, res) => {
       fieldType,
       usage: usage || "Product",
       status: status || "Active",
+      vendorId: req.vendor?._id || null,
     });
 
     // Create AttributeMapping documents
@@ -209,6 +218,54 @@ export const updateAttribute = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: "Attribute not found.",
+      });
+    }
+
+    // Vendor authorization check:
+    // If attribute was NOT created by this vendor:
+    // Vendor cannot rename or remove existing categories, but CAN map additional categories.
+    if (req.vendor && String(attribute.vendorId || "") !== String(req.vendor._id)) {
+      if (name && name.trim() !== attribute.name) {
+        return res.status(400).json({
+          success: false,
+          message: "Cannot modify the name of an existing attribute.",
+        });
+      }
+
+      if (categoryIds) {
+        const existingCatIds = (attribute.categoryIds || []).map((c) => c.toString());
+        const incomingCatIds = categoryIds.map((c) => c.toString());
+        const removedCats = existingCatIds.filter((c) => !incomingCatIds.includes(c));
+        if (removedCats.length > 0) {
+          return res.status(400).json({
+            success: false,
+            message: "Cannot remove existing category mappings from an existing attribute.",
+          });
+        }
+
+        const newlyAdded = incomingCatIds.filter((c) => !existingCatIds.includes(c));
+        if (newlyAdded.length > 0) {
+          const categoriesExist = await Category.find({ _id: { $in: newlyAdded } });
+          if (categoriesExist.length !== newlyAdded.length) {
+            return res.status(404).json({
+              success: false,
+              message: "One or more categories not found.",
+            });
+          }
+          attribute.categoryIds = Array.from(new Set([...existingCatIds, ...newlyAdded]));
+          const mappingsToInsert = newlyAdded.map((catId) => ({
+            category: catId,
+            attribute: id,
+          }));
+          await AttributeMapping.insertMany(mappingsToInsert, { ordered: false }).catch(() => {});
+        }
+      }
+
+      await attribute.save();
+      return res.status(200).json({
+        success: true,
+        message: "Attribute updated successfully.",
+        attribute,
       });
     }
 
@@ -281,31 +338,34 @@ export const deleteAttribute = async (req, res) => {
       });
     }
 
-    // Validation 1: Check if any Products are currently using this Attribute
-    const productCount = await Product.countDocuments({
-      "attributes.attribute": id,
-    });
-
-    if (productCount > 0) {
-      return res.status(400).json({
+    // Vendor authorization check
+    if (req.vendor && String(attribute.vendorId || "") !== String(req.vendor._id)) {
+      return res.status(403).json({
         success: false,
-        message: "Cannot delete: Products are currently using this Attribute.",
+        message: "You are not authorized to delete this attribute.",
       });
     }
 
-    // Validation 2: Check if mapped to any Category
-    const mappingCount = await AttributeMapping.countDocuments({ attribute: id });
-    if (mappingCount > 0) {
+    // Validation 1: Check if any Products or Variants are currently using this Attribute
+    const productCount = await Product.countDocuments({
+      "attributes.attribute": id,
+    });
+    const variantCount = await Variant.countDocuments({
+      "attributes.attribute": id,
+    });
+
+    if (productCount > 0 || variantCount > 0) {
       return res.status(400).json({
         success: false,
-        message: "Cannot delete: Attribute is mapped to one or more Categories.",
+        message: `Cannot delete: Attribute is currently used by ${productCount} product(s) and ${variantCount} variant(s).`,
       });
     }
 
     // Proceed to hard delete the attribute
     await Attribute.findByIdAndDelete(id);
 
-    // Cascade delete options
+    // Cascade delete mappings and options
+    await AttributeMapping.deleteMany({ attribute: id });
     await AttributeOption.deleteMany({ attribute: id });
 
     res.status(200).json({

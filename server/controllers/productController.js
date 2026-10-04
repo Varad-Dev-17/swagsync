@@ -7,6 +7,7 @@ import Attribute from "../models/attribute.js";
 import AttributeOption from "../models/attributeOption.js";
 import ProductReview from "../models/productReview.js";
 import Variant from "../models/variant.js";
+import Vendor from "../models/vendor.js";
 import { v2 as cloudinary } from "cloudinary";
 import { getNextSequence } from "../utils/counterHelper.js";
 
@@ -227,6 +228,9 @@ export const getAllVariantGroups = async (req, res) => {
             id: groupId,
             productId: product._id,
             productDisplayId: product.productId,
+            variantId: variant._id,
+            variantDisplayId: variant.sku || (variant._id ? `VAR-${variant._id.toString().slice(-6).toUpperCase()}` : null),
+            sku: variant.sku,
             productTitle: product.title,
             productImage: variant.mainImage?.url || null,
             primaryOptionId: primaryOptionId,
@@ -553,7 +557,10 @@ export const getProductById = async (req, res) => {
       .populate("category", "name")
       .populate("brand", "name")
       .populate("attributes.attribute", "name fieldType")
-      .populate("attributes.attribute", "name fieldType");
+      .populate(
+        "vendorId",
+        "vendorProfile.storeName vendorProfile.phone vendorProfile.storeAddress vendorProfile.stores vendorProfile.manufacturerDetails vendorProfile.manufacturers vendorProfile.businessDetails.gstNumber"
+      );
 
     if (!product) {
       console.log("[Get Product By Id] Product is null for ID:", id);
@@ -602,6 +609,10 @@ export const getProductBySlug = async (req, res) => {
       .populate("category", "name")
       .populate("brand", "name")
       .populate("attributes.attribute", "name fieldType")
+      .populate(
+        "vendorId",
+        "vendorProfile.storeName vendorProfile.phone vendorProfile.storeAddress vendorProfile.stores vendorProfile.manufacturerDetails vendorProfile.manufacturers vendorProfile.businessDetails.gstNumber"
+      )
       .lean();
 
     if (!product) {
@@ -987,11 +998,11 @@ export const deleteProduct = async (req, res) => {
   }
 };
 
-// GET RELATED PRODUCTS
+// GET RELATED PRODUCTS (Same Category & Department across all brands)
 export const getRelatedProducts = async (req, res) => {
   try {
     const { id } = req.params;
-    const { limit = 8 } = req.query;
+    const { limit = 10 } = req.query;
 
     const product = await Product.findById(id);
     if (!product) {
@@ -1002,20 +1013,65 @@ export const getRelatedProducts = async (req, res) => {
       });
     }
 
-    const relatedProducts = await Product.find({
+    // 1. Primary match: Same category & same department across all brands, excluding current product
+    const deptFilter = product.department ? { department: product.department } : {};
+    let query = {
       _id: { $ne: id },
       status: "Active",
-      $or: [
-        { department: product.department },
-        { category: product.category },
-        { brand: product.brand },
-      ],
-    })
+      ...deptFilter,
+    };
+
+    if (product.category) {
+      query.category = product.category;
+    }
+
+    let relatedProducts = await Product.find(query)
       .populate("department", "name")
       .populate("category", "name")
       .populate("brand", "name")
       .limit(Number(limit))
       .lean();
+
+    // 2. Fallback: If not enough products, expand to other categories STRICTLY WITHIN THE SAME DEPARTMENT
+    if (relatedProducts.length < Number(limit) && product.department) {
+      const existingIds = [id, ...relatedProducts.map((p) => p._id)];
+      const fallbackProducts = await Product.find({
+        _id: { $nin: existingIds },
+        status: "Active",
+        department: product.department, // 🔐 STRICT: NEVER cross department boundaries!
+      })
+        .populate("department", "name")
+        .populate("category", "name")
+        .populate("brand", "name")
+        .limit(Number(limit) - relatedProducts.length)
+        .lean();
+
+      relatedProducts = [...relatedProducts, ...fallbackProducts];
+    }
+
+    // 3. Attach active variants (with pricing and images) for each product
+    const productIds = relatedProducts.map((p) => p._id);
+    if (productIds.length > 0) {
+      const variants = await Variant.find({
+        product: { $in: productIds },
+        status: "Active",
+      })
+        .populate("attributes.attribute", "name fieldType")
+        .populate("attributes.option", "displayName storedValue")
+        .lean();
+
+      const variantsMap = {};
+      variants.forEach((v) => {
+        const pid = v.product.toString();
+        if (!variantsMap[pid]) variantsMap[pid] = [];
+        variantsMap[pid].push(v);
+      });
+
+      relatedProducts = relatedProducts.map((p) => ({
+        ...p,
+        variants: variantsMap[p._id.toString()] || [],
+      }));
+    }
 
     return res.status(200).json({
       success: true,

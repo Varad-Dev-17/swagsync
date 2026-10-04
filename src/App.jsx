@@ -93,8 +93,11 @@ const VendorDashboard = lazy(() => import("./pages/vendor/portal/VendorDashboard
 const VendorStore = lazy(() => import("./pages/vendor/portal/VendorStore"));
 const VendorCatalog = lazy(() => import("./pages/vendor/portal/VendorCatalog"));
 const VendorAddCategory = lazy(() => import("./pages/vendor/portal/catalog/VendorAddCategory"));
+const VendorEditCategory = lazy(() => import("./pages/vendor/portal/catalog/VendorEditCategory"));
 const VendorAddBrand = lazy(() => import("./pages/vendor/portal/catalog/VendorAddBrand"));
+const VendorEditBrand = lazy(() => import("./pages/vendor/portal/catalog/VendorEditBrand"));
 const VendorAddAttribute = lazy(() => import("./pages/vendor/portal/catalog/VendorAddAttribute"));
+const VendorEditAttribute = lazy(() => import("./pages/vendor/portal/catalog/VendorEditAttribute"));
 const VendorProductsList = lazy(() => import("./pages/vendor/portal/products/VendorProductsList"));
 const VendorAddProduct = lazy(() => import("./pages/vendor/portal/products/VendorAddProduct"));
 const VendorEditProduct = lazy(() => import("./pages/vendor/portal/products/VendorEditProduct"));
@@ -200,8 +203,11 @@ const AppRoutes = () => {
         <Route path="store" element={<VendorStore />} />
         <Route path="catalog" element={<VendorCatalog />} />
         <Route path="catalog/categories/add" element={<VendorAddCategory />} />
+        <Route path="catalog/categories/edit/:id" element={<VendorEditCategory />} />
         <Route path="catalog/brands/add" element={<VendorAddBrand />} />
+        <Route path="catalog/brands/edit/:id" element={<VendorEditBrand />} />
         <Route path="catalog/attributes/add" element={<VendorAddAttribute />} />
+        <Route path="catalog/attributes/edit/:id" element={<VendorEditAttribute />} />
         <Route path="products">
           <Route index element={<VendorProductsList />} />
           <Route path="add" element={<VendorAddProduct />} />
@@ -225,6 +231,18 @@ const AppRoutes = () => {
       </Route>
       <Route
         path="/vendor/dashboard"
+        element={<Navigate to="/vendor/portal" replace />}
+      />
+      <Route
+        path="/vendor/portals"
+        element={<Navigate to="/vendor/portal" replace />}
+      />
+      <Route
+        path="/vendor/portals/*"
+        element={<Navigate to="/vendor/portal" replace />}
+      />
+      <Route
+        path="/vendor"
         element={<Navigate to="/vendor/portal" replace />}
       />
 

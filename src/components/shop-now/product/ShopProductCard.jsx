@@ -142,17 +142,21 @@ const ShopProductCard = ({ product }) => {
             </div>
           )}
           {/* Sizes / Secondary Attribute */}
-          <div className="text-[13px] text-[#535766] truncate mb-2">
-            {product.secondaryAttributeName || 'Sizes'}: <span className="text-[#282c3f]">
-            {product.availableSizes && product.availableSizes.length > 0 ? (
-              product.availableSizes.map((size, idx) => (
-                <span key={idx} className={size === product.currentSize ? "text-[#FD7100] font-bold" : "text-[#282c3f]"}>
-                  {size}{idx < product.availableSizes.length - 1 ? ', ' : ''}
-                </span>
-              ))
-            ) : 'N/A'}
-          </span>
-          </div>
+          {product.availableSizes && product.availableSizes.length > 0 && (
+            <div className="text-[13px] text-[#535766] truncate mb-2">
+              {product.secondaryAttributeName || 'Sizes'}:{' '}
+              <span className="text-[#282c3f]">
+                {product.availableSizes.map((size, idx) => (
+                  <span
+                    key={idx}
+                    className={size === product.currentSize ? "text-[#FD7100] font-bold" : "text-[#282c3f]"}
+                  >
+                    {size}{idx < product.availableSizes.length - 1 ? ', ' : ''}
+                  </span>
+                ))}
+              </span>
+            </div>
+          )}
           {/* Price inside hover to avoid layout jump since it's absolute */}
           <div className="flex items-center gap-1.5 flex-wrap">
             <span className="text-[14px] font-bold text-[#282c3f]">

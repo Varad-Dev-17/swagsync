@@ -3,6 +3,7 @@ import { useParams, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import ProductImageGrid from "../../components/product-details/ProductImageGrid";
 import ProductInfo from "../../components/product-details/ProductInfo";
+import RecommendedProductsSection from "../../components/product-details/RecommendedProductsSection";
 import SyncLoader from "../../components/common/SyncLoader";
 
 const api = axios.create({
@@ -70,6 +71,7 @@ const ProductDetailsPage = () => {
     };
 
     fetchProduct();
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }, [slug]);
 
   // Synchronize active variant when variantQuery changes in URL
@@ -133,6 +135,13 @@ const ProductDetailsPage = () => {
             <ProductImageGrid variant={activeVariant} />
           </div>
         </div>
+
+        {/* Similar / Recommended Products (Full-Width Section) */}
+        <RecommendedProductsSection
+          productId={product._id}
+          categoryName={product.category?.name || (typeof product.category === 'string' ? product.category : '')}
+          departmentName={product.department?.name || (typeof product.department === 'string' ? product.department : '')}
+        />
       </div>
     </div>
   );

@@ -16,6 +16,12 @@ import {
   FolderTree,
   ChevronRight,
   X,
+  Pencil,
+  Trash2,
+  Plus,
+  AlertTriangle,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import DataTable from "../../../components/admin/ui/DataTable";
@@ -31,6 +37,7 @@ const VendorCatalog = () => {
     attributes: [],
     attributeOptions: [],
   });
+  const [currentVendorId, setCurrentVendorId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("categories"); // "departments" | "categories" | "brands" | "attributes"
   const [search, setSearch] = useState("");
@@ -46,12 +53,37 @@ const VendorCatalog = () => {
     data: null,
   });
 
+  // Delete confirmation modal state
+  const [deleteModal, setDeleteModal] = useState({
+    open: false,
+    type: "", // "categories" | "brands" | "attributes"
+    id: null,
+    name: "",
+    isDeleting: false,
+  });
+
+  // Expanded attributes accordion state
+  const [expandedAttributeIds, setExpandedAttributeIds] = useState(new Set());
+
+  const toggleExpandAttribute = (attrId) => {
+    setExpandedAttributeIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(attrId)) {
+        next.delete(attrId);
+      } else {
+        next.add(attrId);
+      }
+      return next;
+    });
+  };
+
   const fetchCatalog = async () => {
     try {
       setLoading(true);
       const res = await api.get("/vendor/portal/catalog");
       if (res.data.success) {
         setCatalog(res.data.data);
+        setCurrentVendorId(res.data.data.currentVendorId || null);
       }
     } catch (error) {
       console.error("Fetch catalog error:", error);
@@ -64,6 +96,29 @@ const VendorCatalog = () => {
   useEffect(() => {
     fetchCatalog();
   }, []);
+
+  const isOwned = (row) => {
+    if (!row || !row.vendorId || !currentVendorId) return false;
+    const rowVendorId = typeof row.vendorId === "object" ? row.vendorId._id || row.vendorId : row.vendorId;
+    return String(rowVendorId) === String(currentVendorId);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteModal.id || !deleteModal.type) return;
+    try {
+      setDeleteModal((prev) => ({ ...prev, isDeleting: true }));
+      const res = await api.delete(`/vendor/portal/${deleteModal.type}/${deleteModal.id}`);
+      if (res.data.success) {
+        toast.success(res.data.message || "Item deleted successfully");
+        setDeleteModal({ open: false, type: "", id: null, name: "", isDeleting: false });
+        fetchCatalog();
+      }
+    } catch (error) {
+      console.error("Delete catalog item error:", error);
+      toast.error(error.response?.data?.message || "Failed to delete item");
+      setDeleteModal((prev) => ({ ...prev, isDeleting: false }));
+    }
+  };
 
   const tabs = [
     { id: "departments", name: "Departments", icon: Layers, count: catalog.departments?.length || 0 },
@@ -240,6 +295,21 @@ const VendorCatalog = () => {
       },
     },
     {
+      header: "Source",
+      align: "center",
+      headerAlign: "center",
+      render: (row) =>
+        isOwned(row) ? (
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+            Your Category
+          </span>
+        ) : (
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-500 border border-slate-200">
+            System
+          </span>
+        ),
+    },
+    {
       header: "Status",
       accessor: "status",
       align: "center",
@@ -250,23 +320,52 @@ const VendorCatalog = () => {
       header: "Actions",
       align: "center",
       headerAlign: "center",
-      render: (row) => (
-        <button
-          onClick={() =>
-            setInspectModal({
-              open: true,
-              title: "Category Details",
-              entityType: "Category",
-              entityName: row.name,
-              data: row,
-            })
-          }
-          className="p-1.5 text-slate-400 hover:text-[#fe4a03] border border-slate-200 hover:border-[#fe4a03]/30 hover:bg-orange-50 rounded-lg transition-all cursor-pointer"
-          title="View Details"
-        >
-          <Eye size={15} />
-        </button>
-      ),
+      render: (row) => {
+        const owned = isOwned(row);
+        return (
+          <div className="flex items-center justify-center gap-1.5">
+            <button
+              onClick={() =>
+                setInspectModal({
+                  open: true,
+                  title: "Category Details",
+                  entityType: "Category",
+                  entityName: row.name,
+                  data: row,
+                })
+              }
+              className="p-1.5 text-slate-400 hover:text-[#fe4a03] border border-slate-200 hover:border-[#fe4a03]/30 hover:bg-orange-50 rounded-lg transition-all cursor-pointer"
+              title="View Details"
+            >
+              <Eye size={15} />
+            </button>
+            <Link
+              to={`/vendor/portal/catalog/categories/edit/${row._id}`}
+              className="p-1.5 text-slate-400 hover:text-blue-600 border border-slate-200 hover:border-blue-200 hover:bg-blue-50 rounded-lg transition-all cursor-pointer"
+              title="Edit Category"
+            >
+              <Pencil size={15} />
+            </Link>
+            {owned && (
+              <button
+                onClick={() =>
+                  setDeleteModal({
+                    open: true,
+                    type: "categories",
+                    id: row._id,
+                    name: row.name,
+                    isDeleting: false,
+                  })
+                }
+                className="p-1.5 text-slate-400 hover:text-red-600 border border-slate-200 hover:border-red-200 hover:bg-red-50 rounded-lg transition-all cursor-pointer"
+                title="Delete Category"
+              >
+                <Trash2 size={15} />
+              </button>
+            )}
+          </div>
+        );
+      },
     },
   ];
 
@@ -298,6 +397,21 @@ const VendorCatalog = () => {
       ),
     },
     {
+      header: "Source",
+      align: "center",
+      headerAlign: "center",
+      render: (row) =>
+        isOwned(row) ? (
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+            Your Brand
+          </span>
+        ) : (
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-500 border border-slate-200">
+            System
+          </span>
+        ),
+    },
+    {
       header: "Status",
       accessor: "status",
       align: "center",
@@ -308,23 +422,52 @@ const VendorCatalog = () => {
       header: "Actions",
       align: "center",
       headerAlign: "center",
-      render: (row) => (
-        <button
-          onClick={() =>
-            setInspectModal({
-              open: true,
-              title: "Brand Details",
-              entityType: "Brand",
-              entityName: row.name,
-              data: row,
-            })
-          }
-          className="p-1.5 text-slate-400 hover:text-[#fe4a03] border border-slate-200 hover:border-[#fe4a03]/30 hover:bg-orange-50 rounded-lg transition-all cursor-pointer"
-          title="View Details"
-        >
-          <Eye size={15} />
-        </button>
-      ),
+      render: (row) => {
+        const owned = isOwned(row);
+        return (
+          <div className="flex items-center justify-center gap-1.5">
+            <button
+              onClick={() =>
+                setInspectModal({
+                  open: true,
+                  title: "Brand Details",
+                  entityType: "Brand",
+                  entityName: row.name,
+                  data: row,
+                })
+              }
+              className="p-1.5 text-slate-400 hover:text-[#fe4a03] border border-slate-200 hover:border-[#fe4a03]/30 hover:bg-orange-50 rounded-lg transition-all cursor-pointer"
+              title="View Details"
+            >
+              <Eye size={15} />
+            </button>
+            <Link
+              to={`/vendor/portal/catalog/brands/edit/${row._id}`}
+              className="p-1.5 text-slate-400 hover:text-blue-600 border border-slate-200 hover:border-blue-200 hover:bg-blue-50 rounded-lg transition-all cursor-pointer"
+              title="Edit Brand"
+            >
+              <Pencil size={15} />
+            </Link>
+            {owned && (
+              <button
+                onClick={() =>
+                  setDeleteModal({
+                    open: true,
+                    type: "brands",
+                    id: row._id,
+                    name: row.name,
+                    isDeleting: false,
+                  })
+                }
+                className="p-1.5 text-slate-400 hover:text-red-600 border border-slate-200 hover:border-red-200 hover:bg-red-50 rounded-lg transition-all cursor-pointer"
+                title="Delete Brand"
+              >
+                <Trash2 size={15} />
+              </button>
+            )}
+          </div>
+        );
+      },
     },
   ];
 
@@ -365,24 +508,71 @@ const VendorCatalog = () => {
         if (opts.length === 0) {
           return <span className="text-slate-400 text-xs italic">No preset options</span>;
         }
+
+        const isExpanded = expandedAttributeIds.has(row._id?.toString());
+        const displayOpts = isExpanded ? opts : opts.slice(0, 5);
+        const hasMore = opts.length > 5;
+        const moreCount = opts.length - 5;
+
         return (
-          <div className="flex flex-wrap gap-1.5 max-w-md py-1">
-            {opts.slice(0, 5).map((opt) => (
-              <span
-                key={opt._id}
-                className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200"
-              >
-                {opt.displayName || opt.storedValue}
-              </span>
-            ))}
-            {opts.length > 5 && (
-              <span className="text-[11px] text-[#fe4a03] font-bold self-center">
-                +{opts.length - 5} more
-              </span>
-            )}
+          <div className="py-1">
+            <div className="flex flex-wrap items-center gap-1.5 max-w-lg transition-all duration-200">
+              {displayOpts.map((opt) => (
+                <span
+                  key={opt._id}
+                  className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200"
+                >
+                  {row.fieldType === "color" && opt.storedValue && (
+                    <span
+                      className="w-2.5 h-2.5 rounded-full border border-slate-300 shrink-0 shadow-xs"
+                      style={{ backgroundColor: opt.storedValue }}
+                    />
+                  )}
+                  <span>{opt.displayName || opt.storedValue}</span>
+                </span>
+              ))}
+
+              {hasMore && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleExpandAttribute(row._id?.toString());
+                  }}
+                  className="inline-flex items-center gap-1 text-[11px] text-[#fe4a03] font-bold hover:underline cursor-pointer bg-[#fe4a03]/5 hover:bg-[#fe4a03]/10 px-2 py-0.5 rounded-md border border-[#fe4a03]/20 transition-colors"
+                >
+                  {isExpanded ? (
+                    <>
+                      <ChevronUp size={12} />
+                      <span>Show less</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>+{moreCount} more</span>
+                      <ChevronDown size={12} />
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
           </div>
         );
       },
+    },
+    {
+      header: "Source",
+      align: "center",
+      headerAlign: "center",
+      render: (row) =>
+        isOwned(row) ? (
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+            Your Attribute
+          </span>
+        ) : (
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-500 border border-slate-200">
+            System
+          </span>
+        ),
     },
     {
       header: "Status",
@@ -395,24 +585,53 @@ const VendorCatalog = () => {
       header: "Actions",
       align: "center",
       headerAlign: "center",
-      render: (row) => (
-        <button
-          onClick={() => {
-            const opts = optionsByAttrId[row._id?.toString()] || [];
-            setInspectModal({
-              open: true,
-              title: "Attribute Options",
-              entityType: "Attribute",
-              entityName: row.name,
-              data: { ...row, options: opts },
-            });
-          }}
-          className="p-1.5 text-slate-400 hover:text-[#fe4a03] border border-slate-200 hover:border-[#fe4a03]/30 hover:bg-orange-50 rounded-lg transition-all cursor-pointer"
-          title="View Options"
-        >
-          <Eye size={15} />
-        </button>
-      ),
+      render: (row) => {
+        const opts = optionsByAttrId[row._id?.toString()] || [];
+        const owned = isOwned(row);
+        return (
+          <div className="flex items-center justify-center gap-1.5">
+            <button
+              onClick={() => {
+                setInspectModal({
+                  open: true,
+                  title: "Attribute Options",
+                  entityType: "Attribute",
+                  entityName: row.name,
+                  data: { ...row, options: opts },
+                });
+              }}
+              className="p-1.5 text-slate-400 hover:text-[#fe4a03] border border-slate-200 hover:border-[#fe4a03]/30 hover:bg-orange-50 rounded-lg transition-all cursor-pointer"
+              title="View Options"
+            >
+              <Eye size={15} />
+            </button>
+            <Link
+              to={`/vendor/portal/catalog/attributes/edit/${row._id}`}
+              className="p-1.5 text-slate-400 hover:text-blue-600 border border-slate-200 hover:border-blue-200 hover:bg-blue-50 rounded-lg transition-all cursor-pointer"
+              title="Edit Attribute"
+            >
+              <Pencil size={15} />
+            </Link>
+            {owned && (
+              <button
+                onClick={() =>
+                  setDeleteModal({
+                    open: true,
+                    type: "attributes",
+                    id: row._id,
+                    name: row.name,
+                    isDeleting: false,
+                  })
+                }
+                className="p-1.5 text-slate-400 hover:text-red-600 border border-slate-200 hover:border-red-200 hover:bg-red-50 rounded-lg transition-all cursor-pointer"
+                title="Delete Attribute"
+              >
+                <Trash2 size={15} />
+              </button>
+            )}
+          </div>
+        );
+      },
     },
   ];
 
@@ -427,7 +646,7 @@ const VendorCatalog = () => {
 
   return (
     <div className="flex-1 overflow-x-hidden flex flex-col bg-[#f8f9fc] min-h-screen">
-      {/* Tab switcher buttons matching Admin Catalog layout */}
+      {/* Tab switcher buttons */}
       <div className="px-6 sm:px-8 pt-6 pb-6 w-full max-w-7xl mx-auto">
         <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-2 sm:pb-0 no-scrollbar">
           {tabs.map((tab) => {
@@ -477,10 +696,10 @@ const VendorCatalog = () => {
                 {activeTab}
               </h2>
               <p className="text-xs text-slate-500 font-medium">
-                {activeTab === "departments" && "Master departments and store availability"}
-                {activeTab === "categories" && "Department-mapped product categories"}
-                {activeTab === "brands" && "Certified vendor and retail brands"}
-                {activeTab === "attributes" && "Global variant attributes and selectable option values"}
+                {activeTab === "departments" && "Master marketplace departments (Read-only taxonomy)"}
+                {activeTab === "categories" && "Department-mapped product categories (Manage your created categories)"}
+                {activeTab === "brands" && "Certified vendor and retail brands (Manage your created brands)"}
+                {activeTab === "attributes" && "Global variant attributes (Manage your created attributes and options)"}
               </p>
             </div>
           </div>
@@ -496,6 +715,36 @@ const VendorCatalog = () => {
                 className="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 text-xs sm:text-[13px] focus:outline-none focus:ring-2 focus:ring-[#fe4a03]/20 focus:border-[#fe4a03] transition-all font-medium text-slate-900 placeholder:text-slate-400 shadow-2xs"
               />
             </div>
+
+            {activeTab === "categories" && (
+              <Link
+                to="/vendor/portal/catalog/categories/add"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#fe4a03] hover:bg-[#e03f00] text-white text-xs sm:text-[13px] font-bold shadow-md shadow-[#fe4a03]/20 transition-all shrink-0 cursor-pointer"
+              >
+                <Plus size={16} />
+                <span>Add Category</span>
+              </Link>
+            )}
+
+            {activeTab === "brands" && (
+              <Link
+                to="/vendor/portal/catalog/brands/add"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#fe4a03] hover:bg-[#e03f00] text-white text-xs sm:text-[13px] font-bold shadow-md shadow-[#fe4a03]/20 transition-all shrink-0 cursor-pointer"
+              >
+                <Plus size={16} />
+                <span>Add Brand</span>
+              </Link>
+            )}
+
+            {activeTab === "attributes" && (
+              <Link
+                to="/vendor/portal/catalog/attributes/add"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#fe4a03] hover:bg-[#e03f00] text-white text-xs sm:text-[13px] font-bold shadow-md shadow-[#fe4a03]/20 transition-all shrink-0 cursor-pointer"
+              >
+                <Plus size={16} />
+                <span>Add Attribute</span>
+              </Link>
+            )}
           </div>
         </div>
 
@@ -518,6 +767,69 @@ const VendorCatalog = () => {
         </div>
       </div>
 
+      {/* Delete Confirmation Modal */}
+      {deleteModal.open && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
+          onClick={() =>
+            !deleteModal.isDeleting &&
+            setDeleteModal({ open: false, type: "", id: null, name: "", isDeleting: false })
+          }
+        >
+          <div
+            className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-12 h-12 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center mx-auto border border-red-100">
+              <Trash2 size={24} />
+            </div>
+            <div className="text-center space-y-2">
+              <h3 className="text-lg font-bold text-slate-900">
+                Delete{" "}
+                {deleteModal.type === "categories"
+                  ? "Category"
+                  : deleteModal.type === "brands"
+                  ? "Brand"
+                  : "Attribute"}
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-600">
+                Are you sure you want to delete{" "}
+                <span className="font-bold text-slate-900">"{deleteModal.name}"</span>?
+              </p>
+              <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 text-amber-800 text-xs flex items-start gap-2 text-left">
+                <AlertTriangle size={16} className="shrink-0 mt-0.5 text-amber-600" />
+                <span>
+                  <strong>Product Dependency Rule:</strong> You can only delete this if no products or
+                  variants are currently using it. If any product is assigned to it, deletion will be blocked.
+                </span>
+              </div>
+            </div>
+            <div className="flex gap-3 pt-2">
+              <button
+                disabled={deleteModal.isDeleting}
+                onClick={() =>
+                  setDeleteModal({ open: false, type: "", id: null, name: "", isDeleting: false })
+                }
+                className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-700 text-xs sm:text-sm font-bold hover:bg-slate-50 transition-colors cursor-pointer disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                disabled={deleteModal.isDeleting}
+                onClick={handleConfirmDelete}
+                className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs sm:text-sm font-bold shadow-md shadow-red-600/20 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              >
+                {deleteModal.isDeleting ? (
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  "Delete Permanently"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Inspection Modal */}
       {inspectModal.open && (
         <div
@@ -533,7 +845,8 @@ const VendorCatalog = () => {
               <div>
                 <h3 className="text-base font-bold text-slate-900">{inspectModal.title}</h3>
                 <p className="text-xs text-slate-500 font-medium mt-0.5">
-                  {inspectModal.entityType}: <span className="font-bold text-[#fe4a03]">{inspectModal.entityName}</span>
+                  {inspectModal.entityType}:{" "}
+                  <span className="font-bold text-[#fe4a03]">{inspectModal.entityName}</span>
                 </p>
               </div>
               <button
@@ -546,6 +859,17 @@ const VendorCatalog = () => {
 
             {/* Modal Body */}
             <div className="p-6 overflow-y-auto space-y-4">
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80">
+                <p className="text-[11px] text-slate-500 font-semibold uppercase">Ownership</p>
+                <p className="font-bold text-slate-900 text-xs sm:text-sm mt-0.5">
+                  {isOwned(inspectModal.data) ? (
+                    <span className="text-emerald-700">Added by You (Your Catalog Item)</span>
+                  ) : (
+                    <span className="text-slate-600">Master / System Item (Read-only)</span>
+                  )}
+                </p>
+              </div>
+
               {inspectModal.entityType === "Attribute" && inspectModal.data?.options && (
                 <div>
                   <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
@@ -557,8 +881,12 @@ const VendorCatalog = () => {
                         key={opt._id}
                         className="p-2.5 rounded-xl border border-slate-200 bg-slate-50/50 flex flex-col"
                       >
-                        <span className="font-bold text-slate-900 text-xs">{opt.displayName || opt.storedValue}</span>
-                        <span className="text-[10px] text-slate-400 font-mono mt-0.5">val: {opt.storedValue}</span>
+                        <span className="font-bold text-slate-900 text-xs">
+                          {opt.displayName || opt.storedValue}
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-mono mt-0.5">
+                          val: {opt.storedValue}
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -571,6 +899,12 @@ const VendorCatalog = () => {
                     <p className="text-[11px] text-slate-500 font-semibold uppercase">Department</p>
                     <p className="font-bold text-slate-900 text-sm mt-0.5">
                       {inspectModal.data?.department?.name || "General"}
+                    </p>
+                  </div>
+                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80">
+                    <p className="text-[11px] text-slate-500 font-semibold uppercase">Slug</p>
+                    <p className="font-mono text-slate-700 text-xs mt-0.5">
+                      {inspectModal.data?.slug || "N/A"}
                     </p>
                   </div>
                   <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80">
@@ -601,6 +935,12 @@ const VendorCatalog = () => {
 
               {inspectModal.entityType === "Brand" && (
                 <div className="space-y-3">
+                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80">
+                    <p className="text-[11px] text-slate-500 font-semibold uppercase">Slug</p>
+                    <p className="font-mono text-slate-700 text-xs mt-0.5">
+                      {inspectModal.data?.slug || "N/A"}
+                    </p>
+                  </div>
                   <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80">
                     <p className="text-[11px] text-slate-500 font-semibold uppercase">Status</p>
                     <div className="mt-1">

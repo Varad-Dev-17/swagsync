@@ -1,8 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import { Trash2, Plus } from 'lucide-react';
+import { Trash2, Plus, Lock, Info } from 'lucide-react';
 import MultiSelect from '../../../../components/admin/ui/MultiSelect';
 
 const COMMON_COLORS = {
@@ -36,6 +36,35 @@ const AttributeForm = ({ initialData = null, isEdit = false, isVendor = false })
   const categoryIdParam = searchParams.get('categoryId');
   const usageParam = searchParams.get('usage');
   const returnTo = searchParams.get('returnTo');
+
+  const token = localStorage.getItem('token');
+  let currentVendorId = null;
+  if (token) {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      currentVendorId = payload.vendorId;
+    } catch (e) {}
+  }
+
+  const isAttributeOwned = useMemo(() => {
+    if (!isEdit || !isVendor) return true;
+    if (!initialData?.vendorId) return false;
+    const vId = typeof initialData.vendorId === 'object' ? initialData.vendorId._id || initialData.vendorId : initialData.vendorId;
+    return String(vId) === String(currentVendorId);
+  }, [isEdit, isVendor, initialData, currentVendorId]);
+
+  const initialCategoryIds = useMemo(() => {
+    if (!isEdit || !initialData?.categoryIds) return [];
+    return initialData.categoryIds.map(c => (c._id || c).toString());
+  }, [isEdit, initialData]);
+
+  const isOptionOwned = (opt) => {
+    if (!isVendor) return true;
+    if (!opt._id) return true; // new option added in current session
+    if (!opt.vendorId || !currentVendorId) return false;
+    const optVendorId = typeof opt.vendorId === 'object' ? opt.vendorId._id || opt.vendorId : opt.vendorId;
+    return String(optVendorId) === String(currentVendorId);
+  };
   
   const [formData, setFormData] = useState({
     categoryIds: [],
@@ -102,7 +131,8 @@ const AttributeForm = ({ initialData = null, isEdit = false, isVendor = false })
           _id: opt._id,
           displayName: opt.displayName,
           storedValue: opt.storedValue,
-          hex: opt.hex || '#000000'
+          hex: opt.hex || '#000000',
+          vendorId: opt.vendorId || null,
         })));
       }
     } catch (error) {
@@ -155,6 +185,11 @@ const AttributeForm = ({ initialData = null, isEdit = false, isVendor = false })
   };
 
   const handleRemoveOption = (index, optionId) => {
+    const opt = options[index];
+    if (opt && !isOptionOwned(opt)) {
+      toast.error("Existing options cannot be deleted.");
+      return;
+    }
     if (optionId) {
       setDeletedOptionIds(prev => [...prev, optionId]);
     }
@@ -162,6 +197,11 @@ const AttributeForm = ({ initialData = null, isEdit = false, isVendor = false })
   };
 
   const updateOption = (index, field, value) => {
+    const targetOpt = options[index];
+    if (targetOpt && !isOptionOwned(targetOpt)) {
+      toast.error("Existing options cannot be modified.");
+      return;
+    }
     setOptions(prev => prev.map((opt, i) => {
       if (i === index) {
         const updatedOpt = { ...opt, [field]: value };
@@ -296,6 +336,11 @@ const AttributeForm = ({ initialData = null, isEdit = false, isVendor = false })
         const updatePromises = [];
 
         options.forEach(opt => {
+          // If option is existing and not owned by current vendor, skip sending PUT request
+          if (opt._id && !isOptionOwned(opt)) {
+            return;
+          }
+
           const payload = {
             attribute: attributeId,
             displayName: opt.displayName.trim(),
@@ -350,6 +395,19 @@ const AttributeForm = ({ initialData = null, isEdit = false, isVendor = false })
       <div className="mb-6">
         <h2 className={`text-xl font-bold ${primaryText}`}>{isEdit ? 'Edit Attribute' : 'Add Attribute'}</h2>
       </div>
+
+      {isVendor && isEdit && !isAttributeOwned && (
+        <div className="mb-6 p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs sm:text-sm flex items-start gap-2.5">
+          <Info className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+          <div>
+            <p className="font-bold">System Attribute (Partial Editing Mode)</p>
+            <p className="text-amber-700 text-xs mt-0.5">
+              Previous existing attribute settings and existing options cannot be modified or deleted. You can map additional categories and add new custom options below.
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="space-y-4">
         <div>
           <MultiSelect
@@ -357,20 +415,39 @@ const AttributeForm = ({ initialData = null, isEdit = false, isVendor = false })
             required
             options={categories.map(c => ({ value: c._id, label: c.name }))}
             values={formData.categoryIds}
-            onChange={(vals) => setFormData({ ...formData, categoryIds: vals })}
+            onChange={(vals) => {
+              if (isVendor && isEdit && !isAttributeOwned) {
+                const missing = initialCategoryIds.filter(id => !vals.includes(id));
+                if (missing.length > 0) {
+                  toast.error("Existing category mappings cannot be removed from this attribute.");
+                  return;
+                }
+              }
+              setFormData({ ...formData, categoryIds: vals });
+            }}
             placeholder="Search categories..."
           />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div>
-            <label className={`block text-sm font-medium ${primaryText} mb-1.5`}>Attribute Name *</label>
+            <label className={`block text-sm font-medium ${primaryText} mb-1.5 flex items-center justify-between`}>
+              <span>Attribute Name *</span>
+              {isVendor && isEdit && !isAttributeOwned && (
+                <span className="text-xs text-slate-400 font-normal flex items-center gap-1">
+                  <Lock size={12} /> System field (read-only)
+                </span>
+              )}
+            </label>
             <input
               type="text"
               value={formData.name}
+              disabled={isVendor && isEdit && !isAttributeOwned}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               placeholder="e.g. Color, Size, Material"
-              className={`w-full px-3 h-12 border border-gray-200 rounded-lg outline-none ${primaryRing} focus:ring-1 transition-colors text-sm`}
+              className={`w-full px-3 h-12 border border-gray-200 rounded-lg outline-none ${primaryRing} focus:ring-1 transition-colors text-sm ${
+                isVendor && isEdit && !isAttributeOwned ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''
+              }`}
               required
             />
           </div>
@@ -392,11 +469,21 @@ const AttributeForm = ({ initialData = null, isEdit = false, isVendor = false })
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-[#4648d4] mb-1.5">Used In *</label>
+            <label className="block text-sm font-medium text-[#4648d4] mb-1.5 flex items-center justify-between">
+              <span>Used In *</span>
+              {isVendor && isEdit && !isAttributeOwned && (
+                <span className="text-xs text-slate-400 font-normal flex items-center gap-1">
+                  <Lock size={12} /> System field
+                </span>
+              )}
+            </label>
             <select
               value={formData.usage}
+              disabled={isVendor && isEdit && !isAttributeOwned}
               onChange={(e) => setFormData({ ...formData, usage: e.target.value })}
-              className="w-full px-3 h-12 border border-gray-200 rounded-lg outline-none focus:border-[#4648d4] focus:ring-1 focus:ring-[#4648d4] transition-colors bg-white cursor-pointer text-sm"
+              className={`w-full px-3 h-12 border border-gray-200 rounded-lg outline-none focus:border-[#4648d4] focus:ring-1 focus:ring-[#4648d4] transition-colors bg-white text-sm ${
+                isVendor && isEdit && !isAttributeOwned ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : 'cursor-pointer'
+              }`}
               required
             >
               <option value="Product">Product</option>
@@ -405,11 +492,21 @@ const AttributeForm = ({ initialData = null, isEdit = false, isVendor = false })
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-[#4648d4] mb-1.5">Status</label>
+            <label className="block text-sm font-medium text-[#4648d4] mb-1.5 flex items-center justify-between">
+              <span>Status</span>
+              {isVendor && isEdit && !isAttributeOwned && (
+                <span className="text-xs text-slate-400 font-normal flex items-center gap-1">
+                  <Lock size={12} /> System field
+                </span>
+              )}
+            </label>
             <select
               value={formData.status}
+              disabled={isVendor && isEdit && !isAttributeOwned}
               onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-              className="w-full px-3 h-12 border border-gray-200 rounded-lg outline-none focus:border-[#4648d4] focus:ring-1 focus:ring-[#4648d4] transition-colors bg-white cursor-pointer text-sm"
+              className={`w-full px-3 h-12 border border-gray-200 rounded-lg outline-none focus:border-[#4648d4] focus:ring-1 focus:ring-[#4648d4] transition-colors bg-white text-sm ${
+                isVendor && isEdit && !isAttributeOwned ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : 'cursor-pointer'
+              }`}
             >
               <option value="Active">Active</option>
               <option value="Inactive">Inactive</option>
@@ -434,67 +531,108 @@ const AttributeForm = ({ initialData = null, isEdit = false, isVendor = false })
           )}
 
           <div className="space-y-2">
-            {options.map((option, index) => (
-              <div key={index} className="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:gap-3 items-center bg-gray-50/50 p-2 rounded-lg sm:bg-transparent sm:border-none border border-gray-100">
-                
-                {/* Mobile Labels */}
-                <div className="sm:hidden text-xs font-medium text-gray-500 mb-1">Display Name</div>
-                <div className="col-span-1 sm:col-span-5">
-                  <input
-                    type="text"
-                    ref={index === options.length - 1 ? lastOptionInputRef : null}
-                    value={option.displayName}
-                    onChange={(e) => updateOption(index, 'displayName', e.target.value)}
-                    onKeyDown={(e) => handleKeyDown(e, index)}
-                    placeholder="e.g. Small, Black, XL"
-                    className="w-full px-3 h-10 border border-gray-200 rounded-lg outline-none focus:border-[#4648d4] focus:ring-1 focus:ring-[#4648d4] transition-colors text-sm"
-                  />
-                </div>
-
-                {formData.fieldType === 'color' ? (
-                  <>
-                    <div className="sm:hidden text-xs font-medium text-gray-500 mt-1 mb-1">Color</div>
-                    <div className="col-span-1 sm:col-span-6 flex items-center gap-3">
-                      <input
-                        type="color"
-                        value={option.hex || '#000000'}
-                        onChange={(e) => updateOption(index, 'hex', e.target.value.toUpperCase())}
-                        className="h-10 w-12 p-0.5 border border-gray-200 rounded-lg cursor-pointer bg-white shrink-0"
-                      />
-                      <span className="text-sm text-gray-400 font-mono hidden sm:inline-block">
-                        {option.hex || '#000000'}
+            {options.map((option, index) => {
+              const owned = isOptionOwned(option);
+              return (
+                <div key={index} className={`grid grid-cols-1 sm:grid-cols-12 gap-2 sm:gap-3 items-center p-2 rounded-lg border ${
+                  !owned ? 'bg-gray-100/70 border-gray-200' : 'bg-gray-50/50 border-gray-100 sm:bg-transparent sm:border-none'
+                }`}>
+                  
+                  {/* Mobile Labels */}
+                  <div className="sm:hidden text-xs font-medium text-gray-500 mb-1 flex items-center justify-between">
+                    <span>Display Name</span>
+                    {!owned && (
+                      <span className="text-[10px] text-gray-500 font-semibold flex items-center gap-1">
+                        <Lock size={10} /> Existing
                       </span>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="sm:hidden text-xs font-medium text-gray-500 mt-1 mb-1">Stored Value</div>
-                    <div className="col-span-1 sm:col-span-6">
-                      <input
-                        type="text"
-                        value={option.storedValue}
-                        onChange={(e) => updateOption(index, 'storedValue', e.target.value)}
-                        onKeyDown={(e) => handleKeyDown(e, index)}
-                        placeholder="e.g. sm, blk"
-                        className="w-full px-3 h-10 border border-gray-200 rounded-lg outline-none focus:border-[#4648d4] focus:ring-1 focus:ring-[#4648d4] transition-colors text-sm uppercase"
-                      />
-                    </div>
-                  </>
-                )}
+                    )}
+                  </div>
+                  <div className="col-span-1 sm:col-span-5">
+                    <input
+                      type="text"
+                      ref={index === options.length - 1 ? lastOptionInputRef : null}
+                      value={option.displayName}
+                      disabled={!owned}
+                      onChange={(e) => updateOption(index, 'displayName', e.target.value)}
+                      onKeyDown={(e) => handleKeyDown(e, index)}
+                      placeholder="e.g. Small, Black, XL"
+                      className={`w-full px-3 h-10 border rounded-lg outline-none text-sm transition-colors ${
+                        !owned 
+                          ? 'bg-gray-200/60 border-gray-300 text-gray-600 cursor-not-allowed' 
+                          : 'border-gray-200 focus:border-[#4648d4] focus:ring-1 focus:ring-[#4648d4]'
+                      }`}
+                    />
+                  </div>
 
-                <div className="col-span-1 sm:col-span-1 flex justify-end mt-1 sm:mt-0">
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveOption(index, option._id)}
-                    className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors flex items-center justify-center w-full sm:w-auto border sm:border-none border-red-100 bg-red-50/50 sm:bg-transparent h-10"
-                    title="Remove Option"
-                  >
-                    <Trash2 size={16} />
-                    <span className="ml-2 sm:hidden text-sm font-medium">Remove</span>
-                  </button>
+                  {formData.fieldType === 'color' ? (
+                    <>
+                      <div className="sm:hidden text-xs font-medium text-gray-500 mt-1 mb-1">Color</div>
+                      <div className="col-span-1 sm:col-span-6 flex items-center gap-3">
+                        <input
+                          type="color"
+                          disabled={!owned}
+                          value={option.hex || '#000000'}
+                          onChange={(e) => updateOption(index, 'hex', e.target.value.toUpperCase())}
+                          className={`h-10 w-12 p-0.5 border border-gray-200 rounded-lg bg-white shrink-0 ${
+                            !owned ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'
+                          }`}
+                        />
+                        <span className="text-sm text-gray-400 font-mono hidden sm:inline-block">
+                          {option.hex || '#000000'}
+                        </span>
+                        {!owned && (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-gray-200 text-gray-600 shrink-0 ml-auto">
+                            <Lock size={10} /> Existing
+                          </span>
+                        )}
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="sm:hidden text-xs font-medium text-gray-500 mt-1 mb-1">Stored Value</div>
+                      <div className="col-span-1 sm:col-span-6 flex items-center gap-2">
+                        <input
+                          type="text"
+                          disabled={!owned}
+                          value={option.storedValue}
+                          onChange={(e) => updateOption(index, 'storedValue', e.target.value)}
+                          onKeyDown={(e) => handleKeyDown(e, index)}
+                          placeholder="e.g. sm, blk"
+                          className={`w-full px-3 h-10 border rounded-lg outline-none text-sm uppercase transition-colors ${
+                            !owned 
+                              ? 'bg-gray-200/60 border-gray-300 text-gray-600 cursor-not-allowed' 
+                              : 'border-gray-200 focus:border-[#4648d4] focus:ring-1 focus:ring-[#4648d4]'
+                          }`}
+                        />
+                        {!owned && (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-gray-200 text-gray-600 shrink-0 whitespace-nowrap">
+                            <Lock size={10} /> Existing
+                          </span>
+                        )}
+                      </div>
+                    </>
+                  )}
+
+                  <div className="col-span-1 sm:col-span-1 flex justify-end mt-1 sm:mt-0">
+                    {owned ? (
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveOption(index, option._id)}
+                        className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors flex items-center justify-center w-full sm:w-auto border sm:border-none border-red-100 bg-red-50/50 sm:bg-transparent h-10 cursor-pointer"
+                        title="Remove Option"
+                      >
+                        <Trash2 size={16} />
+                        <span className="ml-2 sm:hidden text-sm font-medium">Remove</span>
+                      </button>
+                    ) : (
+                      <div className="p-2 text-slate-400 flex items-center justify-center h-10" title="Existing option (read-only)">
+                        <Lock size={16} />
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <button
