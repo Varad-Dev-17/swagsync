@@ -32,10 +32,28 @@ const VendorLogin = () => {
     e.preventDefault();
     setError("");
     setVendorStatusError(null);
+
+    const trimmedEmail = email.trim().toLowerCase();
+    if (!trimmedEmail) {
+      setError("Email address is required.");
+      return;
+    }
+
+    if (!password) {
+      setError("Password is required.");
+      return;
+    }
+
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+    if (!passwordRegex.test(password)) {
+      setError("Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number.");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      const result = await vendorLogin(email.trim().toLowerCase(), password);
+      const result = await vendorLogin(trimmedEmail, password);
 
       if (result.success) {
         toast.success("Vendor login successful!");

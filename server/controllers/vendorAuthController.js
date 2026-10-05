@@ -745,8 +745,12 @@ export const verifyVendorForgotPasswordCode = async (req, res) => {
       return res.status(400).json({ success: false, message: "Email, reset code, and new password are required." });
     }
 
-    if (newPassword.length < 8) {
-      return res.status(400).json({ success: false, message: "Password must be at least 8 characters long." });
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+    if (!passwordRegex.test(newPassword)) {
+      return res.status(400).json({
+        success: false,
+        message: "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number.",
+      });
     }
 
     const normalizedEmail = email.toLowerCase().trim();
@@ -809,10 +813,11 @@ export const changeVendorPassword = async (req, res) => {
       });
     }
 
-    if (newPassword.length < 8) {
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+    if (!passwordRegex.test(newPassword)) {
       return res.status(400).json({
         success: false,
-        message: "New password must be at least 8 characters long.",
+        message: "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number.",
       });
     }
 

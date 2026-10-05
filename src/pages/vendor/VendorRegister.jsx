@@ -223,7 +223,7 @@ const VendorRegister = () => {
       if (!formData.password) {
         newErrors.password = "Password is required";
       } else if (!passwordRegex.test(formData.password)) {
-        newErrors.password = "Password must be min 8 chars with 1 uppercase, 1 lowercase & 1 number";
+        newErrors.password = "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number.";
       }
 
       if (!formData.confirmPassword) {

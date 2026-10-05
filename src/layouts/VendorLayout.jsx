@@ -66,8 +66,9 @@ const VendorLayout = () => {
     e.preventDefault();
     setChangePasswordError("");
 
-    if (newPassword.length < 8) {
-      setChangePasswordError("New password must be at least 8 characters long.");
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+    if (!passwordRegex.test(newPassword)) {
+      setChangePasswordError("Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number.");
       return;
     }
 

@@ -1,5 +1,8 @@
 import joi from "joi";
 
+const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+const PASSWORD_FRIENDLY_MSG = "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number.";
+
 export const signupSchema = joi.object({
   username: joi.string().min(3).max(30).required(),
   email: joi
@@ -12,8 +15,12 @@ export const signupSchema = joi.object({
     }),
   password: joi
     .string()
-    .pattern(new RegExp("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,}$"))
-    .required(),
+    .pattern(PASSWORD_REGEX)
+    .required()
+    .messages({
+      "string.empty": "Password is required.",
+      "string.pattern.base": PASSWORD_FRIENDLY_MSG,
+    }),
 });
 
 export const acceptCodeSchema = joi.object({
@@ -39,19 +46,29 @@ export const signinSchema = joi.object({
     }),
   password: joi
     .string()
-    .pattern(new RegExp("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,}$"))
-    .required(),
+    .pattern(PASSWORD_REGEX)
+    .required()
+    .messages({
+      "string.empty": "Password is required.",
+      "string.pattern.base": PASSWORD_FRIENDLY_MSG,
+    }),
 });
 
 export const changePasswordSchema = joi.object({
   newPassword: joi
     .string()
+    .pattern(PASSWORD_REGEX)
     .required()
-    .pattern(new RegExp("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,}$")),
+    .messages({
+      "string.empty": "New password is required.",
+      "string.pattern.base": PASSWORD_FRIENDLY_MSG,
+    }),
   oldPassword: joi
     .string()
     .required()
-    .pattern(new RegExp("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,}$")),
+    .messages({
+      "string.empty": "Current password is required.",
+    }),
 });
 
 export const acceptFPCodeSchema = joi.object({
@@ -66,8 +83,12 @@ export const acceptFPCodeSchema = joi.object({
   providedCode: joi.number().required(),
   newPassword: joi
     .string()
+    .pattern(PASSWORD_REGEX)
     .required()
-    .pattern(new RegExp("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,}$")),
+    .messages({
+      "string.empty": "New password is required.",
+      "string.pattern.base": PASSWORD_FRIENDLY_MSG,
+    }),
 });
 
 export const vendorRegisterSchema = joi.object({
@@ -81,10 +102,11 @@ export const vendorRegisterSchema = joi.object({
   phone: joi.string().min(10).max(20).required(),
   password: joi
     .string()
-    .pattern(new RegExp("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,}$"))
+    .pattern(PASSWORD_REGEX)
     .required()
     .messages({
-      "string.pattern.base": "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number.",
+      "string.empty": "Password is required.",
+      "string.pattern.base": PASSWORD_FRIENDLY_MSG,
     }),
   storeName: joi.string().min(2).max(100).required(),
   storeDescription: joi.string().allow("").max(1000).optional(),
@@ -118,7 +140,18 @@ export const vendorSigninSchema = joi.object({
     .min(6)
     .max(80)
     .required()
-    .email({ tlds: { allow: false } }),
-  password: joi.string().required(),
+    .email({ tlds: { allow: false } })
+    .messages({
+      "string.empty": "Email is required.",
+      "string.email": "Please enter a valid email address.",
+    }),
+  password: joi
+    .string()
+    .pattern(PASSWORD_REGEX)
+    .required()
+    .messages({
+      "string.empty": "Password is required.",
+      "string.pattern.base": PASSWORD_FRIENDLY_MSG,
+    }),
 });
 
