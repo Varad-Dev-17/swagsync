@@ -977,7 +977,7 @@ export const cancelOrder = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user.userId;
-    const { itemId } = req.body || {};
+    const { itemId, reason, comment } = req.body || {};
 
     const order = await Order.findOne({ _id: id, user: userId });
     if (!order) {
@@ -994,6 +994,9 @@ export const cancelOrder = async (req, res) => {
 
     let cancellationType = "order";
     let cancelledItemTitle = "";
+    const cleanReason = reason ? String(reason).trim() : "";
+    const cleanComment = comment ? String(comment).trim() : "";
+    const formattedReason = cleanReason ? (cleanComment ? `${cleanReason} (${cleanComment})` : cleanReason) : "";
 
     if (itemId) {
       // ITEM-LEVEL CANCELLATION
@@ -1027,6 +1030,9 @@ export const cancelOrder = async (req, res) => {
 
       // Mark item cancelled
       targetItem.status = "cancelled";
+      if (formattedReason) {
+        targetItem.cancellationReason = formattedReason;
+      }
       cancellationType = "item";
 
       // Restore stock
@@ -1042,21 +1048,22 @@ export const cancelOrder = async (req, res) => {
       addTimelineEvent(
         order,
         "Item Cancelled",
-        `Customer cancelled item [${cancelledItemTitle}].`,
+        `Customer cancelled item [${cancelledItemTitle}].${formattedReason ? ` Reason: ${formattedReason}` : ""}`,
         "Customer",
-        { itemId: targetItem._id, productId: targetItem.product, status: "cancelled" }
+        { itemId: targetItem._id, productId: targetItem.product, status: "cancelled", reason: cleanReason, comment: cleanComment }
       );
 
       // Re-evaluate overall order status
       const activeItems = order.items.filter((item) => item.status !== "cancelled");
       if (activeItems.length === 0) {
         order.status = "cancelled";
+        if (formattedReason) order.cancellationReason = formattedReason;
         addTimelineEvent(
           order,
           "Order Cancelled",
-          "All items in the order have been cancelled.",
+          `All items in the order have been cancelled.${formattedReason ? ` Reason: ${formattedReason}` : ""}`,
           "Customer",
-          { status: "cancelled" }
+          { status: "cancelled", reason: cleanReason, comment: cleanComment }
         );
       } else if (activeItems.every((item) => item.status === "delivered")) {
         order.status = "delivered";
@@ -1092,6 +1099,7 @@ export const cancelOrder = async (req, res) => {
       for (const item of order.items) {
         if (item.status !== "cancelled") {
           item.status = "cancelled";
+          if (formattedReason) item.cancellationReason = formattedReason;
           if (item.variant) {
             await Variant.findByIdAndUpdate(item.variant, {
               $inc: { stock: item.quantity || 1 },
@@ -1101,13 +1109,16 @@ export const cancelOrder = async (req, res) => {
       }
 
       order.status = "cancelled";
+      if (formattedReason) {
+        order.cancellationReason = formattedReason;
+      }
 
       addTimelineEvent(
         order,
         "Order Cancelled",
-        "Order was cancelled directly by customer before dispatch.",
+        `Order was cancelled directly by customer before dispatch.${formattedReason ? ` Reason: ${formattedReason}` : ""}`,
         "Customer",
-        { status: "cancelled" }
+        { status: "cancelled", reason: cleanReason, comment: cleanComment }
       );
     }
 

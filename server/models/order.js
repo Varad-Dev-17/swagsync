@@ -34,6 +34,7 @@ const OrderSchema = new mongoose.Schema(
           default: "pending",
           enum: ["pending", "processing", "packed", "shipped", "on_the_way", "delivered", "cancelled", "delayed"],
         },
+        cancellationReason: { type: String, default: "" },
         trackingNumber: { type: String, default: "" },
         courier: { type: String, default: "" },
       },
@@ -72,6 +73,7 @@ const OrderSchema = new mongoose.Schema(
       default: "pending",
       enum: ["pending", "processing", "packed", "shipped", "on_the_way", "delivered", "cancelled", "delayed"],
     },
+    cancellationReason: { type: String, default: "" },
     deliveredAt: { type: Date, default: null },
     trackingNumber: String,
     adminNotes: [

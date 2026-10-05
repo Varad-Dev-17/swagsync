@@ -87,6 +87,11 @@ export const cancelEmailTemplate = (order, user) => {
                     ? "If you have already made an online payment, a full refund for the cancelled item(s) will be credited to your original payment method within 5 to 7 business days."
                     : "Since this was a Pay on Delivery (COD) order, no payment was charged for the cancelled item(s)."
                 }
+                ${
+                  (order?.cancellationReason || displayItems.find(it => it.cancellationReason)?.cancellationReason)
+                    ? `<div style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed #FECACA; font-size: 12px; color: #7F1D1D;"><strong>Cancellation Reason:</strong> ${order?.cancellationReason || displayItems.find(it => it.cancellationReason)?.cancellationReason}</div>`
+                    : ""
+                }
               </div>
             </td>
           </tr>

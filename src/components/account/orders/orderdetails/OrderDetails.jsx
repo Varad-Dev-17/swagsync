@@ -6,6 +6,7 @@ import { useAuth } from "../../../../context/AuthContext";
 import toast from "react-hot-toast";
 import CustomerTrackingCard from "./CustomerTrackingCard";
 import ReturnExchangeButton from "../returnexchange/ReturnExchangeButton";
+import CancelOrderModal from "../CancelOrderModal";
 import { getReturnEligibility } from "../../../../utils/returnEligibility";
 
 const OrderDetails = () => {
@@ -13,6 +14,7 @@ const OrderDetails = () => {
   const location = useLocation();
   const [order, setOrder] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [cancelModalState, setCancelModalState] = useState({ isOpen: false, targetItem: null, isLoading: false });
   const { getAuthHeaders } = useAuth();
   const navigate = useNavigate();
 
@@ -39,30 +41,46 @@ const OrderDetails = () => {
     }
   }, [orderId, getAuthHeaders, navigate]);
 
-  const handleCancelItem = async (itemId) => {
-    const isMultiItem = order?.items?.length > 1;
-    const promptMsg = isMultiItem
-      ? "Are you sure you want to cancel this item?"
-      : "Are you sure you want to cancel this order?";
+  const handleOpenCancelModal = (item) => {
+    const isMultiItem = (order?.items || []).length > 1;
+    setCancelModalState({
+      isOpen: true,
+      targetItem: isMultiItem ? item : null,
+      isLoading: false,
+    });
+  };
 
-    if (window.confirm(promptMsg)) {
-      try {
-        const payload = itemId ? { itemId } : {};
-        const response = await axios.put(`/orders/cancel/${order._id}`, payload, {
+  const handleConfirmCancel = async ({ reason, comment }) => {
+    const { targetItem } = cancelModalState;
+    setCancelModalState((prev) => ({ ...prev, isLoading: true }));
+    try {
+      const payload = {
+        ...(targetItem?._id ? { itemId: targetItem._id } : {}),
+        reason,
+        comment,
+      };
+      const response = await axios.put(`/orders/cancel/${order._id}`, payload, {
+        headers: getAuthHeaders(),
+      });
+      if (response.data.success) {
+        toast.success(
+          response.data.message ||
+            (targetItem ? "Item cancelled successfully" : "Order cancelled successfully")
+        );
+        setCancelModalState({ isOpen: false, targetItem: null, isLoading: false });
+        const updated = await axios.get(`/orders/${orderId}`, {
           headers: getAuthHeaders(),
         });
-        if (response.data.success) {
-          toast.success(response.data.message || (isMultiItem ? "Item cancelled successfully" : "Order cancelled successfully"));
-          const updated = await axios.get(`/orders/${orderId}`, {
-            headers: getAuthHeaders(),
-          });
-          if (updated.data.success) {
-            setOrder(updated.data.data);
-          }
+        if (updated.data.success) {
+          setOrder(updated.data.data);
         }
-      } catch (error) {
-        toast.error(error.response?.data?.message || (isMultiItem ? "Failed to cancel item" : "Failed to cancel order"));
       }
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message ||
+          (targetItem ? "Failed to cancel item" : "Failed to cancel order")
+      );
+      setCancelModalState((prev) => ({ ...prev, isLoading: false }));
     }
   };
 
@@ -291,7 +309,7 @@ const OrderDetails = () => {
                       <div className="shrink-0 flex items-center gap-2">
                         {currentItemStatus !== 'cancelled' && order.status !== 'cancelled' && (currentItemStatus === 'pending' || currentItemStatus === 'processing' || currentItemStatus === 'packed') && (
                           <button
-                            onClick={() => handleCancelItem(item._id)}
+                            onClick={() => handleOpenCancelModal(item)}
                             className="py-1.5 px-3 text-xs font-bold uppercase tracking-wider text-red-600 border border-red-300 hover:bg-red-50 transition-colors cursor-pointer"
                           >
                             {order.items?.length > 1 ? "Cancel Item" : "Cancel Order"}
@@ -536,6 +554,16 @@ const OrderDetails = () => {
 
         </div>
       </div>
+
+      {/* Cancel Order / Item Confirmation & Reason Modal */}
+      <CancelOrderModal
+        isOpen={cancelModalState.isOpen}
+        onClose={() => setCancelModalState({ isOpen: false, targetItem: null, isLoading: false })}
+        onConfirm={handleConfirmCancel}
+        order={order}
+        targetItem={cancelModalState.targetItem}
+        isLoading={cancelModalState.isLoading}
+      />
     </div>
   );
 };
