@@ -72,6 +72,7 @@ const AdminVendorDetailsPage = () => {
   const [showEditDocsModal, setShowEditDocsModal] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
+  const [suspendReason, setSuspendReason] = useState("");
 
   // Edit vendor form state
   const [editFormData, setEditFormData] = useState({
@@ -159,12 +160,19 @@ const AdminVendorDetailsPage = () => {
 
   // 3. SUSPEND VENDOR ACTION
   const handleSuspend = async () => {
+    if (!suspendReason.trim()) {
+      toast.error("Please enter a reason for suspending this vendor account");
+      return;
+    }
     setActionLoading(true);
     try {
-      const res = await api.patch(`/admin/vendors/${id}/suspend`);
+      const res = await api.patch(`/admin/vendors/${id}/suspend`, {
+        reason: suspendReason.trim(),
+      });
       if (res.data.success) {
         toast.success("Vendor suspended successfully.");
         setShowSuspendModal(false);
+        setSuspendReason("");
         fetchVendorDetails();
       }
     } catch (err) {
@@ -491,6 +499,23 @@ const AdminVendorDetailsPage = () => {
         {profile.rejectionReason && (
           <div className="mt-4 p-3 bg-red-50/70 border border-red-200 rounded-xl text-xs text-red-800">
             <strong>Rejection Reason:</strong> {profile.rejectionReason}
+          </div>
+        )}
+
+        {status === "SUSPENDED" && profile.suspensionReason && (
+          <div className="mt-4 p-3.5 bg-amber-50/80 border border-amber-300/80 rounded-xl text-xs text-amber-900 flex items-start gap-2.5 shadow-2xs">
+            <AlertTriangle size={16} className="text-amber-600 shrink-0 mt-0.5" />
+            <div className="space-y-0.5">
+              <div>
+                <strong className="font-bold text-amber-950">Account Suspension Reason:</strong>{" "}
+                <span className="text-amber-900 font-medium">{profile.suspensionReason}</span>
+              </div>
+              {profile.suspendedAt && (
+                <span className="text-[11px] text-amber-700 block">
+                  Suspended on {new Date(profile.suspendedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                </span>
+              )}
+            </div>
           </div>
         )}
       </div>
@@ -1602,35 +1627,95 @@ const AdminVendorDetailsPage = () => {
       {/* SUSPEND MODAL */}
       {showSuspendModal && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-xl border border-slate-200 text-center animate-in fade-in zoom-in-95 duration-200">
-            <div className="w-14 h-14 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto mb-4">
-              <AlertTriangle size={32} />
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-xl border border-slate-200 text-left animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center gap-3.5 mb-4">
+              <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                <AlertTriangle size={24} />
+              </div>
+              <div>
+                <h3 className="text-lg font-black text-slate-900 tracking-tight">
+                  Suspend Vendor Account
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Target vendor: <strong className="text-slate-800">{profile.storeName || vendor.username}</strong> ({vendor.vendorId || vendor._id})
+                </p>
+              </div>
             </div>
 
-            <h3 className="text-lg font-black text-slate-900 tracking-tight">
-              Suspend Vendor Account?
-            </h3>
-
-            <p className="text-xs text-slate-600 mt-2 leading-relaxed">
-              Are you sure you want to suspend{" "}
-              <strong className="text-slate-900">{profile.storeName || vendor.username}</strong>?
-              The vendor will immediately lose access to all vendor portal APIs and functionality.
+            <p className="text-xs text-slate-600 leading-relaxed mb-4">
+              The vendor will immediately lose portal access and their catalog listings will be paused. You must provide an explicit suspension reason.
             </p>
 
-            <div className="mt-6 flex items-center justify-center gap-3">
+            {/* Quick Preset Chips */}
+            <div className="mb-3">
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+                Quick Select Reason:
+              </label>
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  "Policy Violation",
+                  "Counterfeit / Quality Complaints",
+                  "High Cancellation Rate",
+                  "Missing KYC / Legal Documents",
+                  "Suspicious Account Activity",
+                ].map((preset) => (
+                  <button
+                    key={preset}
+                    type="button"
+                    onClick={() => {
+                      setSuspendReason(preset);
+                    }}
+                    className={`text-[11px] font-medium px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${
+                      suspendReason === preset
+                        ? "bg-amber-100/70 border-amber-300 text-amber-900 font-bold"
+                        : "bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-600"
+                    }`}
+                  >
+                    {preset}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Manual Typing Textarea */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between text-xs">
+                <label className="font-semibold text-slate-700">
+                  Suspension Reason <span className="text-red-500">*</span>
+                </label>
+                <span className="text-[11px] text-slate-400">
+                  {suspendReason.trim().length} characters
+                </span>
+              </div>
+              <textarea
+                rows={3}
+                value={suspendReason}
+                onChange={(e) => setSuspendReason(e.target.value)}
+                placeholder="Type the specific reason for suspension (e.g. repeated order cancellations without notice, failure to upload verified business documents)..."
+                className="w-full text-xs p-3 rounded-xl border border-slate-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/10 transition-all outline-hidden text-slate-800 placeholder:text-slate-400"
+              />
+              <span className="text-[11px] text-slate-400 block">
+                This reason will be recorded on the vendor profile and visible in admin records.
+              </span>
+            </div>
+
+            <div className="mt-6 flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
               <button
                 type="button"
                 disabled={actionLoading}
-                onClick={() => setShowSuspendModal(false)}
-                className="w-full py-2.5 rounded-xl border border-slate-200 text-slate-700 text-xs font-bold hover:bg-slate-50 transition-colors"
+                onClick={() => {
+                  setShowSuspendModal(false);
+                  setSuspendReason("");
+                }}
+                className="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-700 text-xs font-bold hover:bg-slate-50 transition-colors cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="button"
-                disabled={actionLoading}
+                disabled={actionLoading || !suspendReason.trim()}
                 onClick={handleSuspend}
-                className="w-full py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-sm shadow-amber-600/20 transition-colors flex items-center justify-center gap-1.5"
+                className="px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold shadow-sm shadow-amber-600/20 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 {actionLoading ? <Loader2 size={14} className="animate-spin" /> : <AlertTriangle size={14} />}
                 Confirm Suspension

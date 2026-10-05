@@ -357,6 +357,14 @@ export const rejectVendor = async (req, res) => {
 export const suspendVendor = async (req, res) => {
   try {
     const { id } = req.params;
+    const { reason } = req.body;
+
+    if (!reason || !reason.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "A suspension reason is required to suspend this vendor account.",
+      });
+    }
 
     const vendor = await Vendor.findById(id);
     if (!vendor) {
@@ -368,6 +376,7 @@ export const suspendVendor = async (req, res) => {
 
     vendor.vendorStatus = "SUSPENDED";
     if (!vendor.vendorProfile) vendor.vendorProfile = {};
+    vendor.vendorProfile.suspensionReason = reason.trim();
     vendor.vendorProfile.suspendedAt = new Date();
     await vendor.save();
 
@@ -408,6 +417,9 @@ export const reactivateVendor = async (req, res) => {
     }
 
     vendor.vendorStatus = "APPROVED";
+    if (!vendor.vendorProfile) vendor.vendorProfile = {};
+    vendor.vendorProfile.suspensionReason = "";
+    vendor.vendorProfile.reactivatedAt = new Date();
     await vendor.save();
 
     return res.status(200).json({

@@ -134,9 +134,11 @@ const vendorSchema = new mongoose.Schema(
         },
       ],
       rejectionReason: { type: String, trim: true },
+      suspensionReason: { type: String, trim: true },
       approvedAt: { type: Date },
       rejectedAt: { type: Date },
       suspendedAt: { type: Date },
+      reactivatedAt: { type: Date },
     },
   },
   {
