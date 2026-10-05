@@ -151,15 +151,19 @@ export const createCategory = async (req, res) => {
       });
     }
 
-    // Check uniqueness
+    // Check uniqueness (case-insensitive name and slug)
+    const escapedName = name.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const existing = await Category.findOne({
-      $or: [{ name: name.trim() }, { slug: slug.trim().toLowerCase() }],
+      $or: [
+        { name: { $regex: new RegExp(`^${escapedName}$`, "i") } },
+        { slug: slug.trim().toLowerCase() }
+      ],
     });
 
     if (existing) {
       return res.status(409).json({
         success: false,
-        message: "A category with this name or slug already exists.",
+        message: `Already present: Category "${existing.name}" already exists.`,
       });
     }
 
@@ -179,6 +183,12 @@ export const createCategory = async (req, res) => {
     });
   } catch (error) {
     console.error("Error creating category:", error);
+    if (error.code === 11000) {
+      return res.status(409).json({
+        success: false,
+        message: "Already present: A category with this name or slug already exists.",
+      });
+    }
     res.status(500).json({
       success: false,
       message: "Failed to create category.",
@@ -266,7 +276,10 @@ export const updateCategory = async (req, res) => {
         $or: [] 
       };
       
-      if (name) query.$or.push({ name: name.trim() });
+      if (name) {
+        const escapedName = name.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        query.$or.push({ name: { $regex: new RegExp(`^${escapedName}$`, "i") } });
+      }
       if (slug) query.$or.push({ slug: slug.trim().toLowerCase() });
 
       if (query.$or.length > 0) {
@@ -274,7 +287,7 @@ export const updateCategory = async (req, res) => {
         if (existing) {
           return res.status(409).json({
             success: false,
-            message: "A category with this name or slug already exists.",
+            message: `Already present: Category "${existing.name}" already exists.`,
           });
         }
       }
@@ -294,6 +307,12 @@ export const updateCategory = async (req, res) => {
     });
   } catch (error) {
     console.error("Error updating category:", error);
+    if (error.code === 11000) {
+      return res.status(409).json({
+        success: false,
+        message: "Already present: A category with this name or slug already exists.",
+      });
+    }
     res.status(500).json({
       success: false,
       message: "Failed to update category.",

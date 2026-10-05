@@ -90,14 +90,18 @@ export const createDepartment = async (req, res) => {
       });
     }
 
+    const escapedName = name.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const existingDepartment = await Department.findOne({
-      $or: [{ name: name.trim() }, { slug: slug.trim().toLowerCase() }]
+      $or: [
+        { name: { $regex: new RegExp(`^${escapedName}$`, "i") } },
+        { slug: slug.trim().toLowerCase() }
+      ]
     });
 
     if (existingDepartment) {
       return res.status(409).json({
         success: false,
-        message: "Department with this name or slug already exists.",
+        message: `Already present: Department "${existingDepartment.name}" already exists.`,
       });
     }
 
@@ -116,6 +120,12 @@ export const createDepartment = async (req, res) => {
     });
   } catch (error) {
     console.error("Error creating department:", error);
+    if (error.code === 11000) {
+      return res.status(409).json({
+        success: false,
+        message: "Already present: A department with this name or slug already exists.",
+      });
+    }
     res.status(500).json({
       success: false,
       message: "Failed to create department.",
@@ -140,7 +150,10 @@ export const updateDepartment = async (req, res) => {
 
     if (name || slug) {
       const query = { _id: { $ne: id }, $or: [] };
-      if (name) query.$or.push({ name: name.trim() });
+      if (name) {
+        const escapedName = name.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        query.$or.push({ name: { $regex: new RegExp(`^${escapedName}$`, "i") } });
+      }
       if (slug) query.$or.push({ slug: slug.trim().toLowerCase() });
       
       if (query.$or.length > 0) {
@@ -148,7 +161,7 @@ export const updateDepartment = async (req, res) => {
         if (existingDepartment) {
           return res.status(409).json({
             success: false,
-            message: "Department with this name or slug already exists.",
+            message: `Already present: Department "${existingDepartment.name}" already exists.`,
           });
         }
       }
@@ -169,6 +182,12 @@ export const updateDepartment = async (req, res) => {
     });
   } catch (error) {
     console.error("Error updating department:", error);
+    if (error.code === 11000) {
+      return res.status(409).json({
+        success: false,
+        message: "Already present: A department with this name or slug already exists.",
+      });
+    }
     res.status(500).json({
       success: false,
       message: "Failed to update department.",

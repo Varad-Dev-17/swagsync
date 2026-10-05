@@ -109,6 +109,41 @@ const AttributeForm = ({ initialData = null, isEdit = false, isVendor = false })
     fetchCategories();
   }, [isVendor]);
 
+  // Fetch existing attributes for duplicate prevention
+  const [existingAttributes, setExistingAttributes] = useState([]);
+  useEffect(() => {
+    const fetchAttributes = async () => {
+      try {
+        const baseUrl = import.meta.env.PROD ? '' : 'http://localhost:8000';
+        const response = await axios.get(`${baseUrl}/attributes`, {
+          params: { limit: 1000 },
+          headers: getHeaders()
+        });
+        if (response.data.success) {
+          setExistingAttributes(response.data.attributes || response.data.data || []);
+        }
+      } catch (e) {
+        console.error('Failed to load attributes for duplicate check', e);
+      }
+    };
+    fetchAttributes();
+  }, [isVendor]);
+
+  const checkDuplicateName = (nameToCheck) => {
+    const trimmed = (nameToCheck || '').trim().toLowerCase();
+    if (!trimmed) return null;
+    return existingAttributes.find(
+      (a) => a.name?.trim().toLowerCase() === trimmed && (!isEdit || String(a._id) !== String(initialData?._id))
+    );
+  };
+
+  const handleNameBlur = () => {
+    const match = checkDuplicateName(formData.name);
+    if (match) {
+      toast.error(`Already present: Attribute "${match.name}" already exists!`);
+    }
+  };
+
   // Pre-select category & usage if provided via searchParams
   useEffect(() => {
     if (!initialData) {
@@ -244,6 +279,12 @@ const AttributeForm = ({ initialData = null, isEdit = false, isVendor = false })
       return false;
     }
 
+    const duplicate = checkDuplicateName(formData.name);
+    if (duplicate) {
+      toast.error(`Already present: Attribute "${duplicate.name}" already exists!`);
+      return false;
+    }
+
     if (['select', 'color'].includes(formData.fieldType)) {
       if (options.length === 0) {
         toast.error('At least one option is required.');
@@ -277,11 +318,11 @@ const AttributeForm = ({ initialData = null, isEdit = false, isVendor = false })
         }
 
         if (displayNames.has(opt.displayName.trim().toLowerCase())) {
-          toast.error(`Duplicate Display Name found: "${opt.displayName}"`);
+          toast.error(`Already present: Option "${opt.displayName}" already exists in this list!`);
           return false;
         }
         if (storedValues.has(opt.storedValue.trim().toLowerCase())) {
-          toast.error(`Duplicate Stored Value found: "${opt.storedValue}"`);
+          toast.error(`Already present: Stored Value "${opt.storedValue}" already exists in this list!`);
           return false;
         }
 
@@ -444,6 +485,7 @@ const AttributeForm = ({ initialData = null, isEdit = false, isVendor = false })
               value={formData.name}
               disabled={isVendor && isEdit && !isAttributeOwned}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              onBlur={handleNameBlur}
               placeholder="e.g. Color, Size, Material"
               className={`w-full px-3 h-12 border border-gray-200 rounded-lg outline-none ${primaryRing} focus:ring-1 transition-colors text-sm ${
                 isVendor && isEdit && !isAttributeOwned ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''

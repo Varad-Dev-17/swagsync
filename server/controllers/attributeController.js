@@ -162,14 +162,15 @@ export const createAttribute = async (req, res) => {
       }
     }
 
+    const escapedName = name.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const existingAttribute = await Attribute.findOne({
-      name: name.trim(),
+      name: { $regex: new RegExp(`^${escapedName}$`, "i") },
     });
 
     if (existingAttribute) {
       return res.status(409).json({
         success: false,
-        message: "Attribute already exists.",
+        message: `Already present: Attribute "${existingAttribute.name}" already exists.`,
       });
     }
 
@@ -198,6 +199,12 @@ export const createAttribute = async (req, res) => {
     });
   } catch (error) {
     console.error("[Create Attribute] Error:", error);
+    if (error.code === 11000) {
+      return res.status(409).json({
+        success: false,
+        message: "Already present: An attribute with this name already exists.",
+      });
+    }
     res.status(500).json({
       success: false,
       message: "Failed to create attribute.",
@@ -291,14 +298,16 @@ export const updateAttribute = async (req, res) => {
     }
 
     if (name) {
+      const escapedName = name.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       const existingAttribute = await Attribute.findOne({
-        name: name.trim()
+        _id: { $ne: id },
+        name: { $regex: new RegExp(`^${escapedName}$`, "i") }
       });
 
-      if (existingAttribute && existingAttribute._id.toString() !== id) {
+      if (existingAttribute) {
         return res.status(409).json({
           success: false,
-          message: "An attribute with this name already exists.",
+          message: `Already present: Attribute "${existingAttribute.name}" already exists.`,
         });
       }
 
@@ -317,6 +326,12 @@ export const updateAttribute = async (req, res) => {
     });
   } catch (error) {
     console.error("[Update Attribute] Error:", error);
+    if (error.code === 11000) {
+      return res.status(409).json({
+        success: false,
+        message: "Already present: An attribute with this name already exists.",
+      });
+    }
     res.status(500).json({
       success: false,
       message: "Failed to update attribute.",

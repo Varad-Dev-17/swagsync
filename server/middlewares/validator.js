@@ -124,6 +124,12 @@ export const vendorRegisterSchema = joi.object({
   bankName: joi.string().min(2).max(100).required(),
   accountNumber: joi.string().min(6).max(35).required(),
   ifscCode: joi.string().min(4).max(20).required(),
+  manufacturerName: joi.string().allow("").max(100).optional(),
+  countryOfOrigin: joi.string().allow("").max(100).optional(),
+  manufacturerAddress: joi.string().allow("").max(300).optional(),
+  packer: joi.string().allow("").max(100).optional(),
+  packerPhone: joi.string().allow("").max(20).optional(),
+  packerAddress: joi.string().allow("").max(300).optional(),
   documents: joi.array().items(
     joi.object({
       name: joi.string().required(),

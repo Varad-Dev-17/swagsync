@@ -43,6 +43,38 @@ const DepartmentForm = ({ initialData = null, isEdit = false }) => {
     { name: 'Coffee', label: 'Food & Beverage' },
   ];
   const [slugModified, setSlugModified] = useState(false);
+  const [existingDepartments, setExistingDepartments] = useState([]);
+
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        const response = await axios.get(`${(import.meta.env.PROD ? '' : 'http://localhost:8000')}/departments`, {
+          params: { limit: 1000 }
+        });
+        if (response.data.success) {
+          setExistingDepartments(response.data.departments || response.data.data || []);
+        }
+      } catch (e) {
+        console.error('Failed to load departments for duplicate check', e);
+      }
+    };
+    fetchDepartments();
+  }, []);
+
+  const checkDuplicateName = (nameToCheck) => {
+    const trimmed = (nameToCheck || '').trim().toLowerCase();
+    if (!trimmed) return null;
+    return existingDepartments.find(
+      (d) => d.name?.trim().toLowerCase() === trimmed && (!isEdit || String(d._id) !== String(initialData?._id))
+    );
+  };
+
+  const handleNameBlur = () => {
+    const match = checkDuplicateName(formData.name);
+    if (match) {
+      toast.error(`Already present: Department "${match.name}" already exists!`);
+    }
+  };
 
   useEffect(() => {
     if (initialData) {
@@ -77,6 +109,12 @@ const DepartmentForm = ({ initialData = null, isEdit = false }) => {
     e.preventDefault();
     if (!formData.name.trim() || !formData.slug.trim()) {
       toast.error('Name and Slug are required.');
+      return;
+    }
+
+    const duplicate = checkDuplicateName(formData.name);
+    if (duplicate) {
+      toast.error(`Already present: Department "${duplicate.name}" already exists!`);
       return;
     }
 
@@ -117,6 +155,7 @@ const DepartmentForm = ({ initialData = null, isEdit = false }) => {
               type="text"
               value={formData.name}
               onChange={handleNameChange}
+              onBlur={handleNameBlur}
               placeholder="e.g. Men's Clothing"
               className="w-full px-4 h-12 border border-gray-200 rounded-xl outline-none focus:border-[#4648d4] focus:ring-1 focus:ring-[#4648d4] transition-colors"
               required

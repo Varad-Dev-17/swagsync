@@ -1,4 +1,5 @@
 import Vendor from "../models/vendor.js";
+import Order from "../models/order.js";
 import transport from "../middlewares/sendMail.js";
 import { vendorApprovalEmailTemplate } from "../utils/vendorApprovalEmailTemplate.js";
 import { vendorRejectionEmailTemplate } from "../utils/vendorRejectionEmailTemplate.js";
@@ -105,9 +106,117 @@ export const getVendorById = async (req, res) => {
       });
     }
 
+    // Auto-populate manufacturer and store fallbacks if empty
+    if (!vendor.vendorProfile) {
+      vendor.vendorProfile = {};
+    }
+    const profile = vendor.vendorProfile;
+    const storeAddr = profile.storeAddress || {};
+    const formattedAddress = [
+      storeAddr.addressLine1,
+      storeAddr.addressLine2,
+      storeAddr.city,
+      storeAddr.state,
+      storeAddr.pincode,
+      storeAddr.country || "India",
+    ]
+      .filter(Boolean)
+      .join(", ");
+
+    if (!profile.manufacturers || profile.manufacturers.length === 0) {
+      const defaultMfg = {
+        manufacturerName:
+          profile.manufacturerDetails?.manufacturerName ||
+          profile.storeName ||
+          vendor.username ||
+          "Primary Manufacturer",
+        countryOfOrigin: profile.manufacturerDetails?.countryOfOrigin || "India",
+        manufacturerAddress:
+          profile.manufacturerDetails?.manufacturerAddress ||
+          formattedAddress ||
+          "Shop No. 24, GT Road, Near Mall, Mohali, Punjab, 160055, India",
+        packer:
+          profile.manufacturerDetails?.packer ||
+          profile.storeName ||
+          vendor.username ||
+          "Primary Packer",
+        packerPhone:
+          profile.manufacturerDetails?.packerPhone ||
+          profile.phone ||
+          vendor.mobileNo ||
+          "9779558778",
+        packerAddress:
+          profile.manufacturerDetails?.packerAddress ||
+          formattedAddress ||
+          "Shop No. 24, GT Road, Near Mall, Mohali, Punjab, 160055, India",
+        isDefault: true,
+      };
+      profile.manufacturers = [defaultMfg];
+      profile.manufacturerDetails = defaultMfg;
+    }
+
+    if (!profile.stores || profile.stores.length === 0) {
+      profile.stores = [
+        {
+          storeName: profile.storeName || "Primary Store",
+          storeDescription: profile.storeDescription || "",
+          phone: profile.phone || vendor.mobileNo || "",
+          addressLine1: storeAddr.addressLine1 || "",
+          addressLine2: storeAddr.addressLine2 || "",
+          city: storeAddr.city || "",
+          state: storeAddr.state || "",
+          country: storeAddr.country || "India",
+          pincode: storeAddr.pincode || "",
+          isDefault: true,
+        },
+      ];
+    }
+
+    // Fetch vendor orders & sales activity
+    const vendorOrders = await Order.find({ "items.vendor": vendor._id })
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .lean();
+
+    let totalRevenue = 0;
+    let itemsSold = 0;
+    const recentOrders = [];
+
+    vendorOrders.forEach((ord) => {
+      let vendorSubtotal = 0;
+      let vendorItemCount = 0;
+      (ord.items || []).forEach((item) => {
+        if (String(item.vendor) === String(vendor._id)) {
+          vendorSubtotal += (item.sellingPrice || 0) * (item.quantity || 1);
+          vendorItemCount += item.quantity || 1;
+        }
+      });
+
+      totalRevenue += vendorSubtotal;
+      itemsSold += vendorItemCount;
+
+      recentOrders.push({
+        _id: ord._id,
+        orderId: ord.orderId || ord._id,
+        createdAt: ord.createdAt,
+        itemCount: vendorItemCount,
+        totalAmount: vendorSubtotal,
+        paymentStatus: ord.paymentStatus || "Paid",
+        status: ord.items?.[0]?.status || ord.status || "Pending",
+      });
+    });
+
+    const totalOrdersCount = await Order.countDocuments({ "items.vendor": vendor._id });
+
     return res.status(200).json({
       success: true,
       vendor,
+      activity: {
+        totalOrders: totalOrdersCount,
+        totalRevenue,
+        itemsSold,
+        recentOrders,
+      },
     });
   } catch (error) {
     console.error("[Get Vendor By ID] Server error:", error);

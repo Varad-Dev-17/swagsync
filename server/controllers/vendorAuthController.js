@@ -129,10 +129,45 @@ export const vendorRegister = async (req, res) => {
       bankName,
       accountNumber,
       ifscCode,
+      manufacturerName,
+      countryOfOrigin,
+      manufacturerAddress,
+      packer,
+      packerPhone,
+      packerAddress,
       documents,
     } = value;
 
     const normalizedEmail = email.toLowerCase().trim();
+
+    const resolvedMfgAddress =
+      manufacturerAddress ||
+      [addressLine1, addressLine2, city, state, pincode, country || "India"]
+        .filter(Boolean)
+        .join(", ");
+
+    const mfgProfile = {
+      manufacturerName: manufacturerName || storeName || fullName || "Primary Manufacturer",
+      countryOfOrigin: countryOfOrigin || "India",
+      manufacturerAddress: resolvedMfgAddress,
+      packer: packer || storeName || fullName || "Primary Packer",
+      packerPhone: packerPhone || phone || "",
+      packerAddress: packerAddress || resolvedMfgAddress,
+      isDefault: true,
+    };
+
+    const storeEntry = {
+      storeName,
+      storeDescription: storeDescription || "",
+      phone,
+      addressLine1,
+      addressLine2: addressLine2 || "",
+      city,
+      state,
+      country: country || "India",
+      pincode,
+      isDefault: true,
+    };
 
     // Check if email already exists in Vendor or User table
     const existingVendor = await Vendor.findOne({ email: normalizedEmail });
@@ -171,6 +206,9 @@ export const vendorRegister = async (req, res) => {
             country: country || "India",
             pincode,
           },
+          stores: [storeEntry],
+          manufacturers: [mfgProfile],
+          manufacturerDetails: mfgProfile,
           businessDetails: {
             businessName,
             businessType,
@@ -306,6 +344,9 @@ export const vendorRegister = async (req, res) => {
           country: country || "India",
           pincode,
         },
+        stores: [storeEntry],
+        manufacturers: [mfgProfile],
+        manufacturerDetails: mfgProfile,
         businessDetails: {
           businessName,
           businessType,

@@ -122,15 +122,19 @@ export const createBrand = async (req, res) => {
       });
     }
 
-    // Check globally unique name or slug
+    // Check globally unique name or slug (case-insensitive)
+    const escapedName = name.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const existingBrand = await Brand.findOne({
-      $or: [{ name: name.trim() }, { slug: slug.trim().toLowerCase() }],
+      $or: [
+        { name: { $regex: new RegExp(`^${escapedName}$`, "i") } },
+        { slug: slug.trim().toLowerCase() }
+      ],
     });
 
     if (existingBrand) {
       return res.status(409).json({
         success: false,
-        message: "A brand with this name or slug already exists.",
+        message: `Already present: Brand "${existingBrand.name}" already exists.`,
       });
     }
 
@@ -149,6 +153,12 @@ export const createBrand = async (req, res) => {
     });
   } catch (error) {
     console.error("[Create Brand] Error:", error);
+    if (error.code === 11000) {
+      return res.status(409).json({
+        success: false,
+        message: "Already present: A brand with this name or slug already exists.",
+      });
+    }
     res.status(500).json({
       success: false,
       message: "Failed to create brand.",
@@ -233,7 +243,10 @@ export const updateBrand = async (req, res) => {
 
     if (name || slug) {
       const query = { _id: { $ne: id }, $or: [] };
-      if (name) query.$or.push({ name: name.trim() });
+      if (name) {
+        const escapedName = name.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        query.$or.push({ name: { $regex: new RegExp(`^${escapedName}$`, "i") } });
+      }
       if (slug) query.$or.push({ slug: slug.trim().toLowerCase() });
 
       if (query.$or.length > 0) {
@@ -241,7 +254,7 @@ export const updateBrand = async (req, res) => {
         if (existingBrand) {
           return res.status(409).json({
             success: false,
-            message: "A brand with this name or slug already exists.",
+            message: `Already present: Brand "${existingBrand.name}" already exists.`,
           });
         }
       }
@@ -260,6 +273,12 @@ export const updateBrand = async (req, res) => {
     });
   } catch (error) {
     console.error("[Update Brand] Error:", error);
+    if (error.code === 11000) {
+      return res.status(409).json({
+        success: false,
+        message: "Already present: A brand with this name or slug already exists.",
+      });
+    }
     res.status(500).json({
       success: false,
       message: "Failed to update brand.",

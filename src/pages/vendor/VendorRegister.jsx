@@ -100,6 +100,13 @@ const VendorRegister = () => {
     businessType: "Sole Proprietorship",
     gstNumber: "",
     panNumber: "",
+    sameAsStoreInfo: true,
+    manufacturerName: "",
+    countryOfOrigin: "India",
+    mfgAddress: "",
+    packer: "",
+    packerPhone: "",
+    packerAddress: "",
 
     // Step 3: Bank & Documents
     accountHolderName: "",
@@ -119,8 +126,9 @@ const VendorRegister = () => {
   const [resendCooldown, setResendCooldown] = useState(0);
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    const resolvedValue = type === "checkbox" ? checked : value;
+    setFormData((prev) => ({ ...prev, [name]: resolvedValue }));
     if (errors[name]) {
       setErrors((prev) => {
         const next = { ...prev };
@@ -366,6 +374,15 @@ const VendorRegister = () => {
     setLoading(true);
 
     try {
+      const resolvedStoreAddress = [
+        formData.addressLine1.trim(),
+        formData.addressLine2.trim(),
+        formData.city.trim(),
+        `${formData.state.trim()} - ${formData.pincode.trim()}`,
+      ]
+        .filter(Boolean)
+        .join(", ");
+
       const payload = {
         fullName: formData.fullName.trim(),
         email: formData.email.trim().toLowerCase(),
@@ -383,6 +400,23 @@ const VendorRegister = () => {
         businessType: formData.businessType,
         gstNumber: formData.gstNumber.trim().toUpperCase(),
         panNumber: formData.panNumber.trim().toUpperCase(),
+        // Manufacturer & Packer details
+        manufacturerName: formData.sameAsStoreInfo
+          ? formData.storeName.trim()
+          : (formData.manufacturerName.trim() || formData.storeName.trim()),
+        countryOfOrigin: formData.countryOfOrigin?.trim() || "India",
+        manufacturerAddress: formData.sameAsStoreInfo
+          ? resolvedStoreAddress
+          : (formData.mfgAddress.trim() || resolvedStoreAddress),
+        packer: formData.sameAsStoreInfo
+          ? formData.storeName.trim()
+          : (formData.packer.trim() || formData.storeName.trim()),
+        packerPhone: formData.sameAsStoreInfo
+          ? formData.phone.trim()
+          : (formData.packerPhone.trim() || formData.phone.trim()),
+        packerAddress: formData.sameAsStoreInfo
+          ? resolvedStoreAddress
+          : (formData.packerAddress.trim() || formData.mfgAddress.trim() || resolvedStoreAddress),
         accountHolderName: formData.accountHolderName.trim(),
         bankName: formData.bankName.trim(),
         accountNumber: formData.accountNumber.trim(),
@@ -1146,6 +1180,122 @@ const VendorRegister = () => {
                         )}
                       </div>
                     </div>
+                  </div>
+
+                  {/* Section: Manufacturer & Packer Information */}
+                  <div className="mt-8 pt-6 border-t border-slate-100">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
+                      <div>
+                        <h2 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
+                          Manufacturer & Packer Details
+                        </h2>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          Required for legal compliance on marketplace product labels
+                        </p>
+                      </div>
+                      <label className="inline-flex items-center gap-2 cursor-pointer bg-orange-50/70 border border-orange-200/80 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-700 select-none hover:bg-orange-100/60 transition-colors">
+                        <input
+                          type="checkbox"
+                          name="sameAsStoreInfo"
+                          checked={formData.sameAsStoreInfo}
+                          onChange={handleInputChange}
+                          className="w-4 h-4 text-[#fe4a03] border-slate-300 rounded focus:ring-[#fe4a03] accent-[#fe4a03]"
+                        />
+                        <span>Same as Store & Address</span>
+                      </label>
+                    </div>
+
+                    {!formData.sameAsStoreInfo && (
+                      <div className="space-y-4 sm:space-y-5 bg-slate-50/60 p-4 sm:p-5 rounded-xl border border-slate-200/80 mt-3">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+                          <div>
+                            <label className="text-xs font-semibold text-slate-700 block mb-1.5">
+                              Manufacturer Name
+                            </label>
+                            <input
+                              type="text"
+                              name="manufacturerName"
+                              value={formData.manufacturerName}
+                              onChange={handleInputChange}
+                              placeholder="e.g. Apex Apparels Pvt Ltd"
+                              className="w-full h-11 px-3.5 rounded-lg border border-slate-200 focus:border-[#fe4a03] focus:ring-1 focus:ring-[#fe4a03] text-sm text-slate-900 bg-white placeholder-slate-400 transition-all outline-hidden"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="text-xs font-semibold text-slate-700 block mb-1.5">
+                              Country of Origin
+                            </label>
+                            <input
+                              type="text"
+                              name="countryOfOrigin"
+                              value={formData.countryOfOrigin}
+                              onChange={handleInputChange}
+                              placeholder="India"
+                              className="w-full h-11 px-3.5 rounded-lg border border-slate-200 focus:border-[#fe4a03] focus:ring-1 focus:ring-[#fe4a03] text-sm text-slate-900 bg-white placeholder-slate-400 transition-all outline-hidden"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="text-xs font-semibold text-slate-700 block mb-1.5">
+                            Manufacturer Facility Address
+                          </label>
+                          <input
+                            type="text"
+                            name="mfgAddress"
+                            value={formData.mfgAddress}
+                            onChange={handleInputChange}
+                            placeholder="Plot 12, Industrial Area, Phase 2, Pune, Maharashtra - 411018"
+                            className="w-full h-11 px-3.5 rounded-lg border border-slate-200 focus:border-[#fe4a03] focus:ring-1 focus:ring-[#fe4a03] text-sm text-slate-900 bg-white placeholder-slate-400 transition-all outline-hidden"
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 pt-2">
+                          <div>
+                            <label className="text-xs font-semibold text-slate-700 block mb-1.5">
+                              Packer / Packaging Unit Name
+                            </label>
+                            <input
+                              type="text"
+                              name="packer"
+                              value={formData.packer}
+                              onChange={handleInputChange}
+                              placeholder="e.g. Apex Packaging Solutions"
+                              className="w-full h-11 px-3.5 rounded-lg border border-slate-200 focus:border-[#fe4a03] focus:ring-1 focus:ring-[#fe4a03] text-sm text-slate-900 bg-white placeholder-slate-400 transition-all outline-hidden"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="text-xs font-semibold text-slate-700 block mb-1.5">
+                              Packer Contact Phone
+                            </label>
+                            <input
+                              type="tel"
+                              name="packerPhone"
+                              value={formData.packerPhone}
+                              onChange={handleInputChange}
+                              placeholder="e.g. 9876543210"
+                              className="w-full h-11 px-3.5 rounded-lg border border-slate-200 focus:border-[#fe4a03] focus:ring-1 focus:ring-[#fe4a03] text-sm text-slate-900 bg-white placeholder-slate-400 transition-all outline-hidden"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="text-xs font-semibold text-slate-700 block mb-1.5">
+                            Packer Address
+                          </label>
+                          <input
+                            type="text"
+                            name="packerAddress"
+                            value={formData.packerAddress}
+                            onChange={handleInputChange}
+                            placeholder="Same as manufacturer or custom packaging unit address"
+                            className="w-full h-11 px-3.5 rounded-lg border border-slate-200 focus:border-[#fe4a03] focus:ring-1 focus:ring-[#fe4a03] text-sm text-slate-900 bg-white placeholder-slate-400 transition-all outline-hidden"
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </motion.div>
               )}

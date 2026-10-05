@@ -205,16 +205,17 @@ export const createAttributeOption = async (req, res) => {
       });
     }
 
-    // Enforce uniqueness of displayName within the attribute
+    // Enforce case-insensitive uniqueness of displayName within the attribute
+    const escapedName = displayName.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const existingOption = await AttributeOption.findOne({
       attribute,
-      displayName: displayName.trim(),
+      displayName: { $regex: new RegExp(`^${escapedName}$`, "i") },
     });
 
     if (existingOption) {
       return res.status(409).json({
         success: false,
-        message: "An option with this display name already exists for this attribute.",
+        message: `Already present: Option "${existingOption.displayName}" already exists for this attribute.`,
       });
     }
 
@@ -234,6 +235,12 @@ export const createAttributeOption = async (req, res) => {
     });
   } catch (error) {
     console.error("[Create Attribute Option] Error:", error);
+    if (error.code === 11000) {
+      return res.status(409).json({
+        success: false,
+        message: "Already present: An option with this display name already exists for this attribute.",
+      });
+    }
     res.status(500).json({
       success: false,
       message: "Failed to create attribute option.",
@@ -265,15 +272,17 @@ export const updateAttributeOption = async (req, res) => {
     }
 
     if (displayName) {
+      const escapedName = displayName.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       const existingOption = await AttributeOption.findOne({
+        _id: { $ne: id },
         attribute: option.attribute,
-        displayName: displayName.trim()
+        displayName: { $regex: new RegExp(`^${escapedName}$`, "i") }
       });
 
-      if (existingOption && existingOption._id.toString() !== id) {
+      if (existingOption) {
         return res.status(409).json({
           success: false,
-          message: "An option with this display name already exists for this attribute.",
+          message: `Already present: Option "${existingOption.displayName}" already exists for this attribute.`,
         });
       }
 
@@ -293,6 +302,12 @@ export const updateAttributeOption = async (req, res) => {
     });
   } catch (error) {
     console.error("[Update Attribute Option] Error:", error);
+    if (error.code === 11000) {
+      return res.status(409).json({
+        success: false,
+        message: "Already present: An option with this display name already exists for this attribute.",
+      });
+    }
     res.status(500).json({
       success: false,
       message: "Failed to update attribute option.",

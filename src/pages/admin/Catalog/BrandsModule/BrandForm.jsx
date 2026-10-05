@@ -69,6 +69,40 @@ const BrandForm = ({ initialData = null, isEdit = false, isVendor = false }) => 
     fetchDepartments();
   }, [isVendor]);
 
+  // Fetch existing brands for duplicate prevention
+  const [existingBrands, setExistingBrands] = useState([]);
+  useEffect(() => {
+    const fetchBrands = async () => {
+      try {
+        const response = await axios.get(`${(import.meta.env.PROD ? '' : 'http://localhost:8000')}/brands`, {
+          params: { limit: 1000 },
+          headers: getHeaders()
+        });
+        if (response.data.success) {
+          setExistingBrands(response.data.brands || response.data.data || []);
+        }
+      } catch (e) {
+        console.error('Failed to load brands for duplicate check', e);
+      }
+    };
+    fetchBrands();
+  }, [isVendor]);
+
+  const checkDuplicateName = (nameToCheck) => {
+    const trimmed = (nameToCheck || '').trim().toLowerCase();
+    if (!trimmed) return null;
+    return existingBrands.find(
+      (b) => b.name?.trim().toLowerCase() === trimmed && (!isEdit || String(b._id) !== String(initialData?._id))
+    );
+  };
+
+  const handleNameBlur = () => {
+    const match = checkDuplicateName(formData.name);
+    if (match) {
+      toast.error(`Already present: Brand "${match.name}" already exists!`);
+    }
+  };
+
   // Pre-select department from searchParams if adding
   useEffect(() => {
     if (!initialData && departmentIdParam) {
@@ -129,6 +163,12 @@ const BrandForm = ({ initialData = null, isEdit = false, isVendor = false }) => 
     }
     if (!formData.name.trim() || !formData.slug.trim()) {
       toast.error('Brand Name and Slug are required.');
+      return;
+    }
+
+    const duplicate = checkDuplicateName(formData.name);
+    if (duplicate) {
+      toast.error(`Already present: Brand "${duplicate.name}" already exists!`);
       return;
     }
 
@@ -258,6 +298,7 @@ const BrandForm = ({ initialData = null, isEdit = false, isVendor = false }) => 
               type="text"
               value={formData.name}
               onChange={handleNameChange}
+              onBlur={handleNameBlur}
               disabled={isVendor && isEdit && !isBrandOwned}
               placeholder="e.g. Nike"
               className={`w-full px-4 h-12 border border-gray-200 rounded-xl outline-none ${primaryRing} focus:ring-1 transition-colors ${

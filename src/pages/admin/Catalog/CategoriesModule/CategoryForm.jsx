@@ -70,6 +70,40 @@ const CategoryForm = ({ initialData = null, isEdit = false, isVendor = false }) 
     fetchDepartments();
   }, [isVendor]);
 
+  // Fetch existing categories for instant client-side duplicate prevention
+  const [existingCategories, setExistingCategories] = useState([]);
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await axios.get(`${(import.meta.env.PROD ? '' : 'http://localhost:8000')}/categories`, {
+          params: { limit: 1000 },
+          headers: getHeaders()
+        });
+        if (response.data.success) {
+          setExistingCategories(response.data.categories || response.data.data || []);
+        }
+      } catch (e) {
+        console.error('Failed to load categories for duplicate check', e);
+      }
+    };
+    fetchCategories();
+  }, [isVendor]);
+
+  const checkDuplicateName = (nameToCheck) => {
+    const trimmed = (nameToCheck || '').trim().toLowerCase();
+    if (!trimmed) return null;
+    return existingCategories.find(
+      (c) => c.name?.trim().toLowerCase() === trimmed && (!isEdit || String(c._id) !== String(initialData?._id))
+    );
+  };
+
+  const handleNameBlur = () => {
+    const match = checkDuplicateName(formData.name);
+    if (match) {
+      toast.error(`Already present: Category "${match.name}" already exists!`);
+    }
+  };
+
   // Pre-select department from searchParams if adding
   useEffect(() => {
     if (!initialData && departmentIdParam) {
@@ -164,6 +198,12 @@ const CategoryForm = ({ initialData = null, isEdit = false, isVendor = false }) 
     }
     if (!formData.name.trim() || !formData.slug.trim()) {
       toast.error('Name and Slug are required.');
+      return;
+    }
+
+    const duplicate = checkDuplicateName(formData.name);
+    if (duplicate) {
+      toast.error(`Already present: Category "${duplicate.name}" already exists!`);
       return;
     }
 
@@ -293,6 +333,7 @@ const CategoryForm = ({ initialData = null, isEdit = false, isVendor = false }) 
               type="text"
               value={formData.name}
               onChange={handleNameChange}
+              onBlur={handleNameBlur}
               disabled={isVendor && isEdit && !isCategoryOwned}
               placeholder="e.g. Shirts"
               className={`w-full px-4 h-12 border border-gray-200 rounded-xl outline-none ${primaryRing} focus:ring-1 transition-colors ${
