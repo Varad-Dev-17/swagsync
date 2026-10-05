@@ -17,6 +17,13 @@ export const cancelEmailTemplate = (order, user) => {
   const frontendUrl = process.env.FRONTEND_URL || process.env.RENDER_EXTERNAL_URL || "https://swagsync.onrender.com";
   const ordersUrl = `${frontendUrl}/account/orders`;
   const userName = user?.username || order?.shippingAddress?.name || "Shopper";
+  const isFullCancel = order?.status === "cancelled";
+  const cancelledItems = (order?.items || []).filter(item => isFullCancel || item.status === "cancelled");
+  const displayItems = cancelledItems.length > 0 ? cancelledItems : (order?.items || []);
+
+  const totalAmountToDisplay = isFullCancel
+    ? order?.totalAmount
+    : displayItems.reduce((acc, it) => acc + (Number(it?.sellingPrice || it?.price || 0) * (it?.quantity || 1)), 0);
 
   const formatInr = (amount) => {
     const num = Number(amount);
@@ -30,7 +37,7 @@ export const cancelEmailTemplate = (order, user) => {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Order Cancelled #${order?.orderId || ""}</title>
+  <title>${isFullCancel ? "Order Cancelled" : "Item Cancelled"} #${order?.orderId || ""}</title>
 </head>
 <body style="margin: 0; padding: 0; background-color: #F1F5F9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1E293B; -webkit-font-smoothing: antialiased;">
 
@@ -57,7 +64,7 @@ export const cancelEmailTemplate = (order, user) => {
                   </td>
                   <td align="right" style="vertical-align: middle;">
                     <span style="display: inline-block; background-color: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.35); color: #F87171; padding: 6px 12px; border-radius: 9999px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
-                      Cancelled
+                      ${isFullCancel ? "Cancelled" : "Item Cancelled"}
                     </span>
                   </td>
                 </tr>
@@ -69,16 +76,16 @@ export const cancelEmailTemplate = (order, user) => {
           <tr>
             <td style="padding: 32px 32px 20px 32px; text-align: left;">
               <h1 style="margin: 0 0 10px 0; font-size: 22px; font-weight: 700; color: #0F172A;">
-                Your Order Has Been Cancelled
+                ${isFullCancel ? "Your Order Has Been Cancelled" : "Item(s) In Your Order Have Been Cancelled"}
               </h1>
               <p style="margin: 0 0 12px 0; font-size: 14px; line-height: 22px; color: #475569;">
-                Hi <strong>${userName}</strong>, as requested, your order <strong style="color: #0F172A;">#${order?.orderId}</strong> has been cancelled.
+                Hi <strong>${userName}</strong>, as requested, ${isFullCancel ? `your order <strong style="color: #0F172A;">#${order?.orderId}</strong> has been cancelled.` : `item(s) in your order <strong style="color: #0F172A;">#${order?.orderId}</strong> have been cancelled.`}
               </p>
               <div style="background-color: #FEF2F2; border: 1px solid #FEE2E2; border-radius: 8px; padding: 14px 16px; font-size: 13px; color: #991B1B; line-height: 20px;">
                 ${
                   order?.paymentStatus === "paid"
-                    ? "If you have already made an online payment, a full refund will be credited to your original payment method within 5 to 7 business days."
-                    : "Since this was a Pay on Delivery (COD) order, no payment was charged."
+                    ? "If you have already made an online payment, a full refund for the cancelled item(s) will be credited to your original payment method within 5 to 7 business days."
+                    : "Since this was a Pay on Delivery (COD) order, no payment was charged for the cancelled item(s)."
                 }
               </div>
             </td>
@@ -97,7 +104,7 @@ export const cancelEmailTemplate = (order, user) => {
           <tr>
             <td style="padding: 0 32px 20px 32px;">
               <table width="100%" border="0" cellspacing="0" cellpadding="0">
-                ${(order?.items || []).map((item, index) => {
+                ${displayItems.map((item, index) => {
                   let rawImageUrl = "";
                   if (item?.variant?.mainImage?.url) {
                     rawImageUrl = item.variant.mainImage.url;
@@ -132,7 +139,7 @@ export const cancelEmailTemplate = (order, user) => {
                   const itemQuantity = item?.quantity || 1;
                   const unitPrice = Number(item?.sellingPrice || item?.price || 0);
                   const lineTotal = unitPrice * itemQuantity;
-                  const isLastItem = index === (order.items.length - 1);
+                  const isLastItem = index === (displayItems.length - 1);
 
                   return `
                     <tr>
@@ -175,10 +182,10 @@ export const cancelEmailTemplate = (order, user) => {
               <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 14px 18px;">
                 <tr>
                   <td style="font-size: 14px; font-weight: 700; color: #0F172A;">
-                    ${order?.paymentStatus === "paid" ? "Total Refund Amount" : "Order Value"}
+                    ${order?.paymentStatus === "paid" ? (isFullCancel ? "Total Refund Amount" : "Item Refund Amount") : (isFullCancel ? "Order Value" : "Item Value")}
                   </td>
                   <td align="right" style="font-size: 16px; font-weight: 800; color: #0F172A;">
-                    ${formatInr(order?.totalAmount)}
+                    ${formatInr(totalAmountToDisplay)}
                   </td>
                 </tr>
               </table>

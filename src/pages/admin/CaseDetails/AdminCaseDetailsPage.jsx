@@ -94,6 +94,24 @@ const AdminCaseDetailsPage = () => {
     }
   };
 
+  // Individual order item status update handler (Admin)
+  const handleUpdateItemStatus = async (itemId, newStatus) => {
+    if (!newStatus || !itemId) return;
+    try {
+      const res = await api.patch(`/admin/orders/${orderData?._id || id}/item-status`, {
+        itemId,
+        status: newStatus,
+      });
+      if (res.data.success) {
+        toast.success(`Item status updated to ${newStatus}`);
+        fetchCaseDetails();
+      }
+    } catch (err) {
+      console.error("Failed to update item status:", err);
+      toast.error(err.response?.data?.message || "Failed to update item status");
+    }
+  };
+
   // Generic updater for return attributes (Refund details, etc.)
   const handleUpdateReturnDetails = async (updatePayload, successMsg = "Details updated successfully") => {
     if (!returnData) return;
@@ -311,6 +329,7 @@ const AdminCaseDetailsPage = () => {
                 returnRequest={null}
                 isReturnView={false}
                 onUpdateStatus={handleUpdateStatus}
+                onUpdateItemStatus={handleUpdateItemStatus}
                 hideAuditLog={true}
               />
 

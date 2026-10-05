@@ -180,9 +180,6 @@ export const getUserOrders = async (req, res) => {
     const query = { user: userId };
     if (status && status !== 'all') {
       query.status = status;
-    } else {
-      // Exclude cancelled orders from "All Orders" view
-      query.status = { $ne: 'cancelled' };
     }
 
     if (time && time !== 'anytime') {
@@ -980,6 +977,7 @@ export const cancelOrder = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user.userId;
+    const { itemId } = req.body || {};
 
     const order = await Order.findOne({ _id: id, user: userId });
     if (!order) {
@@ -990,34 +988,128 @@ export const cancelOrder = async (req, res) => {
       });
     }
 
-    if (order.status !== "pending") {
-      return res.status(400).json({
-        success: false,
-        message: "Only pending orders can be cancelled",
-        data: null,
-      });
-    }
-
     const Variant = (await import("../models/variant.js")).default;
-    for (const item of order.items) {
-      item.status = "cancelled";
-      if (item.variant) {
-        await Variant.findByIdAndUpdate(item.variant, {
-          $inc: { stock: item.quantity },
+    const Product = (await import("../models/product.js")).default;
+    const nonCancellableStatuses = ["shipped", "on_the_way", "delivered"];
+
+    let cancellationType = "order";
+    let cancelledItemTitle = "";
+
+    if (itemId) {
+      // ITEM-LEVEL CANCELLATION
+      const targetItem = order.items.find(
+        (item) => String(item._id) === String(itemId)
+      );
+
+      if (!targetItem) {
+        return res.status(404).json({
+          success: false,
+          message: "Item not found in order",
+          data: null,
         });
       }
+
+      if (targetItem.status === "cancelled") {
+        return res.status(400).json({
+          success: false,
+          message: "This item has already been cancelled",
+          data: null,
+        });
+      }
+
+      if (nonCancellableStatuses.includes(targetItem.status)) {
+        return res.status(400).json({
+          success: false,
+          message: `Cannot cancel item that is already ${targetItem.status}`,
+          data: null,
+        });
+      }
+
+      // Mark item cancelled
+      targetItem.status = "cancelled";
+      cancellationType = "item";
+
+      // Restore stock
+      if (targetItem.variant) {
+        await Variant.findByIdAndUpdate(targetItem.variant, {
+          $inc: { stock: targetItem.quantity || 1 },
+        });
+      }
+
+      const prodDoc = await Product.findById(targetItem.product).select("title").lean();
+      cancelledItemTitle = prodDoc ? prodDoc.title : "Product Item";
+
+      addTimelineEvent(
+        order,
+        "Item Cancelled",
+        `Customer cancelled item [${cancelledItemTitle}].`,
+        "Customer",
+        { itemId: targetItem._id, productId: targetItem.product, status: "cancelled" }
+      );
+
+      // Re-evaluate overall order status
+      const activeItems = order.items.filter((item) => item.status !== "cancelled");
+      if (activeItems.length === 0) {
+        order.status = "cancelled";
+        addTimelineEvent(
+          order,
+          "Order Cancelled",
+          "All items in the order have been cancelled.",
+          "Customer",
+          { status: "cancelled" }
+        );
+      } else if (activeItems.every((item) => item.status === "delivered")) {
+        order.status = "delivered";
+      } else if (activeItems.every((item) => item.status === "shipped")) {
+        order.status = "shipped";
+      } else if (activeItems.some((item) => ["packed", "shipped", "on_the_way", "delivered"].includes(item.status))) {
+        order.status = "processing";
+      } else {
+        order.status = "pending";
+      }
+    } else {
+      // FULL ORDER CANCELLATION
+      if (order.status === "cancelled") {
+        return res.status(400).json({
+          success: false,
+          message: "Order is already cancelled",
+          data: null,
+        });
+      }
+
+      const shippedOrDeliveredItems = order.items.filter((item) =>
+        nonCancellableStatuses.includes(item.status)
+      );
+
+      if (shippedOrDeliveredItems.length > 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Cannot cancel the full order because some items have already been shipped. Please cancel the individual pending items instead.",
+          data: null,
+        });
+      }
+
+      for (const item of order.items) {
+        if (item.status !== "cancelled") {
+          item.status = "cancelled";
+          if (item.variant) {
+            await Variant.findByIdAndUpdate(item.variant, {
+              $inc: { stock: item.quantity || 1 },
+            });
+          }
+        }
+      }
+
+      order.status = "cancelled";
+
+      addTimelineEvent(
+        order,
+        "Order Cancelled",
+        "Order was cancelled directly by customer before dispatch.",
+        "Customer",
+        { status: "cancelled" }
+      );
     }
-
-    order.status = "cancelled";
-
-    // Append timeline audit event
-    addTimelineEvent(
-      order,
-      "Order Cancelled",
-      "Order was cancelled directly by customer before dispatch.",
-      "Customer",
-      { status: "cancelled" }
-    );
 
     await order.save();
 
@@ -1030,28 +1122,32 @@ export const cancelOrder = async (req, res) => {
 
     // Send Order Cancellation Email asynchronously in the background
     if (recipientEmail) {
-      console.log(`[Order Flow] Dispatching order cancellation email for order ${populatedOrder.orderId} to ${recipientEmail}...`);
-      transport.sendMail({
-        from: `"SwagSync Orders" <${process.env.NODE_CODE_SENDING_EMAIL_ADDRESS}>`,
-        to: recipientEmail,
-        subject: `Order Cancelled #${populatedOrder.orderId} - SwagSync`,
-        html: cancelEmailTemplate(populatedOrder, recipientUser),
-      }).then((info) => {
-        console.log(`[Order Flow] Order cancellation email successfully sent for ${populatedOrder.orderId}:`, info?.messageId || "Delivered");
-      }).catch((emailError) => {
-        console.error(`[Order Flow] Failed to send order cancellation email for ${populatedOrder.orderId}:`, emailError.message || emailError);
-      });
+      try {
+        console.log(`[Order Flow] Dispatching cancellation email for order ${populatedOrder.orderId} to ${recipientEmail}...`);
+        transport.sendMail({
+          from: `"SwagSync Orders" <${process.env.NODE_CODE_SENDING_EMAIL_ADDRESS}>`,
+          to: recipientEmail,
+          subject: `${order.status === "cancelled" ? "Order Cancelled" : "Item Cancelled"} #${populatedOrder.orderId} - SwagSync`,
+          html: cancelEmailTemplate(populatedOrder, recipientUser),
+        }).then((info) => {
+          console.log(`[Order Flow] Cancellation email successfully sent for ${populatedOrder.orderId}:`, info?.messageId || "Delivered");
+        }).catch((emailError) => {
+          console.error(`[Order Flow] Failed to send cancellation email for ${populatedOrder.orderId}:`, emailError.message || emailError);
+        });
+      } catch (emailErr) {
+        console.error(`[Order Flow] Error preparing cancellation email:`, emailErr);
+      }
     } else {
       console.warn(`[Order Flow] Recipient email could not be resolved for order ${populatedOrder.orderId}. Skipping email dispatch.`);
     }
 
     return res.status(200).json({
       success: true,
-      message: "Order cancelled successfully",
+      message: cancellationType === "item" ? "Item cancelled successfully" : "Order cancelled successfully",
       data: formatAndFilterNotes(populatedOrder, true),
     });
   } catch (error) {
-    console.error(error);
+    console.error("Cancel order error:", error);
     return res.status(500).json({
       success: false,
       message: "Failed to cancel order",

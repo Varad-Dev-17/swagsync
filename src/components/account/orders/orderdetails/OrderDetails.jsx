@@ -39,6 +39,33 @@ const OrderDetails = () => {
     }
   }, [orderId, getAuthHeaders, navigate]);
 
+  const handleCancelItem = async (itemId) => {
+    const isMultiItem = order?.items?.length > 1;
+    const promptMsg = isMultiItem
+      ? "Are you sure you want to cancel this item?"
+      : "Are you sure you want to cancel this order?";
+
+    if (window.confirm(promptMsg)) {
+      try {
+        const payload = itemId ? { itemId } : {};
+        const response = await axios.put(`/orders/cancel/${order._id}`, payload, {
+          headers: getAuthHeaders(),
+        });
+        if (response.data.success) {
+          toast.success(response.data.message || (isMultiItem ? "Item cancelled successfully" : "Order cancelled successfully"));
+          const updated = await axios.get(`/orders/${orderId}`, {
+            headers: getAuthHeaders(),
+          });
+          if (updated.data.success) {
+            setOrder(updated.data.data);
+          }
+        }
+      } catch (error) {
+        toast.error(error.response?.data?.message || (isMultiItem ? "Failed to cancel item" : "Failed to cancel order"));
+      }
+    }
+  };
+
   // Auto-scroll to tracking section when navigated via "Return Requested" button
   useEffect(() => {
     if (order && location.state?.scrollToTracking) {
@@ -261,7 +288,15 @@ const OrderDetails = () => {
                         })()}
                       </div>
 
-                      <div className="shrink-0">
+                      <div className="shrink-0 flex items-center gap-2">
+                        {currentItemStatus !== 'cancelled' && order.status !== 'cancelled' && (currentItemStatus === 'pending' || currentItemStatus === 'processing' || currentItemStatus === 'packed') && (
+                          <button
+                            onClick={() => handleCancelItem(item._id)}
+                            className="py-1.5 px-3 text-xs font-bold uppercase tracking-wider text-red-600 border border-red-300 hover:bg-red-50 transition-colors cursor-pointer"
+                          >
+                            {order.items?.length > 1 ? "Cancel Item" : "Cancel Order"}
+                          </button>
+                        )}
                         <ReturnExchangeButton 
                           orderId={order._id || orderId} 
                           productId={item.product?._id || item.product} 

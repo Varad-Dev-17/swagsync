@@ -90,19 +90,24 @@ const OrdersSection = () => {
     setIsFilterModalOpen(true);
   };
 
-  const handleCancelOrder = async (e, orderId) => {
+  const handleCancelOrder = async (e, orderId, itemId = null, isMultiItem = false) => {
     e.stopPropagation();
-    if (window.confirm("Are you sure you want to cancel this order?")) {
+    const promptMsg = isMultiItem
+      ? "Are you sure you want to cancel this item?"
+      : "Are you sure you want to cancel this order?";
+
+    if (window.confirm(promptMsg)) {
       try {
-        const response = await axios.put(`/orders/cancel/${orderId}`, {}, {
+        const payload = itemId ? { itemId } : {};
+        const response = await axios.put(`/orders/cancel/${orderId}`, payload, {
           headers: getAuthHeaders()
         });
         if (response.data.success) {
-          toast.success("Order cancelled successfully");
+          toast.success(response.data.message || (isMultiItem ? "Item cancelled successfully" : "Order cancelled successfully"));
           fetchOrdersAndRequests(activeFilterStatus, activeFilterTime);
         }
       } catch (error) {
-        toast.error("Failed to cancel order");
+        toast.error(error.response?.data?.message || (isMultiItem ? "Failed to cancel item" : "Failed to cancel order"));
       }
     }
   };
@@ -113,10 +118,6 @@ const OrdersSection = () => {
     order.items.forEach(item => {
       const isCancelled = (order.status === 'cancelled' || item.status === 'cancelled');
 
-      // Do not show cancelled orders under 'All Orders'
-      if (activeFilterStatus === 'all' && isCancelled) {
-        return;
-      }
 
       // If 'cancelled' tab is selected, only show cancelled items
       if (activeFilterStatus === 'cancelled' && !isCancelled) {
@@ -478,10 +479,10 @@ const OrdersSection = () => {
                   <div className="w-full sm:w-52 shrink-0 flex flex-col gap-2.5 justify-center border-t sm:border-t-0 pt-4 sm:pt-0 border-gray-100">
                     {effStatus !== 'cancelled' && order.status !== 'cancelled' && (effStatus === 'pending' || effStatus === 'processing' || effStatus === 'packed') && (
                       <button
-                        onClick={(e) => handleCancelOrder(e, order._id)}
+                        onClick={(e) => handleCancelOrder(e, order._id, item._id, order.items?.length > 1)}
                         className="w-full py-2 px-4 text-xs font-bold uppercase tracking-wider text-red-600 border border-red-300 hover:bg-red-50 transition-colors cursor-pointer"
                       >
-                        Cancel Order
+                        {order.items?.length > 1 ? "Cancel Item" : "Cancel Order"}
                       </button>
                     )}
 
