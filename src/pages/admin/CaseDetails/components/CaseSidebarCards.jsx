@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   User, 
   Store,
@@ -25,6 +25,21 @@ const CaseSidebarCards = ({
 }) => {
   const navigate = useNavigate();
   const [showStatusMenu, setShowStatusMenu] = useState(false);
+  const statusMenuRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (statusMenuRef.current && !statusMenuRef.current.contains(event.target)) {
+        setShowStatusMenu(false);
+      }
+    };
+    if (showStatusMenu) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showStatusMenu]);
 
   if (!returnRequest && !order) return null;
 
@@ -148,10 +163,10 @@ const CaseSidebarCards = ({
   const statusOptions = isReturnView ? returnStatusOptions : orderStatusOptions;
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-2xs divide-y divide-slate-100 overflow-hidden">
+    <div className="bg-white rounded-xl border border-slate-200 shadow-2xs divide-y divide-slate-100">
       
       {/* 1. Customer Details */}
-      <div className="p-4 space-y-3">
+      <div className="p-4 space-y-3 rounded-t-xl">
         <div className="flex items-center gap-2 text-slate-800 font-bold text-xs">
           <User size={14} className="text-[#4F46E5]" />
           <span>Customer Details</span>
@@ -252,7 +267,7 @@ const CaseSidebarCards = ({
       </div>
 
       {/* 3. Payment Summary (Essential only, no duplicate refund details) */}
-      <div className="p-4 space-y-2.5">
+      <div className={`p-4 space-y-2.5 ${!isReturnView ? "rounded-b-xl" : ""}`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-slate-800 font-bold text-xs">
             <CreditCard size={14} className="text-[#4F46E5]" />
@@ -329,57 +344,69 @@ const CaseSidebarCards = ({
         </div>
       </div>
 
-      {/* 4. Actions */}
-      <div className="p-4 space-y-2.5">
-        <div className="flex items-center gap-2 text-slate-800 font-bold text-xs">
-          <Send size={13} className="text-[#4F46E5]" />
-          <span>Actions</span>
-        </div>
+      {/* 4. Actions - Only for Return / Exchange requests */}
+      {isReturnView && (
+        <div className="p-4 space-y-2.5 rounded-b-xl">
+          <div className="flex items-center gap-2 text-slate-800 font-bold text-xs">
+            <Send size={13} className="text-[#4F46E5]" />
+            <span>Actions</span>
+          </div>
 
-        <div className="flex items-center gap-2 relative">
-          {/* Primary Action Button */}
-          {primaryActionLabel && (
-            <button
-              disabled={isProcessing}
-              onClick={() => nextTargetStatus && onUpdateStatus && onUpdateStatus(nextTargetStatus)}
-              className="flex-1 py-2 px-3 bg-[#4F46E5] hover:bg-[#4338CA] text-white font-bold text-xs rounded-lg shadow-2xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
-            >
-              {isProcessing ? <Loader2 size={12} className="animate-spin" /> : null}
-              <span>{primaryActionLabel}</span>
-            </button>
-          )}
-
-          {/* Update Status Dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => setShowStatusMenu(!showStatusMenu)}
-              className="py-2 px-3 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-xs rounded-lg shadow-2xs transition-colors flex items-center gap-1 cursor-pointer whitespace-nowrap"
-            >
-              <span>Update Status</span>
-              <ChevronDown size={13} className="text-slate-500" />
-            </button>
-
-            {showStatusMenu && (
-              <div className="absolute right-0 bottom-full mb-1 w-44 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-30 animate-in fade-in slide-in-from-bottom-2 duration-150">
-                <div className="px-3 py-1 text-[10px] font-bold uppercase text-slate-400">Change Status to</div>
-                {statusOptions.map(opt => (
-                  <button
-                    key={opt.value}
-                    onClick={() => {
-                      setShowStatusMenu(false);
-                      if (onUpdateStatus) onUpdateStatus(opt.value);
-                    }}
-                    className="w-full text-left px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-indigo-50 hover:text-[#4F46E5] flex items-center justify-between cursor-pointer"
-                  >
-                    <span>{opt.label}</span>
-                    {status === opt.value && <Check size={12} className="text-[#4F46E5]" />}
-                  </button>
-                ))}
-              </div>
+          <div className="flex items-center gap-2 relative">
+            {/* Primary Action Button */}
+            {primaryActionLabel && (
+              <button
+                disabled={isProcessing}
+                onClick={() => nextTargetStatus && onUpdateStatus && onUpdateStatus(nextTargetStatus)}
+                className="flex-1 py-2 px-3 bg-[#4F46E5] hover:bg-[#4338CA] text-white font-bold text-xs rounded-lg shadow-2xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+              >
+                {isProcessing ? <Loader2 size={12} className="animate-spin" /> : null}
+                <span>{primaryActionLabel}</span>
+              </button>
             )}
+
+            {/* Update Status Dropdown */}
+            <div ref={statusMenuRef} className={`relative ${!primaryActionLabel ? "w-full" : ""}`}>
+              <button
+                onClick={() => setShowStatusMenu(!showStatusMenu)}
+                className={`py-2 px-3 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-xs rounded-lg shadow-2xs transition-colors flex items-center justify-between gap-1.5 cursor-pointer whitespace-nowrap ${
+                  !primaryActionLabel ? "w-full" : ""
+                }`}
+              >
+                <span>Update Status</span>
+                <ChevronDown size={13} className={`text-slate-500 transition-transform duration-200 ${showStatusMenu ? "rotate-180" : ""}`} />
+              </button>
+
+              {showStatusMenu && (
+                <div
+                  className={`absolute ${
+                    !primaryActionLabel ? "left-0 w-full min-w-[200px]" : "right-0 w-52"
+                  } bottom-full mb-1.5 bg-white rounded-xl shadow-2xl border border-slate-200 py-1.5 z-50 animate-in fade-in slide-in-from-bottom-2 duration-150`}
+                >
+                  <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
+                    Change Status to
+                  </div>
+                  <div className="py-1">
+                    {statusOptions.map((opt) => (
+                      <button
+                        key={opt.value}
+                        onClick={() => {
+                          setShowStatusMenu(false);
+                          if (onUpdateStatus) onUpdateStatus(opt.value);
+                        }}
+                        className="w-full text-left px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-indigo-50 hover:text-[#4F46E5] flex items-center justify-between cursor-pointer transition-colors"
+                      >
+                        <span className="truncate">{opt.label}</span>
+                        {status === opt.value && <Check size={14} className="text-[#4F46E5] shrink-0 ml-2" />}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
     </div>
   );

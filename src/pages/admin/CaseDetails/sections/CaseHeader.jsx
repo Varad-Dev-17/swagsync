@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Printer, ExternalLink, MoreVertical } from 'lucide-react';
+import { ArrowLeft, ExternalLink } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import CopyBadge from '../components/CopyBadge';
 
@@ -123,58 +123,42 @@ const CaseHeader = ({
           )}
         </div>
 
-        {/* Right Action Controls */}
-        <div className="flex items-center flex-wrap gap-2">
-          
-          {/* Status Select Pill */}
-          <div className={`relative inline-flex items-center border rounded-lg shadow-2xs font-semibold text-xs transition-colors ${getStatusPillStyle(selectedStatus)}`}>
-            <span className="pl-2.5 py-1.5 text-slate-600 font-bold whitespace-nowrap">
-              {isExchange ? "Exchange:" : isReturnView ? "Return:" : "Status:"}
-            </span>
-            <select
-              value={selectedStatus}
-              onChange={handleStatusChange}
-              disabled={isUpdating}
-              className="bg-transparent pl-1 pr-6 py-1.5 font-semibold text-xs outline-none cursor-pointer capitalize"
-            >
-              {currentOptions.map((opt) => (
-                <option key={opt.value} value={opt.value} className="bg-white text-slate-700 font-medium text-xs py-1">
-                  {opt.label}
-                </option>
-              ))}
-            </select>
+        {/* Right Action Controls - Only for Returns & Exchanges */}
+        {isReturnView && (
+          <div className="flex items-center flex-wrap gap-2">
+            
+            {/* Status Select Pill */}
+            <div className={`relative inline-flex items-center border rounded-lg shadow-2xs font-semibold text-xs transition-colors ${getStatusPillStyle(selectedStatus)}`}>
+              <span className="pl-2.5 py-1.5 text-slate-600 font-bold whitespace-nowrap">
+                {isExchange ? "Exchange:" : "Return:"}
+              </span>
+              <select
+                value={selectedStatus}
+                onChange={handleStatusChange}
+                disabled={isUpdating}
+                className="bg-transparent pl-1 pr-6 py-1.5 font-semibold text-xs outline-none cursor-pointer capitalize"
+              >
+                {currentOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value} className="bg-white text-slate-700 font-medium text-xs py-1">
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* View Order Link Button */}
+            {orderObjId && (
+              <button
+                onClick={() => navigate(`/admin/orders/${orderObjId}`)}
+                className="px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 shadow-2xs cursor-pointer"
+              >
+                <ExternalLink size={12} className="text-[#4F46E5] stroke-[2.5]" />
+                <span>View Order</span>
+              </button>
+            )}
+
           </div>
-
-          {/* View Order Link Button */}
-          {orderObjId && isReturnView && (
-            <button
-              onClick={() => navigate(`/admin/orders/${orderObjId}`)}
-              className="px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 shadow-2xs cursor-pointer"
-            >
-              <ExternalLink size={12} className="text-[#4F46E5] stroke-[2.5]" />
-              <span>View Order</span>
-            </button>
-          )}
-
-          {/* Print Button */}
-          <button
-            onClick={() => window.print()}
-            className="px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 shadow-2xs cursor-pointer"
-          >
-            <Printer size={12} className="text-[#4F46E5] stroke-[2]" />
-            <span>Print</span>
-          </button>
-
-          {/* More Options Button */}
-          <button 
-            onClick={() => navigate(isReturnView ? "/admin/returns" : "/admin/orders")}
-            className="p-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-500 rounded-lg transition-colors shadow-2xs cursor-pointer"
-            title="More Options"
-          >
-            <MoreVertical size={14} />
-          </button>
-
-        </div>
+        )}
 
       </div>
 
