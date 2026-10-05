@@ -218,17 +218,19 @@ const AdminCaseDetailsPage = () => {
   const returnStatusOptions = isExchangeCase ? [
     { value: "pending", label: "Requested" },
     { value: "approved", label: "Approved" },
-    { value: "rejected", label: "Rejected" },
     { value: "pickup_scheduled", label: "Picked up schedule" },
+    { value: "pickup_replace", label: "Pickup & Replace" },
     { value: "replace_and_exchange", label: "Replace and Exchange" },
     { value: "completed", label: "Completed" },
+    { value: "rejected", label: "Rejected" },
   ] : [
     { value: "pending", label: "Requested" },
     { value: "approved", label: "Approved" },
-    { value: "rejected", label: "Rejected" },
+    { value: "pickup", label: "Pickup" },
     { value: "pickup_scheduled", label: "Picked up schedule" },
     { value: "received", label: "Recieved" },
     { value: "completed", label: "Completed" },
+    { value: "rejected", label: "Rejected" },
   ];
 
   const caseIdCode = isReturnView

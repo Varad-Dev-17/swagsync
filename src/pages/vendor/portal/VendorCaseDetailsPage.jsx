@@ -30,6 +30,7 @@ import {
   ZoomIn,
 } from "lucide-react";
 import ImageViewerModal from "../../admin/CaseDetails/components/ImageViewerModal";
+import ReturnTrackingTimelineCard from "../../admin/CaseDetails/components/ReturnTrackingTimelineCard";
 import StatusBadge from "../../../components/admin/ui/StatusBadge";
 
 export default function VendorCaseDetailsPage() {
@@ -279,18 +280,20 @@ export default function VendorCaseDetailsPage() {
     ? [
         { value: "pending", label: "Requested" },
         { value: "approved", label: "Approved" },
-        { value: "rejected", label: "Rejected" },
         { value: "pickup_scheduled", label: "Picked up schedule" },
+        { value: "pickup_replace", label: "Pickup & Replace" },
         { value: "replace_and_exchange", label: "Replace and Exchange" },
         { value: "completed", label: "Completed" },
+        { value: "rejected", label: "Rejected" },
       ]
     : [
         { value: "pending", label: "Requested" },
         { value: "approved", label: "Approved" },
-        { value: "rejected", label: "Rejected" },
+        { value: "pickup", label: "Pickup" },
         { value: "pickup_scheduled", label: "Picked up schedule" },
         { value: "received", label: "Recieved" },
         { value: "completed", label: "Completed" },
+        { value: "rejected", label: "Rejected" },
       ];
 
   const caseIdCode = isReturnView
@@ -825,42 +828,9 @@ export default function VendorCaseDetailsPage() {
                 )}
               </div>
 
-              {/* SECTION D: Return / Exchange Tracking Lifecycle Bar */}
-              <div className="p-5 sm:p-6 bg-slate-50/40">
-                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4">
-                  {isExchangeCase ? "Exchange Lifecycle Progress" : "Return Lifecycle Progress"}
-                </h4>
-                <div className="grid grid-cols-4 gap-2 text-center text-xs">
-                  {[
-                    { label: isExchangeCase ? "Requested" : "Requested", key: "pending" },
-                    { label: "Approved", key: "approved" },
-                    { label: isExchangeCase ? "Pickup & Swap" : "Pickup Scheduled", key: "pickup_replace" },
-                    { label: "Completed", key: "completed" },
-                  ].map((step, idx) => {
-                    const isDone =
-                      idx === 0 ||
-                      (idx === 1 && ["approved", "pickup", "pickup_replace", "completed"].includes(activeStatus)) ||
-                      (idx === 2 && ["pickup", "pickup_replace", "completed"].includes(activeStatus)) ||
-                      (idx === 3 && activeStatus === "completed");
-
-                    return (
-                      <div key={idx} className="flex flex-col items-center space-y-1.5">
-                        <div
-                          className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs border transition-all ${
-                            isDone
-                              ? "bg-emerald-500 text-white border-emerald-500 shadow-sm shadow-emerald-500/20"
-                              : "bg-white text-slate-400 border-slate-200"
-                          }`}
-                        >
-                          {isDone ? <Check size={14} strokeWidth={3} /> : idx + 1}
-                        </div>
-                        <span className={`text-[11px] font-bold ${isDone ? "text-slate-900" : "text-slate-400"}`}>
-                          {step.label}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
+              {/* SECTION D: Return / Exchange Tracking Timeline */}
+              <div className="bg-slate-50/40 border-t border-slate-100">
+                <ReturnTrackingTimelineCard returnRequest={returnData} />
               </div>
             </>
           ) : (
@@ -1022,7 +992,7 @@ export default function VendorCaseDetailsPage() {
                   </div>
                 )}
 
-                {(activeStatus === "approved" || activeStatus === "pickup" || activeStatus === "pickup_replace") && (
+                {(activeStatus === "approved" || activeStatus === "pickup" || activeStatus === "pickup_scheduled" || activeStatus === "pickup_replace" || activeStatus === "replace_and_exchange") && (
                   <div className="space-y-2">
                     <button
                       onClick={() => handleVendorAction({ action: "received" }, "Marked item as received")}
@@ -1030,6 +1000,25 @@ export default function VendorCaseDetailsPage() {
                       className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
                     >
                       <Package size={14} /> Mark Item Received
+                    </button>
+                    <button
+                      onClick={() => setQcModalOpen(true)}
+                      disabled={isUpdatingStatus}
+                      className="w-full py-2.5 bg-[#fe4a03] hover:bg-[#e03f00] text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                    >
+                      <ShieldCheck size={14} /> Inspect QC & Settle
+                    </button>
+                  </div>
+                )}
+
+                {activeStatus === "received" && (
+                  <div className="space-y-2">
+                    <button
+                      onClick={() => handleVendorAction({ action: "complete" }, "Completed request")}
+                      disabled={isUpdatingStatus}
+                      className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                    >
+                      <Check size={14} /> Complete Return
                     </button>
                     <button
                       onClick={() => setQcModalOpen(true)}
