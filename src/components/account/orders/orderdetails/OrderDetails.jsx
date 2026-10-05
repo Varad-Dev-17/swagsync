@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { Loader2, ArrowLeft, CheckCircle2, Truck, Clock, X, XCircle, MapPin, Receipt, Phone, Mail, Package, RefreshCw } from "lucide-react";
+import { Loader2, ArrowLeft, CheckCircle2, Truck, Clock, X, XCircle, MapPin, Receipt, Phone, Package, RefreshCw, ShieldCheck } from "lucide-react";
 import axios from "axios";
 import { useAuth } from "../../../../context/AuthContext";
 import toast from "react-hot-toast";
-import CustomerTrackingCard from "./CustomerTrackingCard";
+import CustomerTrackingCard, { CustomerTimelineAccordion } from "./CustomerTrackingCard";
 import ReturnExchangeButton from "../returnexchange/ReturnExchangeButton";
 import CancelOrderModal from "../CancelOrderModal";
 import { getReturnEligibility } from "../../../../utils/returnEligibility";
@@ -159,7 +159,7 @@ const OrderDetails = () => {
   };
 
   return (
-    <div className="max-w-full lg:max-w-[1150px] mx-auto pt-24 sm:pt-32 pb-6 px-4 sm:px-6 md:px-8">
+    <div className="w-full pt-24 sm:pt-30 pb-10 px-4 sm:px-6 lg:px-8 xl:px-12">
       <button 
         onClick={() => navigate("/account/orders")}
         className="flex items-center gap-2 text-gray-500 hover:text-slate-700 mb-6 transition-colors font-medium text-sm cursor-pointer"
@@ -168,9 +168,9 @@ const OrderDetails = () => {
         Back to Orders
       </button>
 
-      <div className="flex flex-col lg:flex-row gap-6 items-start">
-        {/* Left Column (Items & Tracking) */}
-        <div className="flex-1 w-full space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6 items-start">
+        {/* Column 1: Items & Delivery Details (md:col-span-1 lg:col-span-4) */}
+        <div className="md:col-span-1 lg:col-span-4 space-y-6">
           {/* Compact Items Table Container */}
           <div className="bg-white border border-gray-200 rounded-none overflow-hidden shadow-xs">
           <div className="bg-gray-50 px-5 py-3.5 border-b border-gray-200 flex items-center justify-between">
@@ -218,7 +218,7 @@ const OrderDetails = () => {
 
               return (
                 <div key={index} className="p-4 sm:p-5 hover:bg-gray-50/50 transition-colors">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex flex-col gap-3.5">
                     {/* Item Thumbnail & Specifications */}
                     <div className="flex items-start sm:items-center gap-4 flex-1 min-w-0">
                       <div className="w-14 h-16 sm:w-16 sm:h-20 bg-gray-100 rounded-none overflow-hidden border border-gray-200 shrink-0 shadow-2xs">
@@ -259,7 +259,7 @@ const OrderDetails = () => {
                             ) : (
                               <span className="inline-flex items-center gap-1 font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
                                 <RefreshCw className="w-3.5 h-3.5 text-amber-600 animate-spin-slow" />
-                                {latestRequest.type === "exchange" ? "⇄ Exchange Claim:" : "↩ Return Claim:"} {String(latestRequest.status).replace(/_/g, " ").toUpperCase()}
+                                {latestRequest.type === "exchange" ? "Exchange Claim:" : "Return Claim:"} {String(latestRequest.status).replace(/_/g, " ").toUpperCase()}
                               </span>
                             )
                           ) : (
@@ -284,8 +284,8 @@ const OrderDetails = () => {
                       </div>
                     </div>
 
-                    {/* Price & Actions Right Column */}
-                    <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-3 border-t sm:border-t-0 pt-3 sm:pt-0 border-gray-100 shrink-0">
+                    {/* Price & Actions Row */}
+                    <div className="flex items-center justify-between gap-2 pt-2.5 border-t border-gray-100">
                       <div className="text-sm font-extrabold text-slate-700">
                         {(() => {
                           const method = (order?.paymentMethod || "").toLowerCase();
@@ -334,49 +334,54 @@ const OrderDetails = () => {
           </div>
         </div>
 
-        {/* Dedicated Customer Lifecycle Tracking Dashboard (Phase 3 Enhancement) */}
-        <CustomerTrackingCard order={order} />
-
-        {/* Delivery Details Block */}
-        </div>
-
-        {/* Right Column (Info Blocks) */}
-        <div className="w-full lg:w-[400px] xl:w-[450px] shrink-0 space-y-6">
+          {/* Delivery Details Block in Column 1 */}
           {order.shippingAddress && (
-            <div className="bg-white border border-gray-100 rounded-none p-5 shadow-xs">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center text-gray-500 flex-shrink-0">
-                <MapPin className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="font-bold text-[14px] text-slate-700">Delivery To</h3>
-                <p className="text-[13px] text-gray-500 font-semibold">{order.shippingAddress.name}</p>
-              </div>
-            </div>
-            
-            <div className="pl-13 space-y-4 ml-2 border-l-2 border-gray-50">
-              <div className="flex gap-3 pl-4">
-                <Phone className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+            <div className="bg-white border border-gray-200 rounded-none p-5 shadow-xs">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center text-gray-500 flex-shrink-0">
+                  <MapPin className="w-5 h-5" />
+                </div>
                 <div>
-                  <p className="text-[12px] text-slate-700 font-medium">Contact Details</p>
-                  <p className="text-[12px] text-gray-500 mt-0.5">{order.shippingAddress.phone}</p>
+                  <h3 className="font-bold text-[14px] text-slate-700">Delivery To</h3>
+                  <p className="text-[13px] text-gray-500 font-semibold">{order.shippingAddress.name}</p>
                 </div>
               </div>
-              <div className="flex gap-3 pl-4">
-                <MapPin className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
-                <div className="flex-1 relative">
-                  <p className="text-[12px] text-slate-700 font-medium">Delivery Address</p>
-                  <p className="text-[12px] text-gray-500 mt-0.5 pr-12 leading-relaxed">
-                    {order.shippingAddress.address}, {order.shippingAddress.city}
-                  </p>
-                  <div className="absolute right-0 top-0 w-10 h-10 bg-[#FFF5ED] rounded-lg flex items-center justify-center">
-                    <MapPin className="w-5 h-5 text-[#FD7100]" />
+              
+              <div className="pl-6 space-y-4 ml-2 border-l-2 border-gray-50">
+                <div className="flex gap-3 pl-2">
+                  <Phone className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-[12px] text-slate-700 font-medium">Contact Details</p>
+                    <p className="text-[12px] text-gray-500 mt-0.5">{order.shippingAddress.phone}</p>
+                  </div>
+                </div>
+                <div className="flex gap-3 pl-2">
+                  <MapPin className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1 relative">
+                    <p className="text-[12px] text-slate-700 font-medium">Delivery Address</p>
+                    <p className="text-[12px] text-gray-500 mt-0.5 pr-12 leading-relaxed">
+                      {order.shippingAddress.address}, {order.shippingAddress.city}
+                    </p>
+                    <div className="absolute right-0 top-0 w-9 h-9 bg-[#FFF5ED] rounded-lg flex items-center justify-center">
+                      <MapPin className="w-5 h-5 text-[#FD7100]" />
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
+
+          {/* Complete Journey & Timeline History Accordion */}
+          <CustomerTimelineAccordion order={order} defaultOpen={false} />
+        </div>
+
+        {/* Column 2: Order Fulfillment & Tracking (md:col-span-2 lg:col-span-5) */}
+        <div className="md:col-span-2 lg:col-span-5 space-y-6">
+          <CustomerTrackingCard order={order} hideTimeline={true} />
+        </div>
+
+        {/* Column 3: Billing Details & Metadata (md:col-span-1 lg:col-span-3) */}
+        <div className="md:col-span-1 lg:col-span-3 space-y-6">
 
         {/* Payment Block */}
         <div className="bg-white border border-gray-100 rounded-none p-5 shadow-xs">
@@ -512,24 +517,6 @@ const OrderDetails = () => {
           </button>
         </div>
 
-        {/* Updates Sent To Block */}
-        <div className="bg-white border border-gray-100 rounded-none p-5 shadow-xs">
-          <h3 className="font-bold text-[13px] text-slate-700 mb-4 flex items-center gap-2">
-            <Mail className="w-4 h-4 text-gray-400" />
-            Updates sent to
-          </h3>
-          <div className="grid grid-cols-2 gap-4 pl-6 text-[12px]">
-            <div>
-              <p className="text-gray-400 mb-1 font-medium">Call</p>
-              <p className="font-bold text-slate-700">{order.shippingAddress?.phone || order.user?.phone || "-"}</p>
-            </div>
-            <div>
-              <p className="text-gray-400 mb-1 font-medium">Email</p>
-              <p className="font-bold text-slate-700 truncate pr-2">{order.user?.email}</p>
-            </div>
-          </div>
-        </div>
-
         {/* Order Details Timestamps */}
         <div className="bg-white border border-gray-100 rounded-none p-5 shadow-xs">
           <h3 className="font-bold text-[13px] text-slate-700 mb-4 flex items-center gap-2">
@@ -551,6 +538,37 @@ const OrderDetails = () => {
             </div>
           </div>
         </div>
+
+          {/* SwagSync Assurance & Help */}
+          <div className="bg-slate-50 border border-gray-200 rounded-none p-5 shadow-xs space-y-3">
+            <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-[#FD7100]" />
+              SwagSync Assurance
+            </h4>
+            <div className="space-y-2.5 text-xs text-gray-600">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                <span>100% Genuine & Quality Checked</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <RefreshCw className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                <span>Easy 7-day Return & Exchange</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Truck className="w-3.5 h-3.5 text-[#FD7100] shrink-0" />
+                <span>Free Delivery on eligible orders</span>
+              </div>
+            </div>
+            <div className="pt-2.5 border-t border-gray-200 text-[11px] text-gray-500">
+              Need help with your order?{" "}
+              <button 
+                onClick={() => navigate("/contact")}
+                className="text-[#FD7100] font-bold hover:underline cursor-pointer"
+              >
+                Contact Support
+              </button>
+            </div>
+          </div>
 
         </div>
       </div>

@@ -193,7 +193,7 @@ const HorizontalWishlistCard = ({ item }) => {
 
 const AccountWishlistSection = () => {
   const { wishlistItems, isLoading } = useWishlist();
-  const [viewMode, setViewMode] = useState('horizontal'); // 'horizontal' | 'grid'
+  const [viewMode, setViewMode] = useState('grid'); // Default to column/grid view so single items don't span full width
   const navigate = useNavigate();
 
   return (
@@ -219,19 +219,8 @@ const AccountWishlistSection = () => {
             {/* View Mode Toggle */}
             <div className="flex items-center bg-gray-100 p-1 rounded-xl border border-gray-200">
               <button
-                onClick={() => setViewMode('horizontal')}
-                title="Horizontal list view"
-                className={`p-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
-                  viewMode === 'horizontal'
-                    ? 'bg-white text-[#FD7100] shadow-xs'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                <List size={16} />
-              </button>
-              <button
                 onClick={() => setViewMode('grid')}
-                title="Grid view"
+                title="Grid / Columns view"
                 className={`p-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
                   viewMode === 'grid'
                     ? 'bg-white text-[#FD7100] shadow-xs'
@@ -239,6 +228,17 @@ const AccountWishlistSection = () => {
                 }`}
               >
                 <LayoutGrid size={16} />
+              </button>
+              <button
+                onClick={() => setViewMode('horizontal')}
+                title="List view"
+                className={`p-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
+                  viewMode === 'horizontal'
+                    ? 'bg-white text-[#FD7100] shadow-xs'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <List size={16} />
               </button>
             </div>
 
@@ -260,18 +260,18 @@ const AccountWishlistSection = () => {
           <p className="text-sm text-gray-500 mt-4">Loading your wishlist...</p>
         </div>
       ) : wishlistItems && wishlistItems.length > 0 ? (
-        viewMode === 'horizontal' ? (
-          /* Horizontal Cards Layout */
-          <div className="space-y-3.5">
+        viewMode === 'grid' ? (
+          /* Grid Cards Layout - Columns ensure single items do not take full width */
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3.5 sm:gap-5">
             {wishlistItems.map((item) => (
-              <HorizontalWishlistCard key={item._id} item={item} />
+              <WishlistCard key={item._id} item={item} />
             ))}
           </div>
         ) : (
-          /* Grid Cards Layout */
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+          /* Horizontal Cards Layout - Also constrained into columns */
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-3.5 sm:gap-4">
             {wishlistItems.map((item) => (
-              <WishlistCard key={item._id} item={item} />
+              <HorizontalWishlistCard key={item._id} item={item} />
             ))}
           </div>
         )

@@ -1,8 +1,119 @@
-import React from "react";
-import { Package, Truck, Clock, CheckCircle2, XCircle, RefreshCw, ShieldCheck, DollarSign, MessageSquare, AlertCircle, MapPin, Check } from "lucide-react";
+import React, { useState } from "react";
+import { Package, Truck, Clock, CheckCircle2, XCircle, RefreshCw, ShieldCheck, DollarSign, MessageSquare, AlertCircle, MapPin, Check, ChevronDown } from "lucide-react";
 import TimelineItem from "../../../../pages/admin/CaseDetails/components/TimelineItem";
 
-const CustomerTrackingCard = ({ order = null }) => {
+const formatDate = (dateString) => {
+  if (!dateString) return "";
+  try {
+    const d = new Date(dateString);
+    return d.toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+  } catch {
+    return "";
+  }
+};
+
+const translateCustomerEvent = (ev) => {
+  const t = String(ev.type || "").toLowerCase();
+  let title = ev.type || "Update Received";
+  let subtitle = ev.description || "";
+
+  if (t.includes("refund initiated")) {
+    title = "Refund Initiated";
+    subtitle = "Your refund has been initiated and is currently being processed.";
+  } else if (t.includes("refund completed") || t.includes("refunded")) {
+    title = "Refund Completed";
+    subtitle = "Your refund has been successfully completed and settled.";
+  } else if (t.includes("pickup scheduled") || t === "pickup") {
+    title = "Pickup Scheduled";
+    subtitle = "A logistics courier has been assigned to collect your return item.";
+  } else if (t.includes("pickup_replace") || t.includes("pickup & replace")) {
+    title = "Pickup & Replace Scheduled";
+    subtitle = "Courier assigned to collect item and deliver replacement.";
+  } else if (t.includes("picked up")) {
+    title = "Item Collected";
+    subtitle = "Your item has been picked up by the logistics courier.";
+  } else if (t.includes("out for delivery") || t.includes("on_the_way")) {
+    title = "Out for Delivery";
+    subtitle = "Your package is out for delivery.";
+  }
+
+  return { title, subtitle };
+};
+
+// Standalone Accordion Component for Customer Timeline (Left Side placement)
+export const CustomerTimelineAccordion = ({ order = null, defaultOpen = false }) => {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+  if (!order) return null;
+
+  const returnRequests = Array.isArray(order.returnRequests) ? order.returnRequests : [];
+  const orderEvents = Array.isArray(order.timeline) ? order.timeline : [];
+  const allReturnEvents = returnRequests.flatMap(req => Array.isArray(req.timeline) ? req.timeline : []);
+
+  const combined = [...orderEvents, ...allReturnEvents]
+    .filter(ev => !String(ev.type || "").toLowerCase().includes("qc") && !String(ev.type || "").toLowerCase().includes("quality check"))
+    .sort((a, b) => new Date(a.timestamp || 0) - new Date(b.timestamp || 0));
+
+  if (combined.length === 0) return null;
+
+  const formattedSteps = combined.map((ev, idx) => {
+    const { title, subtitle } = translateCustomerEvent(ev);
+    return {
+      eventId: ev.eventId || idx,
+      title,
+      date: formatDate(ev.timestamp),
+      subtitle,
+      isCompleted: true,
+    };
+  });
+
+  const latestStep = formattedSteps[formattedSteps.length - 1];
+
+  return (
+    <div className="bg-white border border-gray-200 rounded-none shadow-xs overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setIsOpen(prev => !prev)}
+        className="w-full p-4 sm:p-5 flex items-center justify-between text-left hover:bg-gray-50/70 transition-colors cursor-pointer select-none"
+      >
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-10 h-10 bg-orange-50 rounded-full flex items-center justify-center text-[#FD7100] shrink-0">
+            <Clock className="w-5 h-5" />
+          </div>
+          <div className="min-w-0">
+            <h3 className="font-bold text-[14px] text-slate-700">Complete Journey & Timeline History</h3>
+            <p className="text-[12px] text-gray-500 font-medium truncate mt-0.5">
+              {isOpen ? `${formattedSteps.length} updates recorded` : (latestStep ? `Latest: ${latestStep.title}` : `${formattedSteps.length} updates recorded`)}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0 ml-3">
+          <span className="text-[11px] font-bold bg-slate-100 text-slate-600 px-2.5 py-0.5 rounded-full hidden sm:inline-block">
+            {formattedSteps.length} updates
+          </span>
+          <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
+        </div>
+      </button>
+
+      {isOpen && (
+        <div className="px-4 pb-4 pt-1 border-t border-gray-100 bg-gray-50/40">
+          <div className="max-h-[350px] overflow-y-auto custom-scrollbar pt-3 px-1">
+            <TimelineItem steps={formattedSteps} isAuditLog={true} />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const CustomerTrackingCard = ({ order = null, hideTimeline = false }) => {
   if (!order) return null;
 
   const status = (order.status || "pending").toLowerCase();
@@ -11,23 +122,6 @@ const CustomerTrackingCard = ({ order = null }) => {
   // Check if there are any active return or exchange requests attached to this order
   const returnRequests = Array.isArray(order.returnRequests) ? order.returnRequests : [];
   const activeReturn = returnRequests.length > 0 ? returnRequests[0] : null;
-
-  const formatDate = (dateString) => {
-    if (!dateString) return "";
-    try {
-      const d = new Date(dateString);
-      return d.toLocaleDateString("en-IN", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: true,
-      });
-    } catch {
-      return "";
-    }
-  };
 
   // Order Tracking Tracker
   const orderSteps = ["pending", "packed", "shipped", "on_the_way", "delivered"];
@@ -53,7 +147,7 @@ const CustomerTrackingCard = ({ order = null }) => {
       </div>
 
       {!isCancelled ? (
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 pt-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-2.5 pt-2">
           {[
             { label: "Order Confirmed", desc: "Verified & Approved", icon: Clock, idx: 0 },
             { label: "Packed", desc: "Packed & Verified", icon: Package, idx: 1 },
@@ -66,15 +160,15 @@ const CustomerTrackingCard = ({ order = null }) => {
             const isCurrent = currentOrderIdx === s.idx && status !== "delivered";
 
             return (
-              <div key={i} className="flex flex-col items-center text-center p-3 rounded-xl bg-slate-50/70 border border-gray-100 relative">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 transition-transform ${isCompleted ? "bg-emerald-600 text-white shadow-xs" : isCurrent ? "bg-[#FD7100] text-white ring-4 ring-[#FD7100]/20 animate-pulse" : "bg-gray-200 text-gray-400"
+              <div key={i} className="flex flex-col items-center text-center p-2.5 rounded-xl bg-slate-50/70 border border-gray-100 relative">
+                <div className={`w-9 h-9 rounded-full flex items-center justify-center mb-1.5 transition-transform ${isCompleted ? "bg-emerald-600 text-white shadow-xs" : isCurrent ? "bg-[#FD7100] text-white ring-4 ring-[#FD7100]/20 animate-pulse" : "bg-gray-200 text-gray-400"
                   }`}>
-                  <Icon size={18} className="stroke-[2.25]" />
+                  <Icon size={16} className="stroke-[2.25]" />
                 </div>
-                <span className={`text-xs font-extrabold ${isCompleted ? "text-slate-700" : isCurrent ? "text-[#FD7100]" : "text-gray-400"}`}>
+                <span className={`text-[11px] font-extrabold ${isCompleted ? "text-slate-700" : isCurrent ? "text-[#FD7100]" : "text-gray-400"}`}>
                   {s.label}
                 </span>
-                <span className="text-[11px] text-gray-500 font-medium mt-0.5 max-w-[120px] leading-tight">
+                <span className="text-[10px] text-gray-500 font-medium mt-0.5 leading-tight line-clamp-2">
                   {s.desc}
                 </span>
               </div>
@@ -159,18 +253,18 @@ const CustomerTrackingCard = ({ order = null }) => {
         </div>
 
         {!isRejected ? (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+          <div className="grid grid-cols-2 xl:grid-cols-4 gap-2.5 pt-2">
             {steps.map((s, i) => {
               const isComp = ["completed", "refunded", "exchanged"].includes(reqStatus) || currentIdx >= s.idx;
               const isCurr = currentIdx === s.idx && !["completed", "refunded", "exchanged"].includes(reqStatus);
 
               return (
-                <div key={i} className="flex flex-col items-center text-center p-3 rounded-xl bg-slate-50/70 border border-gray-100">
+                <div key={i} className="flex flex-col items-center text-center p-2.5 rounded-xl bg-slate-50/70 border border-gray-100">
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-extrabold mb-1.5 ${isComp ? "bg-[#FD7100] text-white" : isCurr ? "bg-amber-500 text-white animate-pulse" : "bg-gray-200 text-gray-500"
                     }`}>
                   {isComp ? <Check size={14} className="stroke-[3]" /> : i + 1}
                   </div>
-                  <span className={`text-xs font-bold ${isComp ? "text-slate-700" : isCurr ? "text-amber-700 font-extrabold" : "text-gray-400"}`}>
+                  <span className={`text-[11px] font-bold ${isComp ? "text-slate-700" : isCurr ? "text-amber-700 font-extrabold" : "text-gray-400"}`}>
                     {s.label}
                   </span>
                   <span className="text-[10px] text-gray-500 font-medium mt-0.5 leading-tight">
@@ -230,23 +324,23 @@ const CustomerTrackingCard = ({ order = null }) => {
         </div>
 
         {/* Read-Only Refund Totals & Date Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 bg-slate-50 p-4 rounded-xl border border-gray-200/60 text-xs">
+        <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 bg-slate-50 p-4 rounded-xl border border-gray-200/60 text-xs">
           <div>
             <span className="text-gray-400 font-bold uppercase tracking-wider block text-[10px]">Refund Amount:</span>
-            <span className="font-extrabold text-base text-slate-700">₹{Number(refundAmount).toLocaleString("en-IN")}</span>
+            <span className="font-extrabold text-sm text-slate-700">₹{Number(refundAmount).toLocaleString("en-IN")}</span>
           </div>
           <div>
             <span className="text-gray-400 font-bold uppercase tracking-wider block text-[10px]">Settlement Method:</span>
-            <span className="font-bold text-slate-700">{refundMethod}</span>
+            <span className="font-bold text-slate-700 text-xs">{refundMethod}</span>
           </div>
           <div>
             <span className="text-gray-400 font-bold uppercase tracking-wider block text-[10px]">Completion Date:</span>
-            <span className="font-bold text-slate-700">{isDone ? formatDate(req.refundProcessedAt || req.updatedAt) : "Processing In Progress"}</span>
+            <span className="font-bold text-slate-700 text-xs">{isDone ? formatDate(req.refundProcessedAt || req.updatedAt) : "Processing In Progress"}</span>
           </div>
           {req.refundTransactionId && (
             <div>
               <span className="text-gray-400 font-bold uppercase tracking-wider block text-[10px]">Reference / Txn ID:</span>
-              <span className="font-mono font-bold text-slate-700 break-all">{req.refundTransactionId}</span>
+              <span className="font-mono font-bold text-slate-700 break-all text-xs">{req.refundTransactionId}</span>
             </div>
           )}
         </div>
@@ -390,7 +484,7 @@ const CustomerTrackingCard = ({ order = null }) => {
           {renderRefundTracking(req)}
         </div>
       ))}
-      {renderCustomerTimeline()}
+      {!hideTimeline && renderCustomerTimeline()}
       {renderCustomerNotes()}
     </div>
   );
