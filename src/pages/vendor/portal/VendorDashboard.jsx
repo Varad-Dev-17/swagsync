@@ -31,6 +31,7 @@ import {
 import api from "../../../api/axiosConfig";
 import StatusBadge from "../../../components/admin/ui/StatusBadge";
 import PageLoader from "../../../components/common/PageLoader";
+import toast from "react-hot-toast";
 
 const FilterSelect = ({ value, onChange, large = false }) => {
   return (
@@ -58,6 +59,7 @@ const VendorDashboard = () => {
   const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState(null);
 
   const [revenueFilter, setRevenueFilter] = useState("This Week");
@@ -85,6 +87,30 @@ const VendorDashboard = () => {
       setError("Failed to load dashboard statistics. Please try again.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRefresh = async () => {
+    try {
+      setIsRefreshing(true);
+      const res = await api.get("/vendor/portal/dashboard/stats", {
+        params: {
+          revenueTime: revenueFilter,
+          ordersTime: ordersFilter,
+          analyticsTime: analyticsFilter,
+        },
+      });
+      if (res.data.success) {
+        setData(res.data.data);
+        toast.success("Dashboard refreshed successfully!", { id: "vendor-dash-refresh" });
+      } else {
+        toast.error("Failed to refresh dashboard data", { id: "vendor-dash-refresh" });
+      }
+    } catch (err) {
+      console.error("Dashboard refresh error:", err);
+      toast.error("Failed to refresh dashboard statistics. Please try again.", { id: "vendor-dash-refresh" });
+    } finally {
+      setIsRefreshing(false);
     }
   };
 
@@ -206,11 +232,20 @@ const VendorDashboard = () => {
           </p>
         </div>
         <button
-          onClick={fetchStats}
-          className="self-start sm:self-auto inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors shadow-2xs cursor-pointer"
+          onClick={handleRefresh}
+          disabled={isRefreshing}
+          className={`self-start sm:self-auto inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border transition-all text-xs font-semibold shadow-2xs ${
+            isRefreshing
+              ? "bg-orange-50 border-orange-200 text-[#fe4a03] cursor-not-allowed"
+              : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900 cursor-pointer active:scale-95"
+          }`}
+          title="Refresh dashboard stats"
         >
-          <RefreshCw size={14} className="text-[#fe4a03]" />
-          Refresh
+          <RefreshCw
+            size={14}
+            className={`text-[#fe4a03] transition-transform ${isRefreshing ? "animate-spin" : ""}`}
+          />
+          <span>{isRefreshing ? "Refreshing..." : "Refresh"}</span>
         </button>
       </div>
 
