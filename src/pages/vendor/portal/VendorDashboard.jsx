@@ -102,7 +102,6 @@ const VendorDashboard = () => {
       });
       if (res.data.success) {
         setData(res.data.data);
-        toast.success("Dashboard refreshed successfully!", { id: "vendor-dash-refresh" });
       } else {
         toast.error("Failed to refresh dashboard data", { id: "vendor-dash-refresh" });
       }
