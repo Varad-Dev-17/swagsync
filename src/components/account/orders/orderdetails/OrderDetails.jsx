@@ -241,7 +241,7 @@ const OrderDetails = () => {
           <div style="text-align: right;">
             <strong style="display:block; margin-bottom: 4px; font-size: 13px;">Payment Information:</strong>
             <div>Payment Method: ${(order.paymentMethod || "COD").toUpperCase()}</div>
-            <div>Payment Status: ${(order.paymentStatus || "Pending").toUpperCase()}</div>
+            <div>Payment Status: ${(effectivePaymentStatus || order.paymentStatus || "Pending").toUpperCase()}</div>
             <div>Fulfillment Status: ${(currentItemStatus || order.status || "Pending").toUpperCase()}</div>
           </div>
         </div>
@@ -425,6 +425,23 @@ const OrderDetails = () => {
     paymentMethodStr === "razorpay" ||
     Boolean(order.razorpayPaymentId) ||
     (paymentMethodStr !== "cod" && paymentMethodStr !== "cash");
+
+  const isOrderOrItemDelivered =
+    isDelivered ||
+    (order.status || "").toLowerCase() === "delivered" ||
+    (Array.isArray(order.items) &&
+      order.items.length > 0 &&
+      order.items.every((it) => (it.status || "").toLowerCase() === "delivered"));
+
+  // COD orders when delivered are collected at doorstep and are therefore Paid
+  const isCodPaid = !isRazorpay && isOrderOrItemDelivered;
+  const effectivePaymentStatus = (
+    order.paymentStatus === "refunded"
+      ? "refunded"
+      : order.paymentStatus === "paid" || isRazorpay || isCodPaid
+      ? "paid"
+      : order.paymentStatus || "pending"
+  ).toLowerCase();
 
   // Milestones for Tracking Status
   const getTimelineDate = (typeKeyword) => {
@@ -1540,7 +1557,7 @@ const OrderDetails = () => {
                   <div className="bg-[#FFF6F0] rounded-xl p-3 border border-orange-100 mt-2 space-y-1">
                     <div className="flex items-center justify-between">
                       <span className="font-bold text-slate-800 text-xs sm:text-sm">
-                        {isRazorpay ? "Total Amount Paid" : "Total Amount to Pay (COD)"}
+                        {isRazorpay || isCodPaid ? "Total Amount Paid" : "Total Amount to Pay (COD)"}
                       </span>
                       <span className="font-black text-lg text-[#FD7100] font-mono">
                         ₹{displayTotalPaid.toLocaleString("en-IN")}
@@ -1566,14 +1583,18 @@ const OrderDetails = () => {
                     </div>
                     <span
                       className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${
-                        order.paymentStatus === "paid"
+                        effectivePaymentStatus === "paid"
                           ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                          : order.paymentStatus === "refunded"
+                          : effectivePaymentStatus === "refunded"
                           ? "bg-purple-50 text-purple-700 border border-purple-200"
                           : "bg-amber-50 text-amber-700 border border-amber-200"
                       }`}
                     >
-                      {order.paymentStatus || (isRazorpay ? "Paid" : "Pending")}
+                      {effectivePaymentStatus === "paid"
+                        ? "Paid"
+                        : effectivePaymentStatus === "refunded"
+                        ? "Refunded"
+                        : "Pending"}
                     </span>
                   </div>
 

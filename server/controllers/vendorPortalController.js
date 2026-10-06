@@ -2295,6 +2295,9 @@ export const updateVendorOrderItemFulfillment = async (req, res) => {
     if (order.items.every((it) => it.status === "delivered")) {
       order.status = "delivered";
       order.deliveredAt = new Date();
+      if (order.paymentStatus !== "refunded") {
+        order.paymentStatus = "paid";
+      }
     } else if (order.items.every((it) => it.status === "shipped" || it.status === "delivered")) {
       order.status = "shipped";
     } else if (order.items.every((it) => ["packed", "shipped", "delivered"].includes(it.status))) {

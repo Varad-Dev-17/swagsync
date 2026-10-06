@@ -219,6 +219,20 @@ export const getUserOrders = async (req, res) => {
       Order.countDocuments(query),
     ]);
 
+    // Ensure delivered orders reflect as paid
+    orders.forEach((o) => {
+      const isDeliv =
+        o.status === "delivered" ||
+        (Array.isArray(o.items) && o.items.length > 0 && o.items.every((it) => it.status === "delivered"));
+      if (isDeliv && o.paymentStatus !== "refunded" && o.paymentStatus !== "paid") {
+        o.paymentStatus = "paid";
+      }
+    });
+    Order.updateMany(
+      { user: userId, status: "delivered", paymentStatus: "pending" },
+      { $set: { paymentStatus: "paid" } }
+    ).exec().catch(() => {});
+
     return res.status(200).json({
       success: true,
       message: "Orders fetched successfully",
@@ -259,6 +273,18 @@ export const getOrderById = async (req, res) => {
         message: "Order not found",
         data: null,
       });
+    }
+
+    // Delivered orders for COD have cash collected upon delivery and should reflect as paid
+    const isAllDelivered =
+      order.status === "delivered" ||
+      (Array.isArray(order.items) &&
+        order.items.length > 0 &&
+        order.items.every((it) => it.status === "delivered"));
+
+    if (isAllDelivered && order.paymentStatus !== "refunded" && order.paymentStatus !== "paid") {
+      order.paymentStatus = "paid";
+      Order.updateOne({ _id: order._id }, { $set: { paymentStatus: "paid" } }).exec().catch(() => {});
     }
 
     // Users can only view their own orders unless admin
@@ -1004,6 +1030,12 @@ export const updateOrderItemStatus = async (req, res) => {
     const activeItems = order.items.filter((item) => item.status !== "cancelled");
     if (activeItems.length > 0 && activeItems.every((item) => item.status === status)) {
       order.status = status;
+      if (status === "delivered") {
+        order.deliveredAt = new Date();
+        if (order.paymentStatus !== "refunded") {
+          order.paymentStatus = "paid";
+        }
+      }
     }
 
     await order.save();
