@@ -454,7 +454,7 @@ const VendorStore = () => {
                   </h2>
                 </div>
                 <p className="text-xs text-slate-500 mt-1 max-w-2xl">
-                  Manage your public store locations and fulfillment warehouse addresses. When adding or editing products, you can select which store fulfills that item (similar to manufacturer profiles).
+                  Add and manage locations to fulfill your product orders.
                 </p>
               </div>
 
@@ -603,28 +603,6 @@ const VendorStore = () => {
             </div>
           )}
 
-          {/* Read-Only Account Security Information */}
-          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-6 space-y-4">
-            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-              Security & Account Credentials (Read-Only)
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 rounded-xl bg-slate-50 border border-slate-200/70 text-xs">
-              <div>
-                <span className="text-slate-400 block text-[11px]">Registered Email</span>
-                <span className="font-semibold text-slate-800 break-all">{vendorData.email}</span>
-              </div>
-              <div>
-                <span className="text-slate-400 block text-[11px]">Vendor Username</span>
-                <span className="font-semibold text-slate-800">{vendorData.username}</span>
-              </div>
-              <div>
-                <span className="text-slate-400 block text-[11px]">Approval Status</span>
-                <span className="font-bold text-emerald-600 flex items-center gap-1">
-                  <CheckCircle2 size={13} /> {vendorData.vendorStatus}
-                </span>
-              </div>
-            </div>
-          </div>
         </div>
       )}
 
@@ -642,7 +620,7 @@ const VendorStore = () => {
                   </h2>
                 </div>
                 <p className="text-xs text-slate-500 mt-1 max-w-2xl">
-                  Manage your registered manufacturer profiles. When adding or editing products, you can easily select which manufacturer applies to that product (similar to saved delivery addresses).
+                  Add and manage manufacturer profiles for your products.
                 </p>
               </div>
 

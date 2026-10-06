@@ -8,6 +8,13 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const handleSuspendedEvent = () => {
+      localStorage.removeItem("token");
+      localStorage.removeItem("profileImage");
+      setUser(null);
+    };
+    window.addEventListener("vendor:suspended", handleSuspendedEvent);
+
     const token = localStorage.getItem("token");
     if (token) {
       try {
@@ -16,9 +23,10 @@ export const AuthProvider = ({ children }) => {
           localStorage.removeItem("token");
           localStorage.removeItem("profileImage");
           setUser(null);
+          setLoading(false);
         } else {
           const storedProfileImage = localStorage.getItem("profileImage");
-          setUser({
+          const initialUser = {
             userId: payload.userId,
             email: payload.email,
             username: payload.username,
@@ -32,14 +40,82 @@ export const AuthProvider = ({ children }) => {
             dateOfBirth: payload.dateOfBirth,
             gender: payload.gender,
             token,
-          });
+          };
+          setUser(initialUser);
+
+          // If vendor, perform real-time status verification against the server
+          if (payload.role === "vendor") {
+            api.get("/vendor/me")
+              .then((res) => {
+                if (res.data?.success && res.data?.vendor) {
+                  const freshVendor = res.data.vendor;
+                  if (freshVendor.vendorStatus !== "APPROVED") {
+                    localStorage.removeItem("token");
+                    localStorage.removeItem("profileImage");
+                    setUser(null);
+                    if (window.location.pathname.startsWith("/vendor") && window.location.pathname !== "/vendor/login") {
+                      const reason = encodeURIComponent(
+                        freshVendor.vendorStatus === "SUSPENDED"
+                          ? "Your Vendor account has been suspended by Admin. Please contact support."
+                          : `Your Vendor account status is ${freshVendor.vendorStatus}.`
+                      );
+                      window.location.replace(`/vendor/login?suspended=true&reason=${reason}`);
+                    }
+                  } else {
+                    setUser((prev) =>
+                      prev
+                        ? {
+                            ...prev,
+                            vendorStatus: freshVendor.vendorStatus,
+                            storeName: freshVendor.vendorProfile?.storeName || prev.storeName,
+                          }
+                        : null
+                    );
+                  }
+                }
+              })
+              .catch((err) => {
+                const isSuspended =
+                  err.response?.status === 403 &&
+                  (err.response?.data?.vendorStatus === "SUSPENDED" ||
+                    (typeof err.response?.data?.message === "string" &&
+                      err.response.data.message.toLowerCase().includes("suspended")));
+                if (isSuspended) {
+                  localStorage.removeItem("token");
+                  localStorage.removeItem("profileImage");
+                  setUser(null);
+                  if (window.location.pathname.startsWith("/vendor") && window.location.pathname !== "/vendor/login") {
+                    const reason = encodeURIComponent(
+                      err.response?.data?.message ||
+                        "Your Vendor account has been suspended by Admin. Please contact support."
+                    );
+                    window.location.replace(`/vendor/login?suspended=true&reason=${reason}`);
+                  }
+                }
+              })
+              .finally(() => {
+                setLoading(false);
+              });
+            return () => {
+              window.removeEventListener("vendor:suspended", handleSuspendedEvent);
+            };
+          } else {
+            setLoading(false);
+          }
         }
       } catch {
         localStorage.removeItem("token");
         localStorage.removeItem("profileImage");
+        setUser(null);
+        setLoading(false);
       }
+    } else {
+      setLoading(false);
     }
-    setLoading(false);
+
+    return () => {
+      window.removeEventListener("vendor:suspended", handleSuspendedEvent);
+    };
   }, []);
 
   const login = async (email, password) => {

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../../context/AuthContext";
@@ -27,6 +27,24 @@ const VendorLogin = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from?.pathname || "/vendor/portal";
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const isSuspendedParam = searchParams.get("suspended") === "true";
+    const reasonParam = searchParams.get("reason");
+
+    if (location.state?.suspended || isSuspendedParam) {
+      const message =
+        location.state?.message ||
+        reasonParam ||
+        "Your Vendor account has been suspended by Admin. Please contact support.";
+      setVendorStatusError({
+        status: "SUSPENDED",
+        message,
+      });
+      toast.error(message, { id: "vendor-suspended-notice" });
+    }
+  }, [location]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

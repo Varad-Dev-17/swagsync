@@ -132,7 +132,20 @@ const ProtectedRoute = ({ children, adminOnly = false, vendorOnly = false }) => 
   }
   if (adminOnly && !user.isAdmin) return <Navigate to="/" replace />;
   if (vendorOnly && (user.role !== "vendor" || user.vendorStatus !== "APPROVED")) {
-    return <Navigate to="/vendor/login" state={{ from: location }} replace />;
+    const isSuspended = user.vendorStatus === "SUSPENDED";
+    return (
+      <Navigate
+        to={isSuspended ? "/vendor/login?suspended=true" : "/vendor/login"}
+        state={{
+          from: location,
+          suspended: isSuspended,
+          message: isSuspended
+            ? "Your Vendor account has been suspended by Admin. Please contact support."
+            : undefined,
+        }}
+        replace
+      />
+    );
   }
 
   return children;
