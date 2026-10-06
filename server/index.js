@@ -49,6 +49,7 @@ import notificationRoutes from "./routers/notificationRoutes.js";
 import vendorRoutes from "./routers/vendorRoutes.js";
 import vendorAdminRoutes from "./routers/vendorAdminRoutes.js";
 import vendorPortalRoutes from "./routers/vendorPortalRoutes.js";
+import adminNotificationRoutes from "./routers/adminNotificationRoutes.js";
 
 import path from "path";
 import { fileURLToPath } from "url";
@@ -102,6 +103,7 @@ app.use("/admin/dashboard", dashboardRoutes);
 app.use("/admin/upload", uploadRoutes);
 app.use("/admin/tickets", ticketAdminRoutes);
 app.use("/admin/vendors", vendorAdminRoutes);
+app.use("/admin/notifications", adminNotificationRoutes);
 
 // Public / User routes
 app.use("/auth", authRoutes);

@@ -27,6 +27,7 @@ import {
   Legend,
 } from "recharts";
 import api from "../../api/axiosConfig";
+import AdminNotificationBell from "../admin/AdminNotificationBell";
 
 const FilterSelect = ({ value, onChange, large = false }) => {
   return (
@@ -194,13 +195,18 @@ const DashboardSection = () => {
   return (
     <div className="w-full min-h-screen bg-slate-50/50 font-sans text-slate-900 selection:bg-purple-100 p-6 lg:p-8">
       {/* Header */}
-      <div className="mb-6">
-        <h2 className="text-xl sm:text-[22px] md:text-2xl font-bold text-slate-900 flex items-center gap-2 tracking-tight">
-          Welcome back, admin! <span className="text-xl sm:text-2xl">👋</span>
-        </h2>
-        <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">
-          Here's what's happening with your store today.
-        </p>
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h2 className="text-xl sm:text-[22px] md:text-2xl font-bold text-slate-900 flex items-center gap-2 tracking-tight">
+            Welcome back, admin! <span className="text-xl sm:text-2xl">👋</span>
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">
+            Here's what's happening with your store today.
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <AdminNotificationBell />
+        </div>
       </div>
 
       {/* Top Stats Panel - Compact & Left-Aligned */}

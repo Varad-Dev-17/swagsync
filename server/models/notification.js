@@ -5,12 +5,37 @@ const NotificationSchema = new mongoose.Schema(
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true,
+      required: false,
+      default: null,
+      index: true,
+    },
+    recipientRole: {
+      type: String,
+      enum: ["user", "admin", "vendor"],
+      default: "user",
       index: true,
     },
     type: {
       type: String,
-      enum: ["orders", "order", "returns", "return", "tickets", "ticket", "offers", "offer", "account", "system"],
+      enum: [
+        "orders",
+        "order",
+        "returns",
+        "return",
+        "tickets",
+        "ticket",
+        "offers",
+        "offer",
+        "account",
+        "system",
+        "users",
+        "user",
+        "vendors",
+        "vendor",
+        "reviews",
+        "review",
+        "stock",
+      ],
       default: "orders",
       index: true,
     },
@@ -34,7 +59,21 @@ const NotificationSchema = new mongoose.Schema(
     },
     iconType: {
       type: String,
-      enum: ["package", "return", "ticket", "tag", "sparkles", "shield", "security", "bell", "user", "offer"],
+      enum: [
+        "package",
+        "return",
+        "ticket",
+        "tag",
+        "sparkles",
+        "shield",
+        "security",
+        "bell",
+        "user",
+        "offer",
+        "store",
+        "star",
+        "alert",
+      ],
       default: "bell",
     },
     color: {
@@ -57,6 +96,8 @@ const NotificationSchema = new mongoose.Schema(
 );
 
 NotificationSchema.index({ user: 1, createdAt: -1 });
+NotificationSchema.index({ recipientRole: 1, createdAt: -1 });
+NotificationSchema.index({ recipientRole: 1, read: 1 });
 
 const Notification = mongoose.model("Notification", NotificationSchema);
 

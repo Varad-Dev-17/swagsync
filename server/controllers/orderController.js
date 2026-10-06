@@ -11,7 +11,7 @@ import { addTimelineEvent, appendAdminNote, mergeAdminNotesSafe } from "../utils
 import { ORDER_POPULATE_CONFIG, formatAndFilterNotes } from "../utils/populateHelper.js";
 import crypto from "crypto";
 import Razorpay from "razorpay";
-import { createNotification } from "../utils/notificationHelper.js";
+import { createNotification, createAdminNotification, createVendorNotification } from "../utils/notificationHelper.js";
 
 // GET ALL ORDERS (Admin)
 export const getAllOrders = async (req, res) => {
@@ -622,10 +622,83 @@ export const createOrder = async (req, res) => {
       entityId: orderId,
     });
 
-    for (const item of cart.products) {
-      await Variant.findByIdAndUpdate(item.variantId, {
-        $inc: { stock: -item.quantity },
+    // Send admin notification for new order
+    createAdminNotification({
+      type: "orders",
+      title: "New Order Placed",
+      message: `Order #${orderId} for ₹${roundedPaidAmount} placed by ${shippingAddress?.name || "Customer"}.`,
+      link: `/admin/orders?search=${encodeURIComponent(orderId)}`,
+      linkText: "View Order",
+      iconType: "package",
+      color: "blue",
+      entityId: order._id.toString(),
+    });
+
+    // Send vendor notifications for each vendor with items in this order
+    const vendorItemsMap = new Map();
+    for (const it of orderItems) {
+      if (it.vendor) {
+        const vId = it.vendor.toString();
+        if (!vendorItemsMap.has(vId)) {
+          vendorItemsMap.set(vId, []);
+        }
+        vendorItemsMap.get(vId).push(it);
+      }
+    }
+
+    for (const [vId, vItems] of vendorItemsMap.entries()) {
+      const itemCount = vItems.reduce((acc, curr) => acc + (curr.quantity || 1), 0);
+      createVendorNotification({
+        vendorId: vId,
+        type: "orders",
+        title: "New Order Received",
+        message: `You received an order (#${orderId}) for ${itemCount} item(s).`,
+        link: `/vendor/portal/orders`,
+        linkText: "View Orders",
+        iconType: "package",
+        color: "orange",
+        entityId: order._id.toString(),
       });
+    }
+
+    for (const item of cart.products) {
+      const updatedVariant = await Variant.findByIdAndUpdate(
+        item.variantId,
+        { $inc: { stock: -item.quantity } },
+        { new: true }
+      ).populate("product", "title vendorId");
+
+      if (updatedVariant) {
+        // Admin stock alert (< 5)
+        if (updatedVariant.stock <= 5) {
+          createAdminNotification({
+            type: "stock",
+            title: updatedVariant.stock <= 0 ? "Product Out of Stock!" : "Low Stock Alert!",
+            message: `Variant (SKU: ${updatedVariant.sku}) of "${updatedVariant.product?.title || "Product"}" has ${updatedVariant.stock} items left in stock.`,
+            link: `/admin/stock-management`,
+            linkText: "Manage Stock",
+            iconType: "alert",
+            color: updatedVariant.stock <= 0 ? "rose" : "amber",
+            entityId: updatedVariant._id.toString(),
+          });
+        }
+
+        // Vendor stock alert (<= 10)
+        const vendorId = updatedVariant.vendorId || updatedVariant.product?.vendorId;
+        if (vendorId && updatedVariant.stock <= 10) {
+          createVendorNotification({
+            vendorId,
+            type: "stock",
+            title: updatedVariant.stock <= 0 ? "Product Out of Stock!" : "Low Stock Alert!",
+            message: `Your item "${updatedVariant.product?.title || "Product"}" (SKU: ${updatedVariant.sku}) has only ${updatedVariant.stock} items remaining.`,
+            link: `/vendor/portal/inventory`,
+            linkText: "Manage Inventory",
+            iconType: "alert",
+            color: updatedVariant.stock <= 0 ? "rose" : "amber",
+            entityId: updatedVariant._id.toString(),
+          });
+        }
+      }
     }
 
     cart.products = [];

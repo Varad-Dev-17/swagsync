@@ -29,6 +29,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import VendorNotificationBell from "../components/vendor/VendorNotificationBell";
 
 const navItems = [
   { path: "/vendor/portal", label: "Dashboard", icon: LayoutDashboard, end: true },
@@ -152,8 +153,10 @@ const VendorLayout = () => {
             </Link>
           </div>
 
-          {/* Right: Profile Dropdown */}
-          <div className="flex items-center gap-3 sm:gap-4">
+          {/* Right: Notifications & Profile Dropdown */}
+          <div className="flex items-center gap-2.5 sm:gap-3.5">
+            <VendorNotificationBell />
+
             {/* Profile Dropdown */}
             <div className="relative" ref={dropdownRef}>
               <button

@@ -82,3 +82,84 @@ export const createBroadcastNotification = async ({
     return null;
   }
 };
+
+/**
+ * Creates an admin notification for important store events.
+ */
+export const createAdminNotification = async ({
+  type = "orders",
+  title,
+  message,
+  link = "/admin/dashboard",
+  linkText = "View Details",
+  iconType = "bell",
+  color = "blue",
+  entityId = "",
+}) => {
+  try {
+    if (!title || !message) {
+      return null;
+    }
+
+    const notification = await Notification.create({
+      recipientRole: "admin",
+      user: null,
+      type,
+      title,
+      message,
+      link,
+      linkText,
+      iconType,
+      color,
+      entityId,
+      read: false,
+    });
+
+    return notification;
+  } catch (error) {
+    console.error("[Create Admin Notification Error]:", error.message);
+    return null;
+  }
+};
+
+/**
+ * Creates a vendor notification for events scoped to their store and products.
+ */
+export const createVendorNotification = async ({
+  vendorId,
+  type = "orders",
+  title,
+  message,
+  link = "/vendor/portal",
+  linkText = "View Details",
+  iconType = "bell",
+  color = "orange",
+  entityId = "",
+}) => {
+  try {
+    if (!vendorId || !title || !message) {
+      return null;
+    }
+
+    const notification = await Notification.create({
+      recipientRole: "vendor",
+      user: vendorId,
+      type,
+      title,
+      message,
+      link,
+      linkText,
+      iconType,
+      color,
+      entityId,
+      read: false,
+    });
+
+    return notification;
+  } catch (error) {
+    console.error("[Create Vendor Notification Error]:", error.message);
+    return null;
+  }
+};
+
+

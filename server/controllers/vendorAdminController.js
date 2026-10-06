@@ -3,6 +3,7 @@ import Product from "../models/product.js";
 import Variant from "../models/variant.js";
 import Order from "../models/order.js";
 import transport from "../middlewares/sendMail.js";
+import { createVendorNotification } from "../utils/notificationHelper.js";
 import { vendorApprovalEmailTemplate } from "../utils/vendorApprovalEmailTemplate.js";
 import { vendorRejectionEmailTemplate } from "../utils/vendorRejectionEmailTemplate.js";
 
@@ -274,6 +275,19 @@ export const approveVendor = async (req, res) => {
       // Still return success since status is updated, but mention email note
     }
 
+    // Send vendor notification
+    createVendorNotification({
+      vendorId: vendor._id,
+      type: "account",
+      title: "Store Approved!",
+      message: "Congratulations! Your vendor store has been approved by Admin. You can now add products and manage your catalog.",
+      link: "/vendor/portal/store",
+      linkText: "Store Settings",
+      iconType: "store",
+      color: "emerald",
+      entityId: vendor._id.toString(),
+    });
+
     return res.status(200).json({
       success: true,
       message: `Vendor ${vendor.vendorProfile?.storeName || vendor.username} approved successfully. Approval email dispatched.`,
@@ -393,6 +407,19 @@ export const suspendVendor = async (req, res) => {
       { $set: { status: "Inactive", deactivatedDueToSuspension: true } }
     );
 
+    // Send vendor notification
+    createVendorNotification({
+      vendorId: vendor._id,
+      type: "account",
+      title: "Account Suspended",
+      message: `Your vendor account has been suspended by Admin. Reason: ${reason.trim()}`,
+      link: "/vendor/portal/store",
+      linkText: "View Details",
+      iconType: "alert",
+      color: "rose",
+      entityId: vendor._id.toString(),
+    });
+
     return res.status(200).json({
       success: true,
       message: `Vendor ${vendor.vendorProfile?.storeName || vendor.username} suspended successfully.`,
@@ -444,6 +471,19 @@ export const reactivateVendor = async (req, res) => {
       { vendorId: vendor._id, deactivatedDueToSuspension: true },
       { $set: { status: "Active", deactivatedDueToSuspension: false } }
     );
+
+    // Send vendor notification
+    createVendorNotification({
+      vendorId: vendor._id,
+      type: "account",
+      title: "Account Reactivated!",
+      message: "Your vendor account has been reactivated and your products have been restored.",
+      link: "/vendor/portal/store",
+      linkText: "View Store",
+      iconType: "store",
+      color: "emerald",
+      entityId: vendor._id.toString(),
+    });
 
     return res.status(200).json({
       success: true,

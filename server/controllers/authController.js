@@ -6,7 +6,7 @@ import { verificationEmailTemplate } from "../utils/verificationEmailTemplate.js
 import { forgotPasswordEmailTemplate } from "../utils/forgotPasswordEmailTemplate.js";
 import jwt from "jsonwebtoken";
 import { getNextSequence } from "../utils/counterHelper.js";
-import { createNotification } from "../utils/notificationHelper.js";
+import { createNotification, createAdminNotification } from "../utils/notificationHelper.js";
 
 import {
   signupSchema,
@@ -115,6 +115,18 @@ export const signUp = async (req, res) => {
 
     const result = await newUser.save();
     result.password = undefined;
+
+    // Send admin notification for new customer registration
+    createAdminNotification({
+      type: "users",
+      title: "New Customer Registration",
+      message: `${username} (${email}) has registered as a new customer.`,
+      link: `/admin/users?search=${encodeURIComponent(email)}`,
+      linkText: "View Customer",
+      iconType: "user",
+      color: "purple",
+      entityId: result._id.toString(),
+    });
 
     console.log("Sending success response to frontend");
     res.status(201).json({

@@ -8,7 +8,7 @@ import Address from "../models/address.js";
 import { addTimelineEvent, appendAdminNote, mergeAdminNotesSafe } from "../utils/timelineHelper.js";
 import { RETURN_REQUEST_POPULATE_CONFIG, formatAndFilterNotes } from "../utils/populateHelper.js";
 import { validateQcTransition, validateRefundTransition, validateReturnStatusTransition } from "../utils/returnValidationHelper.js";
-import { createNotification } from "../utils/notificationHelper.js";
+import { createNotification, createAdminNotification, createVendorNotification } from "../utils/notificationHelper.js";
 
 // INIT RAZORPAY PAYMENT FOR EXCHANGE DIFFERENCE
 export const initRazorpayExchangePayment = async (req, res) => {
@@ -302,6 +302,34 @@ export const createReturnRequest = async (req, res) => {
       color: "text-amber-600 bg-amber-50 border-amber-100",
       entityId: returnRequest._id.toString(),
     });
+
+    // Send admin notification for return/exchange request
+    createAdminNotification({
+      type: "returns",
+      title: `New ${type === "exchange" ? "Exchange" : "Return"} Request`,
+      message: `${type === "exchange" ? "Exchange" : "Return"} request submitted for Order #${order.orderId || "order"} by ${order.shippingAddress?.name || "Customer"}. Reason: ${reason || "N/A"}.`,
+      link: `/admin/returns?search=${encodeURIComponent(order.orderId || "")}`,
+      linkText: "Review Request",
+      iconType: "return",
+      color: "amber",
+      entityId: returnRequest._id.toString(),
+    });
+
+    // Send vendor notification if the item belongs to a vendor
+    const itemVendorId = orderItem?.vendor || returnRequest?.vendor || null;
+    if (itemVendorId) {
+      createVendorNotification({
+        vendorId: itemVendorId,
+        type: "returns",
+        title: `New ${type === "exchange" ? "Exchange" : "Return"} Request`,
+        message: `Customer requested a ${type} for Order #${order.orderId || "order"} (Reason: ${reason || "N/A"}).`,
+        link: `/vendor/portal/returns`,
+        linkText: "View Return",
+        iconType: "return",
+        color: "orange",
+        entityId: returnRequest._id.toString(),
+      });
+    }
 
     return res.status(201).json({
       success: true,

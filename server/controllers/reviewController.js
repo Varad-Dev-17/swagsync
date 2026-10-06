@@ -2,6 +2,7 @@ import ProductReview from "../models/productReview.js";
 import Product from "../models/product.js";
 import Order from "../models/order.js";
 import Variant from "../models/variant.js";
+import { createAdminNotification, createVendorNotification } from "../utils/notificationHelper.js";
 
 // GET REVIEWS BY PRODUCT
 export const getReviews = async (req, res) => {
@@ -169,6 +170,33 @@ export const createReview = async (req, res) => {
       ratingAverage,
       ratingCount,
     });
+
+    // Send admin notification for new product review
+    createAdminNotification({
+      type: "reviews",
+      title: "New Product Review",
+      message: `${Number(rating)}★ review posted for "${product.title}": "${finalReviewText.trim().slice(0, 50)}${finalReviewText.trim().length > 50 ? '...' : ''}"`,
+      link: `/admin/reviews`,
+      linkText: "Manage Reviews",
+      iconType: "star",
+      color: "emerald",
+      entityId: review._id.toString(),
+    });
+
+    // Send vendor notification if product belongs to a vendor
+    if (product.vendorId) {
+      createVendorNotification({
+        vendorId: product.vendorId,
+        type: "reviews",
+        title: "New Product Review",
+        message: `Customer left a ${Number(rating)}★ review on "${product.title}": "${finalReviewText.trim().slice(0, 50)}${finalReviewText.trim().length > 50 ? '...' : ''}"`,
+        link: `/vendor/portal/reviews`,
+        linkText: "View Reviews",
+        iconType: "star",
+        color: "emerald",
+        entityId: review._id.toString(),
+      });
+    }
 
     const populatedReview = await ProductReview.findById(review._id)
       .populate("user", "username email")

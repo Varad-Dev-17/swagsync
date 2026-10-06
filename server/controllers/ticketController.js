@@ -3,7 +3,7 @@ import { v2 as cloudinary } from "cloudinary";
 import Ticket from "../models/ticket.js";
 import User from "../models/user.js";
 import { getNextSequence } from "../utils/counterHelper.js";
-import { createNotification } from "../utils/notificationHelper.js";
+import { createNotification, createAdminNotification } from "../utils/notificationHelper.js";
 
 const configureCloudinary = () => {
   cloudinary.config({
@@ -105,6 +105,18 @@ export const createTicket = async (req, res) => {
       linkText: "View Ticket",
       iconType: "ticket",
       color: "amber",
+      entityId: newTicket._id.toString(),
+    });
+
+    // Trigger notification for admin
+    createAdminNotification({
+      type: "tickets",
+      title: "New Support Ticket Raised",
+      message: `Ticket #${newTicket.ticketId} raised for "${newTicket.category}": "${newTicket.message.slice(0, 60)}${newTicket.message.length > 60 ? "..." : ""}"`,
+      link: "/admin/tickets",
+      linkText: "View Ticket",
+      iconType: "ticket",
+      color: "rose",
       entityId: newTicket._id.toString(),
     });
 

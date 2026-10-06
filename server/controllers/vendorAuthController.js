@@ -4,6 +4,7 @@ import { hashPassword, doHashValidation, hmacProcess } from "../utils/hash.js";
 import { verificationEmailTemplate } from "../utils/verificationEmailTemplate.js";
 import { forgotPasswordEmailTemplate } from "../utils/forgotPasswordEmailTemplate.js";
 import { getNextSequence } from "../utils/counterHelper.js";
+import { createAdminNotification } from "../utils/notificationHelper.js";
 import transport from "../middlewares/sendMail.js";
 import jwt from "jsonwebtoken";
 import sharp from "sharp";
@@ -364,6 +365,18 @@ export const vendorRegister = async (req, res) => {
     });
 
     await newVendor.save();
+
+    // Send admin notification for vendor registration
+    createAdminNotification({
+      type: "vendors",
+      title: "New Vendor Registration",
+      message: `Store "${storeName || fullName}" (${normalizedEmail}) registered and is awaiting approval.`,
+      link: `/admin/vendors?search=${encodeURIComponent(normalizedEmail)}`,
+      linkText: "Review Vendor",
+      iconType: "store",
+      color: "orange",
+      entityId: newVendor._id.toString(),
+    });
 
     return res.status(201).json({
       success: true,

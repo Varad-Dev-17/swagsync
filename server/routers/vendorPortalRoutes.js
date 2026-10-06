@@ -56,6 +56,14 @@ import {
   updateAttributeOption,
   deleteAttributeOption,
 } from "../controllers/attributeOptionController.js";
+import {
+  getVendorNotifications,
+  getVendorUnreadCount,
+  markVendorNotificationAsRead,
+  markAllVendorNotificationsAsRead,
+  deleteVendorNotification,
+  clearAllVendorNotifications,
+} from "../controllers/vendorNotificationController.js";
 
 const router = express.Router();
 
@@ -188,5 +196,13 @@ router.post("/upload/multiple", upload.array("images", 10), async (req, res) => 
     return res.status(500).json({ success: false, message: "Upload failed: " + (error.message || "Unknown error") });
   }
 });
+
+// 13. Notifications
+router.get("/notifications", getVendorNotifications);
+router.get("/notifications/unread-count", getVendorUnreadCount);
+router.patch("/notifications/mark-all-read", markAllVendorNotificationsAsRead);
+router.patch("/notifications/:id/read", markVendorNotificationAsRead);
+router.delete("/notifications/clear-all", clearAllVendorNotifications);
+router.delete("/notifications/:id", deleteVendorNotification);
 
 export default router;
