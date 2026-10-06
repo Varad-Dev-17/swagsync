@@ -320,11 +320,11 @@ const UsersSection = () => {
             {/* Table Header */}
             <thead className="bg-slate-50/80 border-b border-slate-200 text-xs font-bold text-slate-600 uppercase tracking-wider">
               <tr>
-                <th className="px-5 py-3.5 w-[26%] text-center">User</th>
-                <th className="px-4 py-3.5 w-[14%] text-center">Status</th>
-                <th className="px-4 py-3.5 w-[14%] text-center">Role</th>
-                <th className="px-4 py-3.5 w-[16%] text-center">Joined</th>
-                <th className="px-5 py-3.5 w-[30%] text-center">Actions</th>
+                <th className="px-5 py-3.5 w-[32%] text-center">User</th>
+                <th className="px-4 py-3.5 w-[17%] text-center">Status</th>
+                <th className="px-4 py-3.5 w-[17%] text-center">Role</th>
+                <th className="px-4 py-3.5 w-[18%] text-center">Joined</th>
+                <th className="px-5 py-3.5 w-[16%] text-center">Actions</th>
               </tr>
             </thead>
 
@@ -406,28 +406,18 @@ const UsersSection = () => {
                         </div>
                       </td>
 
-                      {/* 3. Role Dropdown */}
+                      {/* 3. Role (Read-only Badge) */}
                       <td className="px-4 py-2.5 text-center">
-                        <div className="relative inline-block">
-                          <select
-                            value={user.isAdmin ? "admin" : "user"}
-                            onChange={(e) => {
-                              if (e.target.value === "admin") {
-                                handleMakeAdmin(user._id);
-                              } else {
-                                handleRemoveAdmin(user._id);
-                              }
-                            }}
-                            className={`appearance-none pl-3 pr-7 py-1.5 rounded-lg text-xs font-bold outline-none cursor-pointer transition-colors shadow-2xs border ${
+                        <div className="flex justify-center">
+                          <span
+                            className={`inline-flex items-center px-3 py-1 rounded-lg text-xs font-bold shadow-2xs border select-none ${
                               user.isAdmin
-                                ? "bg-indigo-50 text-[#4F46E5] border-indigo-200 hover:bg-indigo-100/70"
-                                : "bg-slate-100/90 text-slate-700 border-slate-200 hover:bg-slate-200/70"
+                                ? "bg-indigo-50 text-[#4F46E5] border-indigo-200"
+                                : "bg-slate-100 text-slate-700 border-slate-200"
                             }`}
                           >
-                            <option value="user" className="bg-white text-slate-700 font-medium">User</option>
-                            <option value="admin" className="bg-white text-[#4F46E5] font-bold">Admin</option>
-                          </select>
-                          <ChevronDown size={13} className={`absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none ${user.isAdmin ? "text-[#4F46E5]" : "text-slate-400"}`} />
+                            {user.isAdmin ? "Admin" : "User"}
+                          </span>
                         </div>
                       </td>
 
@@ -438,51 +428,16 @@ const UsersSection = () => {
 
                       {/* 5. Actions */}
                       <td className="px-5 py-2.5 text-center">
-                        <div className="inline-flex items-center justify-center gap-1.5 sm:gap-2 flex-wrap sm:flex-nowrap">
-                          
+                        <div className="inline-flex items-center justify-center">
                           {/* View Button */}
                           <button
                             onClick={() => navigate(`/admin/users/${user._id}`)}
-                            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-white text-slate-700 border border-slate-200 hover:bg-indigo-50 hover:text-[#4F46E5] hover:border-indigo-200 transition-colors cursor-pointer shadow-2xs"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-white text-slate-700 border border-slate-200 hover:bg-indigo-50 hover:text-[#4F46E5] hover:border-indigo-200 transition-colors cursor-pointer shadow-2xs"
                             title="View User Details"
                           >
                             <Eye size={13} className="stroke-[2.2] text-[#4F46E5]" />
                             <span>View</span>
                           </button>
-
-                          {/* Block / Unblock Toggle */}
-                          <button
-                            onClick={() => handleToggleStatus(user._id)}
-                            className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold border transition-colors cursor-pointer shadow-2xs ${
-                              user.isBlocked
-                                ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
-                                : "bg-white text-slate-700 border-slate-200 hover:text-amber-700 hover:bg-amber-50 hover:border-amber-200"
-                            }`}
-                            title={user.isBlocked ? "Unblock User" : "Block User"}
-                          >
-                            {user.isBlocked ? (
-                              <>
-                                <UserCheck size={13} className="stroke-[2.2] text-emerald-600" />
-                                <span>Unblock</span>
-                              </>
-                            ) : (
-                              <>
-                                <Ban size={13} className="stroke-[2.2] text-amber-600" />
-                                <span>Block</span>
-                              </>
-                            )}
-                          </button>
-
-                          {/* Delete User */}
-                          <button
-                            onClick={() => handleDelete(user._id)}
-                            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-white border border-slate-200 text-slate-700 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-200 transition-colors cursor-pointer shadow-2xs"
-                            title="Delete User"
-                          >
-                            <Trash2 size={13} className="stroke-[2.2] text-rose-500" />
-                            <span>Delete</span>
-                          </button>
-
                         </div>
                       </td>
 

@@ -5,6 +5,7 @@ import ReturnRequest from "../models/returnRequest.js";
 import Ticket from "../models/ticket.js";
 import Address from "../models/address.js";
 import ProductReview from "../models/productReview.js";
+import Variant from "../models/variant.js";
 import { hmacProcess } from "../utils/hash.js";
 import { verificationEmailTemplate } from "../utils/verificationEmailTemplate.js";
 import transport from "../middlewares/sendMail.js";
@@ -395,6 +396,14 @@ export const getUserDetails = async (req, res) => {
     const [orders, returns, tickets, reviews, addresses] = await Promise.all([
       Order.find({ user: id })
         .populate("items.product", "name images price category")
+        .populate({
+          path: "items.variant",
+          select: "mainImage galleryImages attributes mrp price sku",
+          populate: {
+            path: "attributes.attribute attributes.option",
+            select: "name value"
+          }
+        })
         .sort({ createdAt: -1 })
         .lean(),
       ReturnRequest.find({ user: id })
