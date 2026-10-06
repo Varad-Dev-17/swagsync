@@ -571,6 +571,15 @@ export const getProductById = async (req, res) => {
       });
     }
 
+    const isAdminUser = req.user && req.user.role === "admin";
+    if (!isAdminUser && product.status !== "Active") {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found or is currently unavailable",
+        data: null,
+      });
+    }
+
     console.log("Product found:", product);
 
     const reviews = await ProductReview.find({ product: id })
@@ -615,10 +624,10 @@ export const getProductBySlug = async (req, res) => {
       )
       .lean();
 
-    if (!product) {
+    if (!product || product.status !== "Active") {
       return res.status(404).json({
         success: false,
-        message: "Product not found",
+        message: "Product not found or is currently unavailable",
         data: null,
       });
     }

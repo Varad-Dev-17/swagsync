@@ -116,6 +116,12 @@ const ProductSchema = new mongoose.Schema(
       default: "Inactive",
     },
 
+    deactivatedDueToSuspension: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+
     vendorId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Vendor",

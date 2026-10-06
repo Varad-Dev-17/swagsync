@@ -67,6 +67,11 @@ const VariantSchema = new mongoose.Schema(
       enum: ["Active", "Inactive"],
       default: "Active",
     },
+    deactivatedDueToSuspension: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
     mainImage: ProductImageSchema,
     galleryImages: [ProductImageSchema],
     vendorId: {

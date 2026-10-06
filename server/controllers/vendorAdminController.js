@@ -1,4 +1,6 @@
 import Vendor from "../models/vendor.js";
+import Product from "../models/product.js";
+import Variant from "../models/variant.js";
 import Order from "../models/order.js";
 import transport from "../middlewares/sendMail.js";
 import { vendorApprovalEmailTemplate } from "../utils/vendorApprovalEmailTemplate.js";
@@ -380,6 +382,17 @@ export const suspendVendor = async (req, res) => {
     vendor.vendorProfile.suspendedAt = new Date();
     await vendor.save();
 
+    // Automatically deactivate all Active products and variants belonging to this vendor
+    // without deleting them, marking them so they can be restored upon reactivation
+    await Product.updateMany(
+      { vendorId: vendor._id, status: "Active" },
+      { $set: { status: "Inactive", deactivatedDueToSuspension: true } }
+    );
+    await Variant.updateMany(
+      { vendorId: vendor._id, status: "Active" },
+      { $set: { status: "Inactive", deactivatedDueToSuspension: true } }
+    );
+
     return res.status(200).json({
       success: true,
       message: `Vendor ${vendor.vendorProfile?.storeName || vendor.username} suspended successfully.`,
@@ -421,6 +434,16 @@ export const reactivateVendor = async (req, res) => {
     vendor.vendorProfile.suspensionReason = "";
     vendor.vendorProfile.reactivatedAt = new Date();
     await vendor.save();
+
+    // Automatically restore products and variants that were deactivated due to suspension
+    await Product.updateMany(
+      { vendorId: vendor._id, deactivatedDueToSuspension: true },
+      { $set: { status: "Active", deactivatedDueToSuspension: false } }
+    );
+    await Variant.updateMany(
+      { vendorId: vendor._id, deactivatedDueToSuspension: true },
+      { $set: { status: "Active", deactivatedDueToSuspension: false } }
+    );
 
     return res.status(200).json({
       success: true,
