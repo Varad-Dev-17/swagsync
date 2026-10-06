@@ -82,8 +82,15 @@ const BagSummary = ({
           </div>
 
           <div className="flex justify-between items-center text-[#282c3f]">
-            <span>Estimated Tax</span>
-            <span className="font-semibold text-slate-800">{formatPrice(totals.totalTax)}</span>
+            <div>
+              <span>Estimated GST</span>
+              <span className="text-[11px] text-emerald-600 block font-normal">
+                Included in item price
+              </span>
+            </div>
+            <span className="font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded text-xs">
+              Included ({formatPrice(totals.totalTax)})
+            </span>
           </div>
 
           <div className="flex justify-between items-center text-[#282c3f]">
@@ -110,9 +117,19 @@ const BagSummary = ({
           </div>
         )}
 
-        <div className="bg-[#FD7100]/5 rounded-xl p-3.5 sm:p-4 flex justify-between items-center mb-5 border border-[#FD7100]/10">
-          <span className="text-[14.5px] font-bold text-[#111827]">Total Amount</span>
-          <span className="text-[16.5px] font-extrabold text-[#FD7100]">{formatPrice(totals.grandTotal)}</span>
+        <div className="bg-[#FD7100]/5 rounded-xl p-3.5 sm:p-4 mb-5 border border-[#FD7100]/10 space-y-1">
+          <div className="flex justify-between items-center">
+            <span className="text-[14.5px] font-bold text-[#111827]">Total Amount</span>
+            <span className="text-[16.5px] font-extrabold text-[#FD7100]">{formatPrice(totals.grandTotal)}</span>
+          </div>
+          <div className="text-[11px] text-slate-500 font-medium flex items-center justify-between pt-1 border-t border-orange-200/40">
+            <span>Inclusive of all taxes & GST</span>
+            {totals.totalTax > 0 && (
+              <span className="font-mono text-slate-500">
+                (GST: {formatPrice(totals.totalTax)})
+              </span>
+            )}
+          </div>
         </div>
 
         {totalSavings > 0 && (

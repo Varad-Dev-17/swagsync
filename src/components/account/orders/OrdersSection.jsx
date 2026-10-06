@@ -318,7 +318,12 @@ const OrdersSection = () => {
               <div
                 key={`${order._id}-${index}`}
                 className="bg-white border border-gray-200 overflow-hidden hover:border-gray-400 transition-all duration-300 cursor-pointer w-full shadow-xs"
-                onClick={() => navigate(`/account/orders/${order._id}`)}
+                onClick={() => {
+                  const itemParam = item._id || item.product?._id || item.product;
+                  navigate(`/account/orders/${order._id}?item=${itemParam}`, {
+                    state: { selectedItemId: itemParam },
+                  });
+                }}
               >
                 {/* Card Header Row: Order ID, Placed Date & Status */}
                 <div className="px-5 py-3 bg-gray-50 border-b border-gray-200 flex flex-wrap items-center justify-between gap-4 text-xs sm:text-sm">
@@ -423,7 +428,10 @@ const OrdersSection = () => {
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                navigate(`/account/orders/${order._id}`, { state: { scrollToTracking: true } });
+                                const itemParam = item._id || item.product?._id || item.product;
+                                navigate(`/account/orders/${order._id}?item=${itemParam}`, {
+                                  state: { scrollToTracking: true, selectedItemId: itemParam },
+                                });
                               }}
                               className="text-[11px] font-bold text-gray-500 hover:text-[#FD7100] flex items-center gap-0.5 transition-colors cursor-pointer"
                             >
@@ -547,7 +555,10 @@ const OrdersSection = () => {
                         if (pId && typeof pId === 'string') {
                           navigate(`/product/${pId}`);
                         } else {
-                          navigate(`/account/orders/${order._id}`);
+                          const itemParam = item._id || item.product?._id || item.product;
+                          navigate(`/account/orders/${order._id}?item=${itemParam}`, {
+                            state: { selectedItemId: itemParam },
+                          });
                         }
                       }}
                       className="w-full flex items-center justify-center gap-1.5 py-2 px-4 text-xs font-bold uppercase tracking-wider text-gray-700 border border-gray-300 bg-white hover:bg-gray-50 transition-all duration-200 cursor-pointer group"

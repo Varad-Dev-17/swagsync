@@ -454,7 +454,7 @@ export const orderEmailTemplate = (order, user) => {
                       ${
                         Number(order?.taxAmount || 0) > 0
                           ? `<tr>
-                              <td style="font-size: 13px; color: #64748B; padding-bottom: 8px;">Estimated Tax / GST</td>
+                              <td style="font-size: 13px; color: #64748B; padding-bottom: 8px;">GST (Included in price)</td>
                               <td align="right" style="font-size: 13px; font-weight: 600; color: #0F172A; padding-bottom: 8px;">
                                 ${formatInr(order.taxAmount)}
                               </td>

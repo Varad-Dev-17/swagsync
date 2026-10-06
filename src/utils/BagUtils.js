@@ -50,6 +50,7 @@ export const calculateBagTotals = (items, couponDiscount = 0) => {
     totalCGST: totalTax / 2,
     totalSGST: totalTax / 2,
     shipping: shippingAmount, 
-    grandTotal: finalSubtotal + totalTax + shippingAmount, 
+    // GST is inclusive in item selling prices; grandTotal is finalSubtotal + shipping
+    grandTotal: finalSubtotal + shippingAmount, 
   };
 };

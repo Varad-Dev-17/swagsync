@@ -378,7 +378,8 @@ export const initRazorpayOrder = async (req, res) => {
     else if (finalSubtotal < 1000) shippingAmount = 49;
     else shippingAmount = 0;
 
-    const totalAmount = finalSubtotal + taxAmount + shippingAmount;
+    // In inclusive GST model, selling prices already contain GST. Total is finalSubtotal + shipping.
+    const totalAmount = finalSubtotal + shippingAmount;
 
     // Create Razorpay instance
     const razorpay = new Razorpay({
@@ -564,7 +565,8 @@ export const createOrder = async (req, res) => {
     else if (finalSubtotal < 1000) shippingAmount = 49;
     else shippingAmount = 0;
 
-    const totalAmount = finalSubtotal + taxAmount + shippingAmount;
+    // In inclusive GST model, selling prices already contain GST. Total is finalSubtotal + shipping.
+    const totalAmount = finalSubtotal + shippingAmount;
     const totalDiscountAmount = (totalMRP - subtotal) + couponDiscount;
     
     let orderId = "";

@@ -25,7 +25,8 @@ const ReturnExchangeButton = ({ orderId, productId, item, eligibility, onClick }
           <div 
             onClick={(e) => {
               e.stopPropagation();
-              navigate(`/account/orders/${orderId}`, { state: { scrollToTracking: true } });
+              const itemParam = item?._id || productId;
+              navigate(`/account/orders/${orderId}?item=${itemParam}`, { state: { scrollToTracking: true, selectedItemId: itemParam } });
             }}
             className="w-full py-2 px-3 bg-gray-50 border border-gray-200 hover:bg-gray-100 hover:border-gray-300 transition-all cursor-pointer flex items-center justify-between gap-2 text-[12px] uppercase font-bold tracking-wide group"
           >

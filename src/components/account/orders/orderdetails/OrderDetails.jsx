@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate, useLocation, Link } from "react-router-dom";
+import { useParams, useNavigate, useLocation, Link, useSearchParams } from "react-router-dom";
 import {
   Loader2,
   ArrowLeft,
@@ -33,6 +33,11 @@ import { getReturnEligibility } from "../../../../utils/returnEligibility";
 const OrderDetails = () => {
   const { orderId } = useParams();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const selectedItemId =
+    searchParams.get("item") ||
+    searchParams.get("itemId") ||
+    location.state?.selectedItemId;
   const [order, setOrder] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [cancelModalState, setCancelModalState] = useState({
@@ -180,13 +185,13 @@ const OrderDetails = () => {
       return;
     }
 
-    const itemsHtml = (order.items || [])
+    const itemsHtml = displayedItems
       .map(
         (item) => `
         <tr>
           <td style="padding: 10px; border-bottom: 1px solid #eee;">
             <strong>${item.product?.title || "Product"}</strong>
-            <div style="font-size: 11px; color: #666; margin-top: 2px;">Brand: ${item.product?.brand?.name || "SwagSync"} | Qty: ${item.quantity || 1}</div>
+            <div style="font-size: 11px; color: #666; margin-top: 2px;">Brand: ${item.product?.brand?.name || item.product?.brand || "SwagSync"} | Qty: ${item.quantity || 1}</div>
           </td>
           <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity || 1}</td>
           <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">₹${(item.sellingPrice || item.price || 0).toLocaleString("en-IN")}</td>
@@ -237,7 +242,7 @@ const OrderDetails = () => {
             <strong style="display:block; margin-bottom: 4px; font-size: 13px;">Payment Information:</strong>
             <div>Payment Method: ${(order.paymentMethod || "COD").toUpperCase()}</div>
             <div>Payment Status: ${(order.paymentStatus || "Pending").toUpperCase()}</div>
-            <div>Fulfillment Status: ${(order.status || "Pending").toUpperCase()}</div>
+            <div>Fulfillment Status: ${(currentItemStatus || order.status || "Pending").toUpperCase()}</div>
           </div>
         </div>
 
@@ -256,14 +261,14 @@ const OrderDetails = () => {
         </table>
 
         <div class="totals">
-          <div><span>Items Subtotal:</span><span>₹${Number(order.subtotal || 0).toLocaleString("en-IN")}</span></div>
-          ${order.discountAmount ? `<div style="color: #16a34a;"><span>Promo Discount:</span><span>-₹${Number(order.discountAmount).toLocaleString("en-IN")}</span></div>` : ""}
-          <div><span>Delivery Charges:</span><span>${Number(order.shippingAmount || 0) === 0 ? "FREE" : `₹${Number(order.shippingAmount).toLocaleString("en-IN")}`}</span></div>
-          <div class="grand-total"><span>Total Paid Amount:</span><span>₹${Number(order.totalAmount || 0).toLocaleString("en-IN")}</span></div>
+          <div><span>Items Subtotal:</span><span>₹${Number(displaySubtotal || 0).toLocaleString("en-IN")}</span></div>
+          ${displayCouponDiscount ? `<div style="color: #16a34a;"><span>Promo Discount:</span><span>-₹${Number(displayCouponDiscount).toLocaleString("en-IN")}</span></div>` : ""}
+          <div><span>Delivery Charges:</span><span>${Number(displayShipping || 0) === 0 ? "FREE" : `₹${Number(displayShipping || 0).toLocaleString("en-IN")}`}</span></div>
+          <div class="grand-total"><span>Total Paid Amount:</span><span>₹${Number(displayTotalPaid || 0).toLocaleString("en-IN")}</span></div>
         </div>
 
         <div style="margin-top: 48px; font-size: 11px; color: #94a3b8; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 16px;">
-          This is a computer-generated customer receipt for SwagSync marketplace order #${order.orderId || order._id}.
+          This is a computer-generated customer receipt for SwagSync marketplace order #${order.orderId || order._id}${selectedItem ? ` (${selectedItem.product?.title || "Item"})` : ""}.
         </div>
 
         <script>
@@ -289,36 +294,125 @@ const OrderDetails = () => {
 
   if (!order) return null;
 
-  // Pricing calculations
+  // Order items resolution
+  const allOrderItems = Array.isArray(order.items) ? order.items : [];
+  const selectedItem = selectedItemId
+    ? allOrderItems.find(
+        (i) =>
+          String(i._id) === String(selectedItemId) ||
+          String(i.product?._id || i.product) === String(selectedItemId)
+      ) || null
+    : null;
+
+  const displayedItems = selectedItem ? [selectedItem] : allOrderItems;
+
+  // Whole-order calculations
   const orderSubtotal =
     Number(order.subtotal || 0) ||
-    (order.items || []).reduce(
+    allOrderItems.reduce(
       (acc, i) =>
         acc + Number(i.sellingPrice ?? i.price ?? i.mrp ?? 0) * (i.quantity || 1),
       0
     );
   const computedMRP =
     Number(order.totalMRP || 0) ||
-    (order.items || []).reduce(
+    allOrderItems.reduce(
       (acc, i) =>
         acc + Number(i.mrp ?? i.sellingPrice ?? i.price ?? 0) * (i.quantity || 1),
       0
     );
   const totalPaidAmount = Number(order.totalAmount || orderSubtotal);
-  const totalDiscount = Math.max(0, computedMRP - totalPaidAmount);
-  const totalSavings = totalDiscount;
   const shippingAmount = Number(order.shippingAmount || 0);
 
-  const totalItemCount = (order.items || []).reduce(
+  // Proportional item-level pricing when an individual product/item is selected
+  const unitSellingPrice = selectedItem
+    ? Number(selectedItem.sellingPrice ?? selectedItem.price ?? selectedItem.mrp ?? 0)
+    : 0;
+  const unitMRP = selectedItem
+    ? Number(selectedItem.mrp ?? selectedItem.sellingPrice ?? selectedItem.price ?? 0)
+    : 0;
+  const selectedQty = selectedItem ? Number(selectedItem.quantity || 1) : 1;
+  const itemGrossSelling = unitSellingPrice * selectedQty;
+  const itemGrossMRP = unitMRP * selectedQty;
+
+  // Coupon calculation
+  const calculatedCouponDiff = Math.max(
+    0,
+    Math.round((orderSubtotal + shippingAmount) - totalPaidAmount)
+  );
+
+  const orderCouponDiscount =
+    calculatedCouponDiff > 0
+      ? calculatedCouponDiff
+      : (order.coupon?.value
+          ? (order.coupon.type === "percentage"
+              ? Math.round((orderSubtotal * Number(order.coupon.value)) / 100)
+              : Number(order.coupon.value))
+          : (order.coupon?.code ? Number(order.discountAmount || 0) : 0));
+
+  const proportionalCouponDiscount =
+    selectedItem && orderSubtotal > 0 && itemGrossSelling > 0 && orderCouponDiscount > 0
+      ? Math.round((itemGrossSelling / orderSubtotal) * orderCouponDiscount)
+      : (selectedItem ? 0 : orderCouponDiscount);
+
+  const proportionalShipping =
+    selectedItem && orderSubtotal > 0 && itemGrossSelling > 0 && shippingAmount > 0
+      ? Math.round((itemGrossSelling / orderSubtotal) * shippingAmount)
+      : (selectedItem ? 0 : shippingAmount);
+
+  // Effective display values (switches to item-specific when user clicked a specific product)
+  const displaySubtotal = selectedItem ? itemGrossSelling : orderSubtotal;
+  const displayMRP = selectedItem ? itemGrossMRP : computedMRP;
+  const displayMRPDiscount = Math.max(0, displayMRP - displaySubtotal);
+  const displayShipping = proportionalShipping;
+  const displayCouponDiscount = proportionalCouponDiscount;
+  const displayTotalPaid = selectedItem
+    ? Math.max(0, itemGrossSelling - proportionalCouponDiscount + proportionalShipping)
+    : Math.max(0, orderSubtotal - orderCouponDiscount + shippingAmount);
+  const displaySavings = displayMRPDiscount + displayCouponDiscount;
+  const displayTax = selectedItem
+    ? (selectedItem.gstAmount ? Number(selectedItem.gstAmount) * selectedQty : null)
+    : (order.taxAmount ? Number(order.taxAmount) : null);
+  const displayGstRate = selectedItem?.gstRate ? Number(selectedItem.gstRate) : null;
+
+  const totalItemCount = displayedItems.reduce(
     (acc, i) => acc + (Number(i.quantity) || 1),
     0
   );
 
-  const orderStatus = (order.status || "pending").toLowerCase();
-  const isCancelled = orderStatus === "cancelled";
-  const isDelivered = orderStatus === "delivered";
-  const isShipped = ["shipped", "on_the_way", "delivered"].includes(orderStatus);
-  const isPacked = ["packed", "processing", "shipped", "on_the_way", "delivered"].includes(orderStatus);
+  // Item-specific status & milestones (as vendor and admin manage each item status separately)
+  const currentItemStatus = (
+    selectedItem
+      ? selectedItem.status || order.status || "pending"
+      : order.status || "pending"
+  ).toLowerCase();
+
+  const isCancelled = currentItemStatus === "cancelled";
+  const isDelivered = currentItemStatus === "delivered";
+  const isShipped = ["shipped", "on_the_way", "out_for_delivery", "delivered"].includes(currentItemStatus);
+  const isPacked = ["packed", "processing", "shipped", "on_the_way", "out_for_delivery", "delivered"].includes(currentItemStatus);
+
+  const activeCourier =
+    selectedItem?.courier ||
+    order.courierPartner ||
+    order.shippingDetails?.courierPartner ||
+    null;
+  const activeTrackingNumber =
+    selectedItem?.trackingNumber ||
+    order.trackingNumber ||
+    order.shippingDetails?.trackingNumber ||
+    null;
+
+  const itemReturnRequests = (
+    Array.isArray(order.returnRequests) ? order.returnRequests : []
+  ).filter((req) => {
+    if (!selectedItem) return true;
+    const reqProdId = String(req.product?._id || req.product || "");
+    const targetProdId = String(selectedItem.product?._id || selectedItem.product || "");
+    const reqItemId = String(req.orderItemId || req.item?._id || req.item || "");
+    const targetItemId = String(selectedItem._id || "");
+    return (reqItemId && reqItemId === targetItemId) || (reqProdId && reqProdId === targetProdId);
+  });
 
   // Estimated delivery date: 3 days after createdAt
   const estDeliveryObj = new Date(
@@ -340,57 +434,149 @@ const OrderDetails = () => {
     return ev?.timestamp ? formatDateTime(ev.timestamp) : null;
   };
 
-  const trackingSteps = [
-    {
-      id: "placed",
-      title: "Order Placed",
-      description: "Your order has been successfully placed.",
-      timestamp: formatDateTime(order.createdAt),
-      isCompleted: true,
-      isActive: orderStatus === "pending",
-    },
-    {
-      id: "packed",
-      title: "Packed",
-      description: "Your item has been packed and verified.",
-      timestamp: isPacked ? getTimelineDate("pack") || formatDateTime(order.createdAt) : "-",
-      isCompleted: isPacked,
-      isActive: orderStatus === "packed" || orderStatus === "processing",
-    },
-    {
-      id: "shipped",
-      title: "Shipped",
-      description: "Your item has been shipped from the seller.",
-      timestamp: isShipped ? getTimelineDate("ship") || formatDateTime(order.createdAt) : "-",
-      isCompleted: isShipped,
-      isActive: orderStatus === "shipped",
-    },
-    {
-      id: "on_the_way",
-      title: "Out for Delivery",
-      description: "Your item is out for delivery.",
-      timestamp:
-        orderStatus === "on_the_way" || isDelivered
-          ? getTimelineDate("out") || getTimelineDate("on_the_way") || formatDateTime(order.updatedAt)
-          : "-",
-      isCompleted: orderStatus === "on_the_way" || isDelivered,
-      isActive: orderStatus === "on_the_way",
-    },
-    {
-      id: "delivered",
-      title: "Delivered",
-      description: isDelivered ? "Your item has been delivered." : "Your item will be delivered soon.",
-      timestamp: isDelivered ? formatDateTime(order.deliveredAt || order.updatedAt) : "-",
-      isCompleted: isDelivered,
-      isActive: isDelivered,
-    },
-  ];
+  // 1. Compact Order Tracking Summary (Main Page view)
+  // Dynamically uses currentItemStatus for the selected product.
+  const getCompactTrackingSteps = () => {
+    const activeReturn = itemReturnRequests.length > 0 ? itemReturnRequests[0] : null;
 
-  // Dynamic timeline generator for "See All Updates" popup modal
-  // Strictly renders only applicable events that have actually occurred.
+    if (activeReturn) {
+      const isExchange = activeReturn.type === "exchange";
+      const reqStatus = (activeReturn.status || "pending").toLowerCase();
+
+      if (isExchange) {
+        // Exchange: Delivered → Exchange Requested → Exchange Approved → Pickup → Item Received → Replacement Shipped → Replacement Delivered
+        const steps = ["Delivered", "Exchange Requested"];
+
+        const isApproved = [
+          "approved",
+          "pickup_scheduled",
+          "pickup",
+          "pickup_replace",
+          "replace_and_exchange",
+          "picked_up",
+          "received",
+          "packed",
+          "shipped",
+          "completed",
+          "exchanged",
+        ].includes(reqStatus);
+        if (isApproved) steps.push("Exchange Approved");
+
+        const isPickup = [
+          "pickup_scheduled",
+          "pickup",
+          "pickup_replace",
+          "replace_and_exchange",
+          "picked_up",
+          "received",
+          "packed",
+          "shipped",
+          "completed",
+          "exchanged",
+        ].includes(reqStatus);
+        if (isPickup) steps.push("Pickup");
+
+        const isReceived = ["received", "packed", "shipped", "completed", "exchanged"].includes(reqStatus);
+        if (isReceived) steps.push("Item Received");
+
+        const isReplShipped = ["shipped", "completed", "exchanged"].includes(reqStatus);
+        if (isReplShipped) steps.push("Replacement Shipped");
+
+        const isReplDelivered = ["completed", "exchanged"].includes(reqStatus);
+        if (isReplDelivered) steps.push("Replacement Delivered");
+
+        return steps;
+      } else {
+        // Return: Delivered → Return Requested → Return Approved → Pickup → Item Received → Return Completed
+        const steps = ["Delivered", "Return Requested"];
+
+        const isApproved = [
+          "approved",
+          "pickup_scheduled",
+          "pickup",
+          "picked_up",
+          "received",
+          "completed",
+          "refunded",
+        ].includes(reqStatus);
+        if (isApproved) steps.push("Return Approved");
+
+        const isPickup = [
+          "pickup_scheduled",
+          "pickup",
+          "picked_up",
+          "received",
+          "completed",
+          "refunded",
+        ].includes(reqStatus);
+        if (isPickup) steps.push("Pickup");
+
+        const isReceived = ["received", "completed", "refunded"].includes(reqStatus);
+        if (isReceived) steps.push("Item Received");
+
+        const isCompleted = ["completed", "refunded"].includes(reqStatus);
+        if (isCompleted) steps.push("Return Completed");
+
+        return steps;
+      }
+    }
+
+    if (isCancelled) {
+      // Cancelled: Order Confirmed → Cancelled
+      return ["Order Confirmed", "Cancelled"];
+    }
+
+    // Standard Order Flow for this item:
+    const steps = ["Order Confirmed"];
+
+    if (["packed", "processing", "shipped", "on_the_way", "out_for_delivery", "delivered"].includes(currentItemStatus)) {
+      steps.push("Packed");
+    }
+
+    if (["shipped", "on_the_way", "out_for_delivery", "delivered"].includes(currentItemStatus)) {
+      steps.push("Shipped");
+    }
+
+    if (["on_the_way", "out_for_delivery", "delivered"].includes(currentItemStatus)) {
+      steps.push("Out for Delivery");
+    }
+
+    if (currentItemStatus === "delivered") {
+      steps.push("Delivered");
+    }
+
+    return steps;
+  };
+
+  // 2. Complete Detailed Timeline for "See All Updates" Popup Modal
   const getUpdatesTimeline = () => {
-    const returnRequests = Array.isArray(order.returnRequests) ? order.returnRequests : [];
-    const activeReturn = returnRequests.length > 0 ? returnRequests[0] : null;
+    const activeReturn = itemReturnRequests.length > 0 ? itemReturnRequests[0] : null;
+
+    const parseDateTime = (d) => {
+      if (!d) return { date: "-", time: "" };
+      try {
+        const dateObj = new Date(d);
+        if (isNaN(dateObj.getTime())) return { date: "-", time: "" };
+        return {
+          date: dateObj.toLocaleDateString("en-IN", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+          }),
+          time: dateObj.toLocaleTimeString("en-IN", {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true,
+          }),
+        };
+      } catch {
+        return { date: "-", time: "" };
+      }
+    };
+
+    const courierName = activeCourier;
+    const awbNumber = activeTrackingNumber;
+    const itemCancellationReason = selectedItem?.cancellationReason || order.cancellationReason || "";
 
     if (activeReturn) {
       const isExchange = activeReturn.type === "exchange";
@@ -401,17 +587,21 @@ const OrderDetails = () => {
         const ev = timelineEvents.find((e) =>
           keywords.some((kw) => String(e.type || "").toLowerCase().includes(kw))
         );
-        return ev?.timestamp ? formatDateTime(ev.timestamp) : null;
+        return ev?.timestamp || activeReturn.updatedAt;
       };
 
       if (isExchange) {
         // Exchange: Delivered → Exchange Requested → Exchange Approved → Pickup → Item Received → Replacement Shipped → Replacement Delivered
+        const dtDelivered = parseDateTime(order.deliveredAt || order.updatedAt);
+        const dtExchReq = parseDateTime(activeReturn.createdAt);
+
         const steps = [
           {
             id: "delivered_orig",
             title: "Delivered",
-            description: "Original item was delivered to your address.",
-            timestamp: formatDateTime(order.deliveredAt || order.updatedAt),
+            description: "Original order item was delivered to your address.",
+            date: dtDelivered.date,
+            time: dtDelivered.time,
             icon: CheckCircle2,
             isCompleted: true,
           },
@@ -419,9 +609,10 @@ const OrderDetails = () => {
             id: "exch_requested",
             title: "Exchange Requested",
             description: activeReturn.reason
-              ? `Reason: ${activeReturn.reason}${activeReturn.additionalDetails ? ` - "${activeReturn.additionalDetails}"` : ""}`
-              : "Exchange request submitted.",
-            timestamp: formatDateTime(activeReturn.createdAt),
+              ? `Exchange requested: ${activeReturn.reason}${activeReturn.additionalDetails ? ` - "${activeReturn.additionalDetails}"` : ""}.`
+              : "Exchange request submitted by customer.",
+            date: dtExchReq.date,
+            time: dtExchReq.time,
             icon: RefreshCw,
             isCompleted: true,
           },
@@ -442,11 +633,13 @@ const OrderDetails = () => {
         ].includes(reqStatus);
 
         if (isApproved) {
+          const dtAppr = parseDateTime(findEventDate(["approve"]));
           steps.push({
             id: "exch_approved",
             title: "Exchange Approved",
-            description: "Your exchange request was reviewed and approved.",
-            timestamp: findEventDate(["approve"]) || formatDateTime(activeReturn.updatedAt),
+            description: "Exchange request has been approved by the seller and support team.",
+            date: dtAppr.date,
+            time: dtAppr.time,
             icon: CheckCircle2,
             isCompleted: true,
           });
@@ -467,13 +660,16 @@ const OrderDetails = () => {
 
         if (isPickup) {
           const isPickedUp = ["picked_up", "received", "packed", "shipped", "completed", "exchanged"].includes(reqStatus);
+          const dtPickup = parseDateTime(findEventDate(["pickup", "picked"]));
           steps.push({
             id: "exch_pickup",
             title: isPickedUp ? "Pickup Completed" : "Pickup Scheduled",
             description: isPickedUp
               ? "The return item has been collected by our courier agent."
-              : "Courier scheduled to pick up the item from your delivery address.",
-            timestamp: findEventDate(["pickup", "picked"]) || formatDateTime(activeReturn.updatedAt),
+              : "A courier has been scheduled to pick up the item from your doorstep.",
+            date: dtPickup.date,
+            time: dtPickup.time,
+            courier: courierName,
             icon: Truck,
             isCompleted: true,
           });
@@ -481,11 +677,13 @@ const OrderDetails = () => {
 
         const isReceived = ["received", "packed", "shipped", "completed", "exchanged"].includes(reqStatus);
         if (isReceived) {
+          const dtRecv = parseDateTime(findEventDate(["received"]));
           steps.push({
             id: "exch_received",
             title: "Item Received",
-            description: "Item safely received at fulfillment center.",
-            timestamp: findEventDate(["received"]) || formatDateTime(activeReturn.updatedAt),
+            description: "Item safely received at fulfillment center and inspected.",
+            date: dtRecv.date,
+            time: dtRecv.time,
             icon: Package,
             isCompleted: true,
           });
@@ -493,11 +691,15 @@ const OrderDetails = () => {
 
         const isReplShipped = ["shipped", "completed", "exchanged"].includes(reqStatus);
         if (isReplShipped) {
+          const dtReplShip = parseDateTime(findEventDate(["ship", "replacement"]));
           steps.push({
             id: "exch_repl_shipped",
             title: "Replacement Shipped",
-            description: "Your replacement item has been packed and dispatched.",
-            timestamp: findEventDate(["ship", "replacement"]) || formatDateTime(activeReturn.updatedAt),
+            description: "Your replacement item has been packed and handed over to courier.",
+            date: dtReplShip.date,
+            time: dtReplShip.time,
+            courier: courierName,
+            awb: awbNumber,
             icon: Truck,
             isCompleted: true,
           });
@@ -505,11 +707,13 @@ const OrderDetails = () => {
 
         const isReplDelivered = ["completed", "exchanged"].includes(reqStatus);
         if (isReplDelivered) {
+          const dtReplDelv = parseDateTime(findEventDate(["deliver", "complete"]));
           steps.push({
             id: "exch_repl_delivered",
             title: "Replacement Delivered",
             description: "Replacement item successfully delivered. Exchange closed.",
-            timestamp: findEventDate(["deliver", "complete"]) || formatDateTime(activeReturn.updatedAt),
+            date: dtReplDelv.date,
+            time: dtReplDelv.time,
             icon: CheckCircle2,
             isCompleted: true,
           });
@@ -518,12 +722,16 @@ const OrderDetails = () => {
         return steps;
       } else {
         // Return: Delivered → Return Requested → Return Approved → Pickup → Item Received → Refund/Return Completed
+        const dtDelivered = parseDateTime(order.deliveredAt || order.updatedAt);
+        const dtRetReq = parseDateTime(activeReturn.createdAt);
+
         const steps = [
           {
             id: "delivered_orig",
             title: "Delivered",
-            description: "Original item was delivered to your address.",
-            timestamp: formatDateTime(order.deliveredAt || order.updatedAt),
+            description: "Original order item was delivered to your shipping address.",
+            date: dtDelivered.date,
+            time: dtDelivered.time,
             icon: CheckCircle2,
             isCompleted: true,
           },
@@ -531,9 +739,10 @@ const OrderDetails = () => {
             id: "ret_requested",
             title: "Return Requested",
             description: activeReturn.reason
-              ? `Reason: ${activeReturn.reason}${activeReturn.additionalDetails ? ` - "${activeReturn.additionalDetails}"` : ""}`
-              : "Return request submitted.",
-            timestamp: formatDateTime(activeReturn.createdAt),
+              ? `Return requested: ${activeReturn.reason}${activeReturn.additionalDetails ? ` - "${activeReturn.additionalDetails}"` : ""}.`
+              : "Return request submitted by customer.",
+            date: dtRetReq.date,
+            time: dtRetReq.time,
             icon: RefreshCw,
             isCompleted: true,
           },
@@ -550,11 +759,13 @@ const OrderDetails = () => {
         ].includes(reqStatus);
 
         if (isApproved) {
+          const dtAppr = parseDateTime(findEventDate(["approve"]));
           steps.push({
             id: "ret_approved",
             title: "Return Approved",
-            description: "Return request verified and accepted.",
-            timestamp: findEventDate(["approve"]) || formatDateTime(activeReturn.updatedAt),
+            description: "Return request has been verified and accepted by the seller.",
+            date: dtAppr.date,
+            time: dtAppr.time,
             icon: CheckCircle2,
             isCompleted: true,
           });
@@ -571,13 +782,16 @@ const OrderDetails = () => {
 
         if (isPickup) {
           const isPickedUp = ["picked_up", "received", "completed", "refunded"].includes(reqStatus);
+          const dtPickup = parseDateTime(findEventDate(["pickup", "picked"]));
           steps.push({
             id: "ret_pickup",
             title: isPickedUp ? "Pickup Completed" : "Pickup Scheduled",
             description: isPickedUp
-              ? "Returned item collected by logistics courier."
-              : "Courier agent assigned to collect returned item.",
-            timestamp: findEventDate(["pickup", "picked"]) || formatDateTime(activeReturn.updatedAt),
+              ? "Return item collected from your doorstep by logistics courier."
+              : "Logistics courier assigned to collect return item from your address.",
+            date: dtPickup.date,
+            time: dtPickup.time,
+            courier: courierName,
             icon: Truck,
             isCompleted: true,
           });
@@ -585,11 +799,13 @@ const OrderDetails = () => {
 
         const isReceived = ["received", "completed", "refunded"].includes(reqStatus);
         if (isReceived) {
+          const dtRecv = parseDateTime(findEventDate(["received"]));
           steps.push({
             id: "ret_received",
             title: "Item Received",
-            description: "Returned item safely received at return facility.",
-            timestamp: findEventDate(["received"]) || formatDateTime(activeReturn.updatedAt),
+            description: "Returned item safely received at fulfillment center and verified.",
+            date: dtRecv.date,
+            time: dtRecv.time,
             icon: Package,
             isCompleted: true,
           });
@@ -598,11 +814,13 @@ const OrderDetails = () => {
         const isCompleted = ["completed", "refunded"].includes(reqStatus);
         if (isCompleted) {
           const refundAmount = activeReturn.refundAmount || order.totalAmount;
+          const dtCompl = parseDateTime(activeReturn.refundProcessedAt || activeReturn.updatedAt);
           steps.push({
             id: "ret_completed",
             title: "Refund / Return Completed",
-            description: `Return processed successfully.${refundAmount ? ` Refund of ₹${Number(refundAmount).toLocaleString("en-IN")} credited to your account.` : " Return closed."}`,
-            timestamp: formatDateTime(activeReturn.refundProcessedAt || activeReturn.updatedAt),
+            description: `Return cycle completed.${refundAmount ? ` Refund of ₹${Number(refundAmount).toLocaleString("en-IN")} credited to your payment account.` : " Return closed."}`,
+            date: dtCompl.date,
+            time: dtCompl.time,
             icon: DollarSign,
             isCompleted: true,
           });
@@ -614,22 +832,27 @@ const OrderDetails = () => {
 
     if (isCancelled) {
       // Cancelled: Order Confirmed → Cancelled → Refund (if applicable)
+      const dtPlaced = parseDateTime(order.createdAt);
+      const dtCancel = parseDateTime(order.updatedAt);
+
       const steps = [
         {
           id: "placed",
           title: "Order Confirmed",
-          description: "Your order was placed and confirmed.",
-          timestamp: formatDateTime(order.createdAt),
+          description: "Your order was successfully placed and verified.",
+          date: dtPlaced.date,
+          time: dtPlaced.time,
           icon: CheckCircle2,
           isCompleted: true,
         },
         {
           id: "cancelled",
           title: "Cancelled",
-          description: order.cancellationReason
-            ? `Order cancelled. Reason: ${order.cancellationReason}`
-            : "Your order has been cancelled.",
-          timestamp: formatDateTime(order.updatedAt),
+          description: itemCancellationReason
+            ? `Item cancelled. Reason: ${itemCancellationReason}`
+            : "This item has been cancelled.",
+          date: dtCancel.date,
+          time: dtCancel.time,
           icon: XCircle,
           isCompleted: true,
         },
@@ -642,9 +865,10 @@ const OrderDetails = () => {
           title: order.paymentStatus === "refunded" ? "Refund Completed" : "Refund Processing",
           description:
             order.paymentStatus === "refunded"
-              ? `Refund of ₹${totalPaidAmount.toLocaleString("en-IN")} has been credited to your payment method.`
-              : `Refund of ₹${totalPaidAmount.toLocaleString("en-IN")} is being processed and will reflect within 5-7 business days.`,
-          timestamp: formatDateTime(order.updatedAt),
+              ? `Refund of ₹${displayTotalPaid.toLocaleString("en-IN")} has been credited to your original payment mode.`
+              : `Refund of ₹${displayTotalPaid.toLocaleString("en-IN")} is being processed by the payment gateway.`,
+          date: dtCancel.date,
+          time: dtCancel.time,
           icon: DollarSign,
           isCompleted: true,
         });
@@ -653,60 +877,81 @@ const OrderDetails = () => {
       return steps;
     }
 
-    // Standard Journey: Order Confirmed → Packed → Shipped → Out for Delivery → Delivered
-    // Strictly display ONLY statuses that have actually occurred. Do NOT display future steps.
+    // Standard Journey for this item:
+    const dtPlaced = parseDateTime(order.createdAt);
     const steps = [
       {
         id: "placed",
         title: "Order Confirmed",
-        description: "Your order has been placed and confirmed.",
-        timestamp: formatDateTime(order.createdAt),
+        description: "Your order has been confirmed and verified by SwagSync.",
+        date: dtPlaced.date,
+        time: dtPlaced.time,
         icon: CheckCircle2,
         isCompleted: true,
       },
     ];
 
-    if (["packed", "processing", "shipped", "on_the_way", "delivered"].includes(orderStatus)) {
+    if (["packed", "processing", "shipped", "on_the_way", "out_for_delivery", "delivered"].includes(currentItemStatus)) {
+      const packDate = (order.timeline || []).find((e) =>
+        String(e.type || "").toLowerCase().includes("pack")
+      )?.timestamp || order.createdAt;
+      const dtPack = parseDateTime(packDate);
       steps.push({
         id: "packed",
         title: "Packed",
-        description: "Seller has verified and packed your item.",
-        timestamp: getTimelineDate("pack") || formatDateTime(order.createdAt),
+        description: "Item has been inspected, quality-checked, and safely packed by merchant.",
+        date: dtPack.date,
+        time: dtPack.time,
         icon: Package,
         isCompleted: true,
       });
     }
 
-    if (["shipped", "on_the_way", "delivered"].includes(orderStatus)) {
+    if (["shipped", "on_the_way", "out_for_delivery", "delivered"].includes(currentItemStatus)) {
+      const shipDate = (order.timeline || []).find((e) =>
+        String(e.type || "").toLowerCase().includes("ship")
+      )?.timestamp || order.createdAt;
+      const dtShip = parseDateTime(shipDate);
       steps.push({
         id: "shipped",
         title: "Shipped",
-        description: order.trackingNumber
-          ? `Dispatched via courier partner (AWB: ${order.trackingNumber}).`
-          : "Your item has been dispatched from the warehouse.",
-        timestamp: getTimelineDate("ship") || formatDateTime(order.createdAt),
+        description: "Your package has been dispatched from the seller hub and is in transit.",
+        date: dtShip.date,
+        time: dtShip.time,
+        courier: courierName,
+        awb: awbNumber,
         icon: Truck,
         isCompleted: true,
       });
     }
 
-    if (["on_the_way", "delivered"].includes(orderStatus)) {
+    if (["on_the_way", "out_for_delivery", "delivered"].includes(currentItemStatus)) {
+      const outDate = (order.timeline || []).find((e) =>
+        ["out", "on_the_way"].some((kw) => String(e.type || "").toLowerCase().includes(kw))
+      )?.timestamp || order.updatedAt;
+      const dtOut = parseDateTime(outDate);
       steps.push({
         id: "on_the_way",
         title: "Out for Delivery",
-        description: "Package is out for delivery with courier in your local area.",
-        timestamp: getTimelineDate("out") || getTimelineDate("on_the_way") || formatDateTime(order.updatedAt),
+        description: "Courier delivery executive is out for delivery to your doorstep today.",
+        date: dtOut.date,
+        time: dtOut.time,
+        courier: courierName,
+        awb: awbNumber,
         icon: Truck,
         isCompleted: true,
       });
     }
 
-    if (orderStatus === "delivered") {
+    if (currentItemStatus === "delivered") {
+      const delvDate = order.deliveredAt || order.updatedAt;
+      const dtDelv = parseDateTime(delvDate);
       steps.push({
         id: "delivered",
         title: "Delivered",
-        description: "Package was safely delivered to your address.",
-        timestamp: formatDateTime(order.deliveredAt || order.updatedAt),
+        description: "Package was safely delivered to recipient. Thank you for shopping with SwagSync!",
+        date: dtDelv.date,
+        time: dtDelv.time,
         icon: CheckCircle2,
         isCompleted: true,
       });
@@ -777,9 +1022,9 @@ const OrderDetails = () => {
                 </span>
               </div>
 
-              {/* Items List - All products belonging to this single order */}
+              {/* Items List - Displays only the selected item if item param was provided, or all items */}
               <div className="divide-y divide-gray-100">
-                {(order.items || []).map((item, index) => {
+                {displayedItems.map((item, index) => {
                   let color = "";
                   let size = "";
 
@@ -998,91 +1243,104 @@ const OrderDetails = () => {
                   );
                 })}
               </div>
+
+              {/* Quick switcher to other items in the same order if multi-item */}
+              {allOrderItems.length > 1 && selectedItem && (
+                <div className="pt-4 border-t border-gray-100 flex flex-wrap items-center justify-between gap-3 text-xs">
+                  <span className="text-slate-500 font-medium">
+                    Other items in Order #{order.orderId || order._id}:
+                  </span>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {allOrderItems
+                      .filter(
+                        (other) =>
+                          String(other._id) !== String(selectedItem._id) &&
+                          String(other.product?._id || other.product) !==
+                            String(selectedItem.product?._id || selectedItem.product)
+                      )
+                      .map((other, idx) => {
+                        const itemParam = other._id || other.product?._id || other.product;
+                        return (
+                          <button
+                            key={other._id || idx}
+                            type="button"
+                            onClick={() => {
+                              navigate(`/account/orders/${order._id}?item=${itemParam}`, {
+                                state: { selectedItemId: itemParam },
+                              });
+                            }}
+                            className="px-3 py-1.5 rounded-lg bg-orange-50 hover:bg-orange-100 border border-orange-200 text-[#FD7100] font-bold transition-colors cursor-pointer text-xs inline-flex items-center gap-1.5 shadow-2xs"
+                          >
+                            <span className="truncate max-w-[140px] sm:max-w-[200px]">
+                              {other.product?.title || `Item ${idx + 1}`}
+                            </span>
+                            <span>→</span>
+                          </button>
+                        );
+                      })}
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* 2. Order Tracking Status Card */}
-            <div className="bg-white rounded-2xl border border-gray-200/90 shadow-xs p-5 sm:p-6 space-y-6">
-              <div>
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-orange-50 text-[#FD7100] flex items-center justify-center">
-                    <Package className="w-4 h-4" />
-                  </div>
+            {/* 2. Compact Order Tracking Status Card */}
+            <div className="bg-white rounded-2xl border border-gray-200/90 shadow-xs p-5 sm:p-6 space-y-4">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-orange-50 text-[#FD7100] flex items-center justify-center">
+                  <Package className="w-4 h-4" />
+                </div>
+                <div>
                   <h2 className="font-bold text-slate-900 text-sm sm:text-base">
                     Order Tracking Status
                   </h2>
-                </div>
-                <p className="text-xs text-slate-400 mt-1 pl-10.5">
-                  Real-time fulfillment progress for this item
-                </p>
-              </div>
-
-              {/* Cancelled State banner (if order is cancelled) */}
-              {isCancelled ? (
-                <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-xs text-red-800 space-y-1">
-                  <div className="flex items-center gap-2 font-bold text-sm text-red-900">
-                    <XCircle className="w-4 h-4 text-red-600" />
-                    <span>Order Cancelled</span>
-                  </div>
-                  <p className="text-red-700">
-                    This order was cancelled on {formatDateTime(order.updatedAt)}. If any amount was paid, it will be refunded to your original payment method.
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Order fulfillment progress
                   </p>
                 </div>
-              ) : (
-                /* Standard Vertical Tracking Timeline matching reference image */
-                <div className="relative pl-3 sm:pl-4 space-y-8">
-                  {trackingSteps.map((step, idx) => {
-                    const isLast = idx === trackingSteps.length - 1;
-                    const isStepCompleted = step.isCompleted;
+              </div>
+
+              {/* Compact Tracking Summary: Only main status names joined by arrows up to current status */}
+              <div className="py-2">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
+                  {getCompactTrackingSteps().map((stepName, idx, arr) => {
+                    const isLast = idx === arr.length - 1;
+                    const isCancelledStep = stepName.toLowerCase().includes("cancel");
 
                     return (
-                      <div key={step.id} className="relative flex items-start gap-4">
-                        {/* Connecting Line between steps */}
-                        {!isLast && (
-                          <div
-                            className={`absolute left-[13px] top-[26px] w-[2px] h-[calc(100%+8px)] -z-0 transition-colors ${
-                              trackingSteps[idx + 1].isCompleted
-                                ? "bg-emerald-500"
-                                : "bg-slate-200"
-                            }`}
-                          />
-                        )}
-
-                        {/* Step Circle Node */}
-                        <div
-                          className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 z-10 transition-colors ${
-                            isStepCompleted
-                              ? "bg-emerald-600 text-white shadow-xs"
-                              : "bg-slate-300 text-transparent"
+                      <div key={idx} className="flex items-center gap-2 sm:gap-2.5">
+                        <span
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                            isCancelledStep
+                              ? "bg-rose-50 text-rose-700 border border-rose-200 font-bold"
+                              : isLast
+                              ? "bg-emerald-50 text-emerald-800 border border-emerald-300 font-bold shadow-2xs"
+                              : "bg-slate-50 text-slate-700 border border-slate-200"
                           }`}
                         >
-                          {isStepCompleted ? (
-                            <Check className="w-4 h-4 stroke-[3]" />
-                          ) : (
-                            <span className="w-2 h-2 rounded-full bg-slate-400" />
-                          )}
-                        </div>
+                          <span
+                            className={`w-2 h-2 rounded-full ${
+                              isCancelledStep
+                                ? "bg-rose-500"
+                                : isLast
+                                ? "bg-emerald-500"
+                                : "bg-emerald-400"
+                            }`}
+                          />
+                          {stepName}
+                        </span>
 
-                        {/* Step Details */}
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 flex-1 min-w-0">
-                          <div>
-                            <h3 className="text-xs sm:text-sm font-bold text-slate-900">
-                              {step.title}
-                            </h3>
-                            <p className="text-xs text-slate-500 mt-0.5">
-                              {step.description}
-                            </p>
-                            <span className="text-[11px] text-slate-500 font-medium block mt-1">
-                              {step.timestamp}
-                            </span>
-                          </div>
-                        </div>
+                        {!isLast && (
+                          <span className="text-slate-400 font-bold text-sm select-none">
+                            →
+                          </span>
+                        )}
                       </div>
                     );
                   })}
                 </div>
-              )}
+              </div>
 
-              {/* See All Updates Action Link */}
+              {/* See All Updates Link */}
               <div className="pt-3 border-t border-gray-100">
                 <button
                   type="button"
@@ -1090,7 +1348,7 @@ const OrderDetails = () => {
                   className="inline-flex items-center gap-1.5 text-xs font-bold text-[#FD7100] hover:text-[#e06400] transition-colors cursor-pointer group"
                 >
                   <span>See All Updates</span>
-                  <ChevronRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
+                  <span className="transition-transform group-hover:translate-x-0.5 font-bold">→</span>
                 </button>
               </div>
             </div>
@@ -1188,14 +1446,14 @@ const OrderDetails = () => {
                   <div className="min-w-0">
                     <h3 className="font-bold text-sm text-slate-900">Price Summary</h3>
                     <p className="text-xs text-slate-500 font-medium truncate mt-0.5">
-                      ₹{totalPaidAmount.toLocaleString("en-IN")} • {isRazorpay ? "Razorpay" : paymentMethodStr.toUpperCase()}
+                      ₹{displayTotalPaid.toLocaleString("en-IN")} • {isRazorpay ? "Razorpay" : paymentMethodStr.toUpperCase()}
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0 ml-3">
                   <span className="font-black text-sm font-mono text-[#FD7100]">
-                    ₹{totalPaidAmount.toLocaleString("en-IN")}
+                    ₹{displayTotalPaid.toLocaleString("en-IN")}
                   </span>
                   <ChevronDown
                     className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${
@@ -1210,26 +1468,35 @@ const OrderDetails = () => {
                   {/* Detailed Price Breakdown */}
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-slate-500 font-medium">Item Total</span>
+                      <span className="text-slate-500 font-medium">
+                        Item Total (MRP){totalItemCount > 1 ? ` (${totalItemCount} items)` : ""}
+                      </span>
                       <span className="font-mono font-semibold text-slate-800">
-                        ₹{computedMRP.toLocaleString("en-IN")}
+                        ₹{displayMRP.toLocaleString("en-IN")}
                       </span>
                     </div>
 
-                    {totalDiscount > 0 && (
+                    {displayMRPDiscount > 0 && (
                       <div className="flex items-center justify-between text-emerald-600 font-medium">
-                        <span>Discount</span>
+                        <span>Discount on MRP</span>
                         <span className="font-mono font-bold">
-                          - ₹{totalDiscount.toLocaleString("en-IN")}
+                          - ₹{displayMRPDiscount.toLocaleString("en-IN")}
                         </span>
                       </div>
                     )}
 
-                    {order.coupon?.code && (
+                    {displayCouponDiscount > 0 && (
                       <div className="flex items-center justify-between text-emerald-600 font-medium">
-                        <span>Coupon ({order.coupon.code})</span>
+                        <span className="inline-flex items-center gap-1.5">
+                          <span>Coupon Discount</span>
+                          {order.coupon?.code && (
+                            <span className="bg-emerald-100 text-emerald-800 text-[10px] px-1.5 py-0.5 rounded font-mono font-bold uppercase">
+                              {order.coupon.code}
+                            </span>
+                          )}
+                        </span>
                         <span className="font-mono font-bold">
-                          - ₹{Number(order.discountAmount || 0).toLocaleString("en-IN")}
+                          - ₹{displayCouponDiscount.toLocaleString("en-IN")}
                         </span>
                       </div>
                     )}
@@ -1237,7 +1504,7 @@ const OrderDetails = () => {
                     <div className="flex items-center justify-between">
                       <span className="text-slate-500 font-medium">Delivery Charges</span>
                       <div className="flex items-center gap-1.5 font-semibold">
-                        {shippingAmount === 0 ? (
+                        {displayShipping === 0 ? (
                           <>
                             <span className="line-through text-slate-400 font-mono font-normal">
                               ₹40
@@ -1246,28 +1513,48 @@ const OrderDetails = () => {
                           </>
                         ) : (
                           <span className="font-mono text-slate-800">
-                            ₹{shippingAmount.toLocaleString("en-IN")}
+                            ₹{displayShipping.toLocaleString("en-IN")}
                           </span>
                         )}
                       </div>
                     </div>
 
+                    {/* GST / Taxes Row (Clarified Inclusive Status) */}
                     <div className="flex items-center justify-between">
-                      <span className="text-slate-500 font-medium">Taxes</span>
-                      <span className="font-medium text-slate-700">
-                        {order.taxAmount ? `₹${Number(order.taxAmount).toLocaleString("en-IN")}` : "Included in price"}
-                      </span>
+                      <div>
+                        <span className="text-slate-500 font-medium">
+                          {displayGstRate ? `Estimated GST (${displayGstRate}%)` : "Estimated GST / Taxes"}
+                        </span>
+                        <span className="text-[10px] text-emerald-600 block font-medium">
+                          ✓ Included in item selling price
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <span className="inline-flex items-center gap-1 font-mono font-semibold text-slate-700 bg-slate-100/80 px-2 py-0.5 rounded text-[11px] border border-slate-200/80">
+                          Included {displayTax ? `(₹${Math.round(Number(displayTax)).toLocaleString("en-IN")})` : ""}
+                        </span>
+                      </div>
                     </div>
                   </div>
 
                   {/* Highlighted Total Amount Row */}
-                  <div className="bg-[#FFF6F0] rounded-xl p-3 flex items-center justify-between border border-orange-100 mt-2">
-                    <span className="font-bold text-slate-800 text-xs sm:text-sm">
-                      {isRazorpay ? "Total Amount Paid" : "Total Amount to Pay (COD)"}
-                    </span>
-                    <span className="font-black text-lg text-[#FD7100] font-mono">
-                      ₹{totalPaidAmount.toLocaleString("en-IN")}
-                    </span>
+                  <div className="bg-[#FFF6F0] rounded-xl p-3 border border-orange-100 mt-2 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-slate-800 text-xs sm:text-sm">
+                        {isRazorpay ? "Total Amount Paid" : "Total Amount to Pay (COD)"}
+                      </span>
+                      <span className="font-black text-lg text-[#FD7100] font-mono">
+                        ₹{displayTotalPaid.toLocaleString("en-IN")}
+                      </span>
+                    </div>
+                    <div className="text-[10px] text-slate-500 font-medium flex items-center justify-between pt-1 border-t border-orange-200/50">
+                      <span>Inclusive of all taxes & GST</span>
+                      {displayTax > 0 && (
+                        <span className="font-mono text-slate-500">
+                          (₹{Math.round(Number(displayTax)).toLocaleString("en-IN")} GST)
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   {/* Payment Method & Status */}
@@ -1292,9 +1579,9 @@ const OrderDetails = () => {
                   </div>
 
                   {/* Savings Banner */}
-                  {totalSavings > 0 && (
+                  {displaySavings > 0 && (
                     <div className="bg-emerald-50 text-emerald-800 border border-emerald-200/80 rounded-xl py-2 px-3 text-xs font-bold text-center mt-2">
-                      🎉 You saved ₹{totalSavings.toLocaleString("en-IN")} on this order!
+                      🎉 You saved ₹{displaySavings.toLocaleString("en-IN")} on this {selectedItem ? "item" : "order"}!
                     </div>
                   )}
                 </div>
@@ -1372,12 +1659,13 @@ const OrderDetails = () => {
                   <div className="relative pl-3 space-y-6">
                     {updates.map((step, idx) => {
                       const isLast = idx === updates.length - 1;
+                      const IconComp = step.icon || CheckCircle2;
 
                       return (
                         <div key={step.id || idx} className="relative flex items-start gap-4">
                           {/* Connecting line */}
                           {!isLast && (
-                            <div className="absolute left-[13px] top-[26px] w-[2px] h-[calc(100%+16px)] bg-emerald-500 -z-0" />
+                            <div className="absolute left-[13px] top-[26px] w-[2px] h-[calc(100%+24px)] bg-emerald-500 -z-0" />
                           )}
 
                           {/* Step Node */}
@@ -1390,22 +1678,55 @@ const OrderDetails = () => {
                                 : "bg-emerald-600 text-white shadow-xs"
                             }`}
                           >
-                            <Check className="w-3.5 h-3.5 stroke-[3]" />
+                            <IconComp className="w-3.5 h-3.5 stroke-[2.5]" />
                           </div>
 
-                          {/* Step Content */}
-                          <div className="flex-1 min-w-0 bg-slate-50/70 border border-slate-100 rounded-xl p-3.5 space-y-1">
-                            <div className="flex items-center justify-between gap-2 flex-wrap">
+                          {/* Step Card with Status, Date, Time, Message, Courier & AWB */}
+                          <div className="flex-1 min-w-0 bg-slate-50/80 border border-slate-200/80 rounded-xl p-3.5 space-y-2">
+                            {/* Status Title + Date/Time */}
+                            <div className="flex items-start justify-between gap-2 flex-wrap">
                               <h4 className="text-xs sm:text-sm font-bold text-slate-900">
                                 {step.title}
                               </h4>
-                              <span className="text-[11px] font-mono text-slate-500">
-                                {step.timestamp}
-                              </span>
+                              {(step.date || step.time) && (
+                                <div className="text-right">
+                                  <span className="text-[11px] font-semibold text-slate-700 block">
+                                    {step.date}
+                                  </span>
+                                  {step.time && step.time !== "-" && (
+                                    <span className="text-[10px] text-slate-500 block font-mono">
+                                      {step.time}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
                             </div>
+
+                            {/* Detailed Status Message */}
                             <p className="text-xs text-slate-600 leading-relaxed font-medium">
                               {step.description}
                             </p>
+
+                            {/* Courier & AWB / Tracking info if available */}
+                            {(step.courier || step.awb) && (
+                              <div className="pt-2 mt-1 border-t border-slate-200/60 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs">
+                                {step.courier && (
+                                  <span className="text-slate-600 inline-flex items-center gap-1">
+                                    <Truck className="w-3.5 h-3.5 text-slate-400" />
+                                    <strong className="text-slate-700 font-semibold">Courier:</strong>{" "}
+                                    <span>{step.courier}</span>
+                                  </span>
+                                )}
+                                {step.awb && (
+                                  <span className="text-slate-600 inline-flex items-center gap-1">
+                                    <strong className="text-slate-700 font-semibold">AWB / Tracking:</strong>{" "}
+                                    <span className="font-mono font-medium text-slate-800 bg-slate-200/60 px-1.5 py-0.5 rounded text-[11px]">
+                                      {step.awb}
+                                    </span>
+                                  </span>
+                                )}
+                              </div>
+                            )}
                           </div>
                         </div>
                       );
@@ -1415,12 +1736,20 @@ const OrderDetails = () => {
               })()}
             </div>
 
-            {/* Modal Footer */}
-            <div className="p-4 bg-slate-50/80 border-t border-gray-100 flex items-center justify-end">
+            {/* Modal Footer: Clear Close/Back controls */}
+            <div className="p-4 bg-slate-50/80 border-t border-gray-100 flex items-center justify-between">
               <button
                 type="button"
                 onClick={() => setIsUpdatesModalOpen(false)}
-                className="px-4 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-bold transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-slate-600 hover:text-slate-900 text-xs font-semibold hover:bg-slate-200/60 transition-colors cursor-pointer"
+              >
+                <span>← Back to Order</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsUpdatesModalOpen(false)}
+                className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs"
               >
                 Close
               </button>
