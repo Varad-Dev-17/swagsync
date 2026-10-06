@@ -2,7 +2,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Undo2, Clock, CheckCircle2, ArrowRight } from "lucide-react";
 
-const ReturnExchangeButton = ({ orderId, productId, item, eligibility, onClick }) => {
+const ReturnExchangeButton = ({ orderId, productId, item, eligibility, onClick, hideTrackButton = false }) => {
   const navigate = useNavigate();
 
   const handleReturnExchange = (e) => {
@@ -17,6 +17,11 @@ const ReturnExchangeButton = ({ orderId, productId, item, eligibility, onClick }
   if (!eligibility) return null;
 
   const { showButton, buttonLabel, helperMessage, hasReturnRequest } = eligibility;
+
+  // For items already in exchange/return journey on Order Details page, do not render redundant Track button
+  if (hideTrackButton && hasReturnRequest) {
+    return null;
+  }
 
   return (
     <div className="w-full flex flex-col items-stretch text-left">

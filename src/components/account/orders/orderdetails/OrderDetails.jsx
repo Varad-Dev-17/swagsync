@@ -434,9 +434,9 @@ const OrderDetails = () => {
     return ev?.timestamp ? formatDateTime(ev.timestamp) : null;
   };
 
-  // 1. Compact Order Tracking Summary (Main Page view)
-  // Dynamically uses currentItemStatus for the selected product.
-  const getCompactTrackingSteps = () => {
+  // 1. Single Current Tracking Status (Main Page view)
+  // STRICT: Main page ALWAYS shows ONLY the current/latest status, never the full journey flow
+  const getCurrentTrackingStatusName = () => {
     const activeReturn = itemReturnRequests.length > 0 ? itemReturnRequests[0] : null;
 
     if (activeReturn) {
@@ -444,111 +444,54 @@ const OrderDetails = () => {
       const reqStatus = (activeReturn.status || "pending").toLowerCase();
 
       if (isExchange) {
-        // Exchange: Delivered → Exchange Requested → Exchange Approved → Pickup → Item Received → Replacement Shipped → Replacement Delivered
-        const steps = ["Delivered", "Exchange Requested"];
-
-        const isApproved = [
-          "approved",
-          "pickup_scheduled",
-          "pickup",
-          "pickup_replace",
-          "replace_and_exchange",
-          "picked_up",
-          "received",
-          "packed",
-          "shipped",
-          "completed",
-          "exchanged",
-        ].includes(reqStatus);
-        if (isApproved) steps.push("Exchange Approved");
-
-        const isPickup = [
-          "pickup_scheduled",
-          "pickup",
-          "pickup_replace",
-          "replace_and_exchange",
-          "picked_up",
-          "received",
-          "packed",
-          "shipped",
-          "completed",
-          "exchanged",
-        ].includes(reqStatus);
-        if (isPickup) steps.push("Pickup");
-
-        const isReceived = ["received", "packed", "shipped", "completed", "exchanged"].includes(reqStatus);
-        if (isReceived) steps.push("Item Received");
-
-        const isReplShipped = ["shipped", "completed", "exchanged"].includes(reqStatus);
-        if (isReplShipped) steps.push("Replacement Shipped");
-
-        const isReplDelivered = ["completed", "exchanged"].includes(reqStatus);
-        if (isReplDelivered) steps.push("Replacement Delivered");
-
-        return steps;
+        if (reqStatus === "rejected") return "Exchange Rejected";
+        if (["completed", "exchanged"].includes(reqStatus)) return "Replacement Delivered";
+        if (reqStatus === "shipped") return "Replacement Shipped";
+        if (reqStatus === "received") return "Item Received";
+        if (reqStatus === "picked_up") return "Pickup Completed";
+        if (["pickup_scheduled", "pickup", "pickup_replace"].includes(reqStatus)) return "Pickup Scheduled";
+        if (reqStatus === "approved") return "Exchange Approved";
+        return "Exchange Requested";
       } else {
-        // Return: Delivered → Return Requested → Return Approved → Pickup → Item Received → Return Completed
-        const steps = ["Delivered", "Return Requested"];
-
-        const isApproved = [
-          "approved",
-          "pickup_scheduled",
-          "pickup",
-          "picked_up",
-          "received",
-          "completed",
-          "refunded",
-        ].includes(reqStatus);
-        if (isApproved) steps.push("Return Approved");
-
-        const isPickup = [
-          "pickup_scheduled",
-          "pickup",
-          "picked_up",
-          "received",
-          "completed",
-          "refunded",
-        ].includes(reqStatus);
-        if (isPickup) steps.push("Pickup");
-
-        const isReceived = ["received", "completed", "refunded"].includes(reqStatus);
-        if (isReceived) steps.push("Item Received");
-
-        const isCompleted = ["completed", "refunded"].includes(reqStatus);
-        if (isCompleted) steps.push("Return Completed");
-
-        return steps;
+        if (reqStatus === "rejected") return "Return Rejected";
+        if (["refunded", "completed"].includes(reqStatus)) return "Refund / Return Completed";
+        if (reqStatus === "received") return "Item Received";
+        if (reqStatus === "picked_up") return "Pickup Completed";
+        if (["pickup_scheduled", "pickup"].includes(reqStatus)) return "Pickup Scheduled";
+        if (reqStatus === "approved") return "Return Approved";
+        return "Return Requested";
       }
     }
 
     if (isCancelled) {
-      // Cancelled: Order Confirmed → Cancelled
-      return ["Order Confirmed", "Cancelled"];
-    }
-
-    // Standard Order Flow for this item:
-    const steps = ["Order Confirmed"];
-
-    if (["packed", "processing", "shipped", "on_the_way", "out_for_delivery", "delivered"].includes(currentItemStatus)) {
-      steps.push("Packed");
-    }
-
-    if (["shipped", "on_the_way", "out_for_delivery", "delivered"].includes(currentItemStatus)) {
-      steps.push("Shipped");
-    }
-
-    if (["on_the_way", "out_for_delivery", "delivered"].includes(currentItemStatus)) {
-      steps.push("Out for Delivery");
+      return "Cancelled";
     }
 
     if (currentItemStatus === "delivered") {
-      steps.push("Delivered");
+      return "Delivered";
     }
 
-    return steps;
+    if (["out_for_delivery", "on_the_way"].includes(currentItemStatus)) {
+      return "Out for Delivery";
+    }
+
+    if (currentItemStatus === "shipped") {
+      return "Shipped";
+    }
+
+    if (["packed", "processing"].includes(currentItemStatus)) {
+      return "Packed";
+    }
+
+    if (["pending", "placed", "confirmed", "order_confirmed"].includes(currentItemStatus)) {
+      return "Order Confirmed";
+    }
+
+    return currentItemStatus.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
   };
 
-  // 2. Complete Detailed Timeline for "See All Updates" Popup Modal
+  // 2. Complete Expected Timeline for "See All Updates" Popup Modal
+  // Shows full expected journey: completed stages are highlighted, upcoming stages stay inactive/pending
   const getUpdatesTimeline = () => {
     const activeReturn = itemReturnRequests.length > 0 ? itemReturnRequests[0] : null;
 
@@ -578,8 +521,9 @@ const OrderDetails = () => {
     const awbNumber = activeTrackingNumber;
     const itemCancellationReason = selectedItem?.cancellationReason || order.cancellationReason || "";
 
-    if (activeReturn) {
-      const isExchange = activeReturn.type === "exchange";
+    // 1. EXCHANGE JOURNEY:
+    // Delivered → Exchange Requested → Exchange Approved → Pickup → Item Received → Replacement Shipped → Replacement Delivered
+    if (activeReturn && activeReturn.type === "exchange") {
       const reqStatus = (activeReturn.status || "pending").toLowerCase();
       const timelineEvents = Array.isArray(activeReturn.timeline) ? activeReturn.timeline : [];
 
@@ -590,12 +534,12 @@ const OrderDetails = () => {
         return ev?.timestamp || activeReturn.updatedAt;
       };
 
-      if (isExchange) {
-        // Exchange: Delivered → Exchange Requested → Exchange Approved → Pickup → Item Received → Replacement Shipped → Replacement Delivered
-        const dtDelivered = parseDateTime(order.deliveredAt || order.updatedAt);
-        const dtExchReq = parseDateTime(activeReturn.createdAt);
+      const dtDelivered = parseDateTime(order.deliveredAt || order.updatedAt);
+      const dtExchReq = parseDateTime(activeReturn.createdAt);
 
-        const steps = [
+      if (reqStatus === "rejected") {
+        const dtRej = parseDateTime(findEventDate(["reject"]));
+        return [
           {
             id: "delivered_orig",
             title: "Delivered",
@@ -616,120 +560,151 @@ const OrderDetails = () => {
             icon: RefreshCw,
             isCompleted: true,
           },
+          {
+            id: "exch_rejected",
+            title: "Exchange Rejected",
+            description: activeReturn.adminComments || activeReturn.rejectionReason || "Exchange request was not approved by seller verification.",
+            date: dtRej.date,
+            time: dtRej.time,
+            icon: XCircle,
+            isCompleted: true,
+          },
         ];
+      }
 
-        const isApproved = [
-          "approved",
-          "pickup_scheduled",
-          "pickup",
-          "pickup_replace",
-          "replace_and_exchange",
-          "picked_up",
-          "received",
-          "packed",
-          "shipped",
-          "completed",
-          "exchanged",
-        ].includes(reqStatus);
+      const isApproved = [
+        "approved", "pickup_scheduled", "pickup", "pickup_replace",
+        "replace_and_exchange", "picked_up", "received", "packed",
+        "shipped", "completed", "exchanged"
+      ].includes(reqStatus);
 
-        if (isApproved) {
-          const dtAppr = parseDateTime(findEventDate(["approve"]));
-          steps.push({
-            id: "exch_approved",
-            title: "Exchange Approved",
-            description: "Exchange request has been approved by the seller and support team.",
-            date: dtAppr.date,
-            time: dtAppr.time,
-            icon: CheckCircle2,
-            isCompleted: true,
-          });
-        }
+      const isPickup = [
+        "picked_up", "received", "packed", "shipped", "completed", "exchanged"
+      ].includes(reqStatus);
 
-        const isPickup = [
-          "pickup_scheduled",
-          "pickup",
-          "pickup_replace",
-          "replace_and_exchange",
-          "picked_up",
-          "received",
-          "packed",
-          "shipped",
-          "completed",
-          "exchanged",
-        ].includes(reqStatus);
+      const isReceived = [
+        "received", "packed", "shipped", "completed", "exchanged"
+      ].includes(reqStatus);
 
-        if (isPickup) {
-          const isPickedUp = ["picked_up", "received", "packed", "shipped", "completed", "exchanged"].includes(reqStatus);
-          const dtPickup = parseDateTime(findEventDate(["pickup", "picked"]));
-          steps.push({
-            id: "exch_pickup",
-            title: isPickedUp ? "Pickup Completed" : "Pickup Scheduled",
-            description: isPickedUp
-              ? "The return item has been collected by our courier agent."
-              : "A courier has been scheduled to pick up the item from your doorstep.",
-            date: dtPickup.date,
-            time: dtPickup.time,
-            courier: courierName,
-            icon: Truck,
-            isCompleted: true,
-          });
-        }
+      const isReplShipped = [
+        "shipped", "completed", "exchanged"
+      ].includes(reqStatus);
 
-        const isReceived = ["received", "packed", "shipped", "completed", "exchanged"].includes(reqStatus);
-        if (isReceived) {
-          const dtRecv = parseDateTime(findEventDate(["received"]));
-          steps.push({
-            id: "exch_received",
-            title: "Item Received",
-            description: "Item safely received at fulfillment center and inspected.",
-            date: dtRecv.date,
-            time: dtRecv.time,
-            icon: Package,
-            isCompleted: true,
-          });
-        }
+      const isReplDelivered = [
+        "completed", "exchanged"
+      ].includes(reqStatus);
 
-        const isReplShipped = ["shipped", "completed", "exchanged"].includes(reqStatus);
-        if (isReplShipped) {
-          const dtReplShip = parseDateTime(findEventDate(["ship", "replacement"]));
-          steps.push({
-            id: "exch_repl_shipped",
-            title: "Replacement Shipped",
-            description: "Your replacement item has been packed and handed over to courier.",
-            date: dtReplShip.date,
-            time: dtReplShip.time,
-            courier: courierName,
-            awb: awbNumber,
-            icon: Truck,
-            isCompleted: true,
-          });
-        }
+      const dtAppr = isApproved ? parseDateTime(findEventDate(["approve"])) : { date: "", time: "" };
+      const dtPickup = isPickup ? parseDateTime(findEventDate(["pickup", "picked"])) : { date: "", time: "" };
+      const dtRecv = isReceived ? parseDateTime(findEventDate(["received"])) : { date: "", time: "" };
+      const dtReplShip = isReplShipped ? parseDateTime(findEventDate(["ship", "replacement"])) : { date: "", time: "" };
+      const dtReplDelv = isReplDelivered ? parseDateTime(findEventDate(["deliver", "complete"])) : { date: "", time: "" };
 
-        const isReplDelivered = ["completed", "exchanged"].includes(reqStatus);
-        if (isReplDelivered) {
-          const dtReplDelv = parseDateTime(findEventDate(["deliver", "complete"]));
-          steps.push({
-            id: "exch_repl_delivered",
-            title: "Replacement Delivered",
-            description: "Replacement item successfully delivered. Exchange closed.",
-            date: dtReplDelv.date,
-            time: dtReplDelv.time,
-            icon: CheckCircle2,
-            isCompleted: true,
-          });
-        }
+      return [
+        {
+          id: "delivered_orig",
+          title: "Delivered",
+          description: "Original order item was delivered to your address.",
+          date: dtDelivered.date,
+          time: dtDelivered.time,
+          icon: CheckCircle2,
+          isCompleted: true,
+        },
+        {
+          id: "exch_requested",
+          title: "Exchange Requested",
+          description: activeReturn.reason
+            ? `Exchange requested: ${activeReturn.reason}${activeReturn.additionalDetails ? ` - "${activeReturn.additionalDetails}"` : ""}.`
+            : "Exchange request submitted by customer.",
+          date: dtExchReq.date,
+          time: dtExchReq.time,
+          icon: RefreshCw,
+          isCompleted: true,
+        },
+        {
+          id: "exch_approved",
+          title: "Exchange Approved",
+          description: isApproved
+            ? "Exchange request has been approved by the seller and support team."
+            : "Awaiting seller inspection and verification to approve exchange.",
+          date: dtAppr.date,
+          time: dtAppr.time,
+          icon: CheckCircle2,
+          isCompleted: isApproved,
+        },
+        {
+          id: "exch_pickup",
+          title: "Pickup",
+          description: isPickup
+            ? "The return item has been collected by our courier executive."
+            : "Courier agent will be dispatched to collect the item from your doorstep.",
+          date: dtPickup.date,
+          time: dtPickup.time,
+          courier: isPickup ? courierName : null,
+          icon: Truck,
+          isCompleted: isPickup,
+        },
+        {
+          id: "exch_received",
+          title: "Item Received",
+          description: isReceived
+            ? "Item safely received at fulfillment center and inspected."
+            : "Package will be inspected upon arrival at the seller hub.",
+          date: dtRecv.date,
+          time: dtRecv.time,
+          icon: Package,
+          isCompleted: isReceived,
+        },
+        {
+          id: "exch_repl_shipped",
+          title: "Replacement Shipped",
+          description: isReplShipped
+            ? "Your replacement item has been dispatched and is in transit."
+            : "Replacement item will be packed and handed over to courier.",
+          date: dtReplShip.date,
+          time: dtReplShip.time,
+          courier: isReplShipped ? courierName : null,
+          awb: isReplShipped ? awbNumber : null,
+          icon: Truck,
+          isCompleted: isReplShipped,
+        },
+        {
+          id: "exch_repl_delivered",
+          title: "Replacement Delivered",
+          description: isReplDelivered
+            ? "Replacement item successfully delivered to your doorstep. Exchange closed."
+            : "Replacement item will be delivered to your delivery address.",
+          date: dtReplDelv.date,
+          time: dtReplDelv.time,
+          icon: CheckCircle2,
+          isCompleted: isReplDelivered,
+        },
+      ];
+    }
 
-        return steps;
-      } else {
-        // Return: Delivered → Return Requested → Return Approved → Pickup → Item Received → Refund/Return Completed
-        const dtDelivered = parseDateTime(order.deliveredAt || order.updatedAt);
-        const dtRetReq = parseDateTime(activeReturn.createdAt);
+    // 2. RETURN JOURNEY:
+    // Delivered → Return Requested → Return Approved → Pickup → Item Received → Refund/Return Completed
+    if (activeReturn && activeReturn.type !== "exchange") {
+      const reqStatus = (activeReturn.status || "pending").toLowerCase();
+      const timelineEvents = Array.isArray(activeReturn.timeline) ? activeReturn.timeline : [];
 
-        const steps = [
+      const findEventDate = (keywords) => {
+        const ev = timelineEvents.find((e) =>
+          keywords.some((kw) => String(e.type || "").toLowerCase().includes(kw))
+        );
+        return ev?.timestamp || activeReturn.updatedAt;
+      };
+
+      const dtDelivered = parseDateTime(order.deliveredAt || order.updatedAt);
+      const dtRetReq = parseDateTime(activeReturn.createdAt);
+
+      if (reqStatus === "rejected") {
+        const dtRej = parseDateTime(findEventDate(["reject"]));
+        return [
           {
             id: "delivered_orig",
             title: "Delivered",
-            description: "Original order item was delivered to your shipping address.",
+            description: "Original order item was delivered to your address.",
             date: dtDelivered.date,
             time: dtDelivered.time,
             icon: CheckCircle2,
@@ -746,94 +721,115 @@ const OrderDetails = () => {
             icon: RefreshCw,
             isCompleted: true,
           },
+          {
+            id: "ret_rejected",
+            title: "Return Rejected",
+            description: activeReturn.adminComments || activeReturn.rejectionReason || "Return request was not approved by seller verification.",
+            date: dtRej.date,
+            time: dtRej.time,
+            icon: XCircle,
+            isCompleted: true,
+          },
         ];
-
-        const isApproved = [
-          "approved",
-          "pickup_scheduled",
-          "pickup",
-          "picked_up",
-          "received",
-          "completed",
-          "refunded",
-        ].includes(reqStatus);
-
-        if (isApproved) {
-          const dtAppr = parseDateTime(findEventDate(["approve"]));
-          steps.push({
-            id: "ret_approved",
-            title: "Return Approved",
-            description: "Return request has been verified and accepted by the seller.",
-            date: dtAppr.date,
-            time: dtAppr.time,
-            icon: CheckCircle2,
-            isCompleted: true,
-          });
-        }
-
-        const isPickup = [
-          "pickup_scheduled",
-          "pickup",
-          "picked_up",
-          "received",
-          "completed",
-          "refunded",
-        ].includes(reqStatus);
-
-        if (isPickup) {
-          const isPickedUp = ["picked_up", "received", "completed", "refunded"].includes(reqStatus);
-          const dtPickup = parseDateTime(findEventDate(["pickup", "picked"]));
-          steps.push({
-            id: "ret_pickup",
-            title: isPickedUp ? "Pickup Completed" : "Pickup Scheduled",
-            description: isPickedUp
-              ? "Return item collected from your doorstep by logistics courier."
-              : "Logistics courier assigned to collect return item from your address.",
-            date: dtPickup.date,
-            time: dtPickup.time,
-            courier: courierName,
-            icon: Truck,
-            isCompleted: true,
-          });
-        }
-
-        const isReceived = ["received", "completed", "refunded"].includes(reqStatus);
-        if (isReceived) {
-          const dtRecv = parseDateTime(findEventDate(["received"]));
-          steps.push({
-            id: "ret_received",
-            title: "Item Received",
-            description: "Returned item safely received at fulfillment center and verified.",
-            date: dtRecv.date,
-            time: dtRecv.time,
-            icon: Package,
-            isCompleted: true,
-          });
-        }
-
-        const isCompleted = ["completed", "refunded"].includes(reqStatus);
-        if (isCompleted) {
-          const refundAmount = activeReturn.refundAmount || order.totalAmount;
-          const dtCompl = parseDateTime(activeReturn.refundProcessedAt || activeReturn.updatedAt);
-          steps.push({
-            id: "ret_completed",
-            title: "Refund / Return Completed",
-            description: `Return cycle completed.${refundAmount ? ` Refund of ₹${Number(refundAmount).toLocaleString("en-IN")} credited to your payment account.` : " Return closed."}`,
-            date: dtCompl.date,
-            time: dtCompl.time,
-            icon: DollarSign,
-            isCompleted: true,
-          });
-        }
-
-        return steps;
       }
+
+      const isApproved = [
+        "approved", "pickup_scheduled", "pickup", "picked_up",
+        "received", "completed", "refunded"
+      ].includes(reqStatus);
+
+      const isPickup = [
+        "picked_up", "received", "completed", "refunded"
+      ].includes(reqStatus);
+
+      const isReceived = [
+        "received", "completed", "refunded"
+      ].includes(reqStatus);
+
+      const isCompleted = [
+        "completed", "refunded"
+      ].includes(reqStatus);
+
+      const dtAppr = isApproved ? parseDateTime(findEventDate(["approve"])) : { date: "", time: "" };
+      const dtPickup = isPickup ? parseDateTime(findEventDate(["pickup", "picked"])) : { date: "", time: "" };
+      const dtRecv = isReceived ? parseDateTime(findEventDate(["received"])) : { date: "", time: "" };
+      const dtCompl = isCompleted ? parseDateTime(activeReturn.refundProcessedAt || findEventDate(["refund", "complete"])) : { date: "", time: "" };
+
+      return [
+        {
+          id: "delivered_orig",
+          title: "Delivered",
+          description: "Original order item was delivered to your address.",
+          date: dtDelivered.date,
+          time: dtDelivered.time,
+          icon: CheckCircle2,
+          isCompleted: true,
+        },
+        {
+          id: "ret_requested",
+          title: "Return Requested",
+          description: activeReturn.reason
+            ? `Return requested: ${activeReturn.reason}${activeReturn.additionalDetails ? ` - "${activeReturn.additionalDetails}"` : ""}.`
+            : "Return request submitted by customer.",
+          date: dtRetReq.date,
+          time: dtRetReq.time,
+          icon: RefreshCw,
+          isCompleted: true,
+        },
+        {
+          id: "ret_approved",
+          title: "Return Approved",
+          description: isApproved
+            ? "Return request has been verified and accepted by the seller."
+            : "Return approval pending seller verification.",
+          date: dtAppr.date,
+          time: dtAppr.time,
+          icon: CheckCircle2,
+          isCompleted: isApproved,
+        },
+        {
+          id: "ret_pickup",
+          title: "Pickup",
+          description: isPickup
+            ? "Return item collected from your doorstep by logistics executive."
+            : "Logistics courier will be assigned to collect return item.",
+          date: dtPickup.date,
+          time: dtPickup.time,
+          courier: isPickup ? courierName : null,
+          icon: Truck,
+          isCompleted: isPickup,
+        },
+        {
+          id: "ret_received",
+          title: "Item Received",
+          description: isReceived
+            ? "Returned item safely received at fulfillment center and inspected."
+            : "Item will be inspected upon arrival at fulfillment center.",
+          date: dtRecv.date,
+          time: dtRecv.time,
+          icon: Package,
+          isCompleted: isReceived,
+        },
+        {
+          id: "ret_completed",
+          title: "Refund/Return Completed",
+          description: isCompleted
+            ? `Return closed successfully.${activeReturn.refundAmount ? ` Refund of ₹${Number(activeReturn.refundAmount).toLocaleString("en-IN")} credited to your payment account.` : " Refund processed."}`
+            : "Refund will be initiated once item is verified at warehouse.",
+          date: dtCompl.date,
+          time: dtCompl.time,
+          icon: DollarSign,
+          isCompleted: isCompleted,
+        },
+      ];
     }
 
+    // 3. CANCELLED JOURNEY:
+    // Order Confirmed → Cancelled → Refund (show Refund only when applicable)
     if (isCancelled) {
-      // Cancelled: Order Confirmed → Cancelled → Refund (if applicable)
       const dtPlaced = parseDateTime(order.createdAt);
       const dtCancel = parseDateTime(order.updatedAt);
+      const isOnlinePaid = isRazorpay || ["paid", "refunded"].includes(order.paymentStatus);
 
       const steps = [
         {
@@ -858,28 +854,54 @@ const OrderDetails = () => {
         },
       ];
 
-      const isOnlinePaid = isRazorpay || ["paid", "refunded"].includes(order.paymentStatus);
       if (isOnlinePaid) {
+        const isRefundDone = order.paymentStatus === "refunded";
+        const dtRefund = isRefundDone ? parseDateTime(order.updatedAt) : { date: "", time: "" };
+
         steps.push({
           id: "refund",
-          title: order.paymentStatus === "refunded" ? "Refund Completed" : "Refund Processing",
-          description:
-            order.paymentStatus === "refunded"
-              ? `Refund of ₹${displayTotalPaid.toLocaleString("en-IN")} has been credited to your original payment mode.`
-              : `Refund of ₹${displayTotalPaid.toLocaleString("en-IN")} is being processed by the payment gateway.`,
-          date: dtCancel.date,
-          time: dtCancel.time,
+          title: isRefundDone ? "Refund Completed" : "Refund Processing",
+          description: isRefundDone
+            ? `Refund of ₹${displayTotalPaid.toLocaleString("en-IN")} has been credited to your original payment mode.`
+            : `Refund of ₹${displayTotalPaid.toLocaleString("en-IN")} is being processed by the payment gateway.`,
+          date: dtRefund.date,
+          time: dtRefund.time,
           icon: DollarSign,
-          isCompleted: true,
+          isCompleted: isRefundDone,
         });
       }
 
       return steps;
     }
 
-    // Standard Journey for this item:
+    // 4. NORMAL DELIVERY JOURNEY (All 5 expected stages):
+    // Order Confirmed → Packed → Shipped → Out for Delivery → Delivered
+    const isPackedStep = ["packed", "processing", "shipped", "on_the_way", "out_for_delivery", "delivered"].includes(currentItemStatus);
+    const isShippedStep = ["shipped", "on_the_way", "out_for_delivery", "delivered"].includes(currentItemStatus);
+    const isOutStep = ["on_the_way", "out_for_delivery", "delivered"].includes(currentItemStatus);
+    const isDeliveredStep = currentItemStatus === "delivered";
+
     const dtPlaced = parseDateTime(order.createdAt);
-    const steps = [
+
+    const packDate = isPackedStep
+      ? (order.timeline || []).find((e) => String(e.type || "").toLowerCase().includes("pack"))?.timestamp || order.createdAt
+      : null;
+    const dtPack = isPackedStep ? parseDateTime(packDate) : { date: "", time: "" };
+
+    const shipDate = isShippedStep
+      ? (order.timeline || []).find((e) => String(e.type || "").toLowerCase().includes("ship"))?.timestamp || order.updatedAt
+      : null;
+    const dtShip = isShippedStep ? parseDateTime(shipDate) : { date: "", time: "" };
+
+    const outDate = isOutStep
+      ? (order.timeline || []).find((e) => ["out", "on_the_way"].some((kw) => String(e.type || "").toLowerCase().includes(kw)))?.timestamp || order.updatedAt
+      : null;
+    const dtOut = isOutStep ? parseDateTime(outDate) : { date: "", time: "" };
+
+    const delvDate = isDeliveredStep ? order.deliveredAt || order.updatedAt : null;
+    const dtDelv = isDeliveredStep ? parseDateTime(delvDate) : { date: "", time: "" };
+
+    return [
       {
         id: "placed",
         title: "Order Confirmed",
@@ -889,75 +911,55 @@ const OrderDetails = () => {
         icon: CheckCircle2,
         isCompleted: true,
       },
-    ];
-
-    if (["packed", "processing", "shipped", "on_the_way", "out_for_delivery", "delivered"].includes(currentItemStatus)) {
-      const packDate = (order.timeline || []).find((e) =>
-        String(e.type || "").toLowerCase().includes("pack")
-      )?.timestamp || order.createdAt;
-      const dtPack = parseDateTime(packDate);
-      steps.push({
+      {
         id: "packed",
         title: "Packed",
-        description: "Item has been inspected, quality-checked, and safely packed by merchant.",
+        description: isPackedStep
+          ? "Item has been inspected, quality-checked, and safely packed by merchant."
+          : "Item will be inspected, quality-checked, and safely packed by merchant.",
         date: dtPack.date,
         time: dtPack.time,
         icon: Package,
-        isCompleted: true,
-      });
-    }
-
-    if (["shipped", "on_the_way", "out_for_delivery", "delivered"].includes(currentItemStatus)) {
-      const shipDate = (order.timeline || []).find((e) =>
-        String(e.type || "").toLowerCase().includes("ship")
-      )?.timestamp || order.createdAt;
-      const dtShip = parseDateTime(shipDate);
-      steps.push({
+        isCompleted: isPackedStep,
+      },
+      {
         id: "shipped",
         title: "Shipped",
-        description: "Your package has been dispatched from the seller hub and is in transit.",
+        description: isShippedStep
+          ? "Your package has been dispatched from the seller hub and is in transit."
+          : "Your package will be dispatched from the seller hub via courier.",
         date: dtShip.date,
         time: dtShip.time,
-        courier: courierName,
-        awb: awbNumber,
+        courier: isShippedStep ? courierName : null,
+        awb: isShippedStep ? awbNumber : null,
         icon: Truck,
-        isCompleted: true,
-      });
-    }
-
-    if (["on_the_way", "out_for_delivery", "delivered"].includes(currentItemStatus)) {
-      const outDate = (order.timeline || []).find((e) =>
-        ["out", "on_the_way"].some((kw) => String(e.type || "").toLowerCase().includes(kw))
-      )?.timestamp || order.updatedAt;
-      const dtOut = parseDateTime(outDate);
-      steps.push({
+        isCompleted: isShippedStep,
+      },
+      {
         id: "on_the_way",
         title: "Out for Delivery",
-        description: "Courier delivery executive is out for delivery to your doorstep today.",
+        description: isOutStep
+          ? "Courier delivery executive is out for delivery to your doorstep today."
+          : "Package will be assigned to a local delivery executive for doorstep delivery.",
         date: dtOut.date,
         time: dtOut.time,
-        courier: courierName,
-        awb: awbNumber,
+        courier: isOutStep ? courierName : null,
+        awb: isOutStep ? awbNumber : null,
         icon: Truck,
-        isCompleted: true,
-      });
-    }
-
-    if (currentItemStatus === "delivered") {
-      const delvDate = order.deliveredAt || order.updatedAt;
-      const dtDelv = parseDateTime(delvDate);
-      steps.push({
+        isCompleted: isOutStep,
+      },
+      {
         id: "delivered",
         title: "Delivered",
-        description: "Package was safely delivered to recipient. Thank you for shopping with SwagSync!",
+        description: isDeliveredStep
+          ? "Package was safely delivered to recipient. Thank you for shopping with SwagSync!"
+          : "Package will be delivered to your delivery address.",
         date: dtDelv.date,
         time: dtDelv.time,
         icon: CheckCircle2,
-        isCompleted: true,
-      });
-    }
-
-    return steps;
+        isCompleted: isDeliveredStep,
+      },
+    ];
   };
 
   return (
@@ -1218,6 +1220,7 @@ const OrderDetails = () => {
                               productId={item.product?._id || item.product}
                               item={item}
                               eligibility={eligibility}
+                              hideTrackButton={true}
                             />
                             {!activeRequest && (
                               <div className="flex items-center gap-1 text-xs text-slate-500">
@@ -1299,45 +1302,41 @@ const OrderDetails = () => {
                 </div>
               </div>
 
-              {/* Compact Tracking Summary: Only main status names joined by arrows up to current status */}
+              {/* Compact Tracking Summary: ALWAYS show only the single current/latest status */}
               <div className="py-2">
-                <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
-                  {getCompactTrackingSteps().map((stepName, idx, arr) => {
-                    const isLast = idx === arr.length - 1;
-                    const isCancelledStep = stepName.toLowerCase().includes("cancel");
+                {(() => {
+                  const currentStatus = getCurrentTrackingStatusName();
+                  const isCancelOrReject =
+                    currentStatus.toLowerCase().includes("cancel") ||
+                    currentStatus.toLowerCase().includes("reject");
+                  const isReturnOrExchange =
+                    currentStatus.toLowerCase().includes("return") ||
+                    currentStatus.toLowerCase().includes("exchange") ||
+                    currentStatus.toLowerCase().includes("pickup");
 
-                    return (
-                      <div key={idx} className="flex items-center gap-2 sm:gap-2.5">
-                        <span
-                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                            isCancelledStep
-                              ? "bg-rose-50 text-rose-700 border border-rose-200 font-bold"
-                              : isLast
-                              ? "bg-emerald-50 text-emerald-800 border border-emerald-300 font-bold shadow-2xs"
-                              : "bg-slate-50 text-slate-700 border border-slate-200"
-                          }`}
-                        >
-                          <span
-                            className={`w-2 h-2 rounded-full ${
-                              isCancelledStep
-                                ? "bg-rose-500"
-                                : isLast
-                                ? "bg-emerald-500"
-                                : "bg-emerald-400"
-                            }`}
-                          />
-                          {stepName}
-                        </span>
-
-                        {!isLast && (
-                          <span className="text-slate-400 font-bold text-sm select-none">
-                            →
-                          </span>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
+                  return (
+                    <span
+                      className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shadow-2xs border ${
+                        isCancelOrReject
+                          ? "bg-rose-50 text-rose-700 border-rose-200"
+                          : isReturnOrExchange
+                          ? "bg-amber-50 text-amber-800 border-amber-200"
+                          : "bg-emerald-50 text-emerald-800 border-emerald-300"
+                      }`}
+                    >
+                      <span
+                        className={`w-2 h-2 rounded-full ${
+                          isCancelOrReject
+                            ? "bg-rose-500"
+                            : isReturnOrExchange
+                            ? "bg-amber-500"
+                            : "bg-emerald-500 animate-pulse"
+                        }`}
+                      />
+                      {currentStatus}
+                    </span>
+                  );
+                })()}
               </div>
 
               {/* See All Updates Link */}
@@ -1660,35 +1659,62 @@ const OrderDetails = () => {
                     {updates.map((step, idx) => {
                       const isLast = idx === updates.length - 1;
                       const IconComp = step.icon || CheckCircle2;
+                      const isCompleted = !!step.isCompleted;
+                      const nextStepCompleted = !isLast && !!updates[idx + 1]?.isCompleted;
+                      const isCancelled = step.id === "cancelled" || step.id.includes("reject");
+                      const isRefund = step.id === "refund";
 
                       return (
                         <div key={step.id || idx} className="relative flex items-start gap-4">
                           {/* Connecting line */}
                           {!isLast && (
-                            <div className="absolute left-[13px] top-[26px] w-[2px] h-[calc(100%+24px)] bg-emerald-500 -z-0" />
+                            <div
+                              className={`absolute left-[13px] top-[26px] w-[2px] h-[calc(100%+24px)] -z-0 transition-colors ${
+                                nextStepCompleted ? "bg-emerald-500" : "bg-slate-200"
+                              }`}
+                            />
                           )}
 
                           {/* Step Node */}
                           <div
-                            className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 z-10 ${
-                              step.id === "cancelled"
+                            className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 z-10 transition-all ${
+                              isCancelled
                                 ? "bg-rose-600 text-white shadow-xs"
-                                : step.id === "refund"
+                                : isRefund && isCompleted
                                 ? "bg-purple-600 text-white shadow-xs"
-                                : "bg-emerald-600 text-white shadow-xs"
+                                : isCompleted
+                                ? "bg-emerald-600 text-white shadow-xs"
+                                : "bg-slate-100 text-slate-400 border-2 border-slate-300"
                             }`}
                           >
                             <IconComp className="w-3.5 h-3.5 stroke-[2.5]" />
                           </div>
 
                           {/* Step Card with Status, Date, Time, Message, Courier & AWB */}
-                          <div className="flex-1 min-w-0 bg-slate-50/80 border border-slate-200/80 rounded-xl p-3.5 space-y-2">
+                          <div
+                            className={`flex-1 min-w-0 rounded-xl p-3.5 space-y-2 transition-all ${
+                              isCompleted
+                                ? "bg-white border border-slate-200/90 shadow-2xs"
+                                : "bg-slate-50/50 border border-dashed border-slate-200 opacity-60"
+                            }`}
+                          >
                             {/* Status Title + Date/Time */}
                             <div className="flex items-start justify-between gap-2 flex-wrap">
-                              <h4 className="text-xs sm:text-sm font-bold text-slate-900">
-                                {step.title}
-                              </h4>
-                              {(step.date || step.time) && (
+                              <div className="flex items-center gap-2">
+                                <h4
+                                  className={`text-xs sm:text-sm font-bold ${
+                                    isCompleted ? "text-slate-900" : "text-slate-500"
+                                  }`}
+                                >
+                                  {step.title}
+                                </h4>
+                                {!isCompleted && (
+                                  <span className="text-[10px] bg-slate-200/70 text-slate-600 px-1.5 py-0.5 rounded font-medium">
+                                    Pending
+                                  </span>
+                                )}
+                              </div>
+                              {isCompleted && (step.date || step.time) && (
                                 <div className="text-right">
                                   <span className="text-[11px] font-semibold text-slate-700 block">
                                     {step.date}
@@ -1700,15 +1726,26 @@ const OrderDetails = () => {
                                   )}
                                 </div>
                               )}
+                              {!isCompleted && (
+                                <span className="text-[10px] text-slate-400 font-medium">
+                                  Upcoming
+                                </span>
+                              )}
                             </div>
 
                             {/* Detailed Status Message */}
-                            <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                            <p
+                              className={`text-xs leading-relaxed ${
+                                isCompleted
+                                  ? "text-slate-600 font-medium"
+                                  : "text-slate-400 font-normal"
+                              }`}
+                            >
                               {step.description}
                             </p>
 
                             {/* Courier & AWB / Tracking info if available */}
-                            {(step.courier || step.awb) && (
+                            {isCompleted && (step.courier || step.awb) && (
                               <div className="pt-2 mt-1 border-t border-slate-200/60 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs">
                                 {step.courier && (
                                   <span className="text-slate-600 inline-flex items-center gap-1">
