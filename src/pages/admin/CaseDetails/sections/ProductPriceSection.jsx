@@ -46,7 +46,9 @@ const ProductPriceSection = ({
       : 0;
       
     const netPaid = Math.max(0, grossTotal - proportionalDiscount);
-    return { unitPrice, qty, grossTotal, proportionalDiscount, netPaid, gstAmount: Number(item?.gstAmount || 0) * qty };
+    const rawGst = Number(item?.gstAmount || 0) * qty;
+    const gstAmount = Math.round(rawGst * 100) / 100;
+    return { unitPrice, qty, grossTotal, proportionalDiscount, netPaid, gstAmount };
   };
 
   // Timeline & Audit Log calculations
@@ -305,7 +307,7 @@ const ProductPriceSection = ({
                 }, 0) + shipping;
                 
                 const totalGrossTotal = displayItems.reduce((acc, item) => acc + (Number(calculateItemFinancials(item, order).grossTotal) || 0), 0);
-                const totalGST = displayItems.reduce((acc, item) => acc + (Number(calculateItemFinancials(item, order).gstAmount) || 0), 0);
+                const totalGST = Math.round(displayItems.reduce((acc, item) => acc + (Number(calculateItemFinancials(item, order).gstAmount) || 0), 0) * 100) / 100;
 
                 return (
                   <div className="bg-white p-5 rounded-2xl border border-gray-200/80 shadow-2xs space-y-3.5">
@@ -329,7 +331,7 @@ const ProductPriceSection = ({
                           <div className="pt-2 mt-2 border-t border-gray-100 border-dashed"></div>
                           <div className="flex justify-between items-center text-slate-600">
                             <span className="font-semibold">Tax (Total GST)</span>
-                            <span className="font-mono font-semibold text-amber-700">₹{totalGST.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span>
+                            <span className="font-mono font-semibold text-amber-700">+₹{totalGST.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                           </div>
                         </>
                       )}
@@ -337,7 +339,7 @@ const ProductPriceSection = ({
                       <div className="pt-3 mt-2 border-t border-gray-200 flex flex-col gap-2">
                         <div className="flex justify-between items-center font-bold text-slate-900 text-sm">
                           <span>Total Amount Paid</span>
-                          <span className="text-emerald-700 font-black text-base font-mono">₹{Number(computedGrandTotal || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span>
+                          <span className="text-emerald-700 font-black text-base font-mono">₹{Number(computedGrandTotal || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                         </div>
                         <div className="text-[10px] text-slate-400 font-medium">
                           Paid • {formatDate(order.createdAt)} • {(() => {
@@ -360,22 +362,57 @@ const ProductPriceSection = ({
                           </button>
                           
                           {showItemBreakdown && (
-                            <div className="mt-3 space-y-2 pl-2 border-l-2 border-indigo-100">
+                            <div className="mt-3 space-y-2 max-h-[260px] overflow-y-auto pr-1.5 custom-scrollbar">
                               {displayItems.map((item, i) => {
+                                const product = item.product || item;
+                                const variant = item.variant || item.originalVariant || {};
+                                const title = product.title || product.name || `Item ${i + 1}`;
+                                const brand = product.brand?.name || (typeof product.brand === "string" ? product.brand : null) || item.brand?.name || (typeof item.brand === "string" ? item.brand : null) || "";
                                 const fin = calculateItemFinancials(item, order);
                                 const itemGst = Number(fin.gstAmount || 0);
+
+                                let color = "";
+                                let size = "";
+                                if (Array.isArray(variant.attributes) && variant.attributes.length > 0) {
+                                  variant.attributes.forEach((attr) => {
+                                    const attrName = attr.attribute?.name?.toLowerCase() || "";
+                                    const optValue = attr.option?.displayName || attr.option?.storedValue || attr.option?.value || attr.value || "";
+                                    if (attrName.includes("color") && optValue) color = optValue;
+                                    if (attrName.includes("size") && optValue) size = optValue;
+                                  });
+                                }
+                                if (!color) color = item.color || variant.color || "";
+                                if (!size) size = item.size || variant.size || "";
+                                const variantDesc = [color, size].filter(Boolean).join(" • ");
+
                                 return (
-                                  <div key={`breakdown-${i}`} className="space-y-1">
-                                    <div className="flex justify-between items-center text-slate-600 text-[11px]">
-                                      <span>Item {i + 1} Price</span>
-                                      <span className="font-mono font-medium">₹{Number(fin.grossTotal).toLocaleString('en-IN')}</span>
-                                    </div>
-                                    {itemGst > 0 && (
-                                      <div className="flex justify-between items-center text-slate-500 text-[10px]">
-                                        <span>Item {i + 1} GST</span>
-                                        <span className="font-mono">₹{itemGst.toLocaleString('en-IN')}</span>
+                                  <div key={`breakdown-${i}`} className="p-2.5 rounded-xl bg-slate-50/90 border border-slate-100 space-y-1.5">
+                                    <div className="flex justify-between items-start gap-2">
+                                      <div className="min-w-0">
+                                        <div className="font-semibold text-slate-800 text-[11px] truncate" title={title}>
+                                          Item {i + 1}: {brand ? `${brand} - ` : ""}{title}
+                                        </div>
+                                        <div className="text-[10px] text-slate-400 font-medium">
+                                          {variantDesc ? `${variantDesc} • ` : ""}Qty: {fin.qty}
+                                        </div>
                                       </div>
-                                    )}
+                                      <span className="font-mono font-bold text-slate-800 text-xs shrink-0">
+                                        ₹{(Number(fin.grossTotal) + itemGst).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                      </span>
+                                    </div>
+
+                                    <div className="pt-1 border-t border-slate-200/50 space-y-0.5 text-[11px]">
+                                      <div className="flex justify-between items-center text-slate-600">
+                                        <span>Item {i + 1} Price</span>
+                                        <span className="font-mono font-medium">₹{Number(fin.grossTotal).toLocaleString('en-IN')}</span>
+                                      </div>
+                                      {itemGst > 0 && (
+                                        <div className="flex justify-between items-center text-amber-700">
+                                          <span>Item {i + 1} GST</span>
+                                          <span className="font-mono font-semibold">+₹{itemGst.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                        </div>
+                                      )}
+                                    </div>
                                   </div>
                                 );
                               })}

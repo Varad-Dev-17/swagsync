@@ -580,8 +580,8 @@ export const createOrder = async (req, res) => {
       const itemSellingPrice = variant.price * item.quantity;
       const gstRate = variant.gstRate || 0;
       
-      const itemBasePrice = itemSellingPrice / (1 + (gstRate / 100));
-      const itemGSTAmount = itemSellingPrice - itemBasePrice;
+      const itemBasePrice = Math.round((itemSellingPrice / (1 + (gstRate / 100))) * 100) / 100;
+      const itemGSTAmount = Math.round((itemSellingPrice - itemBasePrice) * 100) / 100;
 
       subtotal += itemSellingPrice;
       totalMRP += itemMRP;
@@ -594,9 +594,9 @@ export const createOrder = async (req, res) => {
         quantity: item.quantity,
         mrp: variant.mrp || variant.price,
         sellingPrice: variant.price,
-        basePrice: variant.price / (1 + (gstRate / 100)),
+        basePrice: Math.round((variant.price / (1 + (gstRate / 100))) * 100) / 100,
         gstRate: gstRate,
-        gstAmount: variant.price - (variant.price / (1 + (gstRate / 100))),
+        gstAmount: Math.round((variant.price - (variant.price / (1 + (gstRate / 100)))) * 100) / 100,
       });
     }
 

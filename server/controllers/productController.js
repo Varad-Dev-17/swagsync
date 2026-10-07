@@ -109,12 +109,16 @@ export const getAllVariantGroups = async (req, res) => {
 
     const postLookupMatch = {};
     if (search.trim()) {
-      const searchRegex = new RegExp(search.trim().replace(/\s+/g, "[-\\s]*"), "i");
+      const escapedQuery = search.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const searchRegex = new RegExp(escapedQuery.replace(/\s+/g, "[-\\s]*"), "i");
       postLookupMatch.$or = [
         { title: searchRegex },
         { shortDescription: searchRegex },
         { slug: searchRegex },
-        { "variants.sku": searchRegex }
+        { "variants.sku": searchRegex },
+        { "brandDoc.name": searchRegex },
+        { "categoryDoc.name": searchRegex },
+        { "departmentDoc.name": searchRegex },
       ];
     }
 
@@ -1279,6 +1283,181 @@ export const getNewArrivals = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to fetch new arrivals",
+    });
+  }
+};
+
+// GET SEARCH SUGGESTIONS (Autocomplete & Instant Recommendations)
+export const getSearchSuggestions = async (req, res) => {
+  try {
+    const { q = "" } = req.query;
+    const query = q.trim();
+
+    if (!query || query.length < 1) {
+      return res.status(200).json({
+        success: true,
+        data: {
+          products: [],
+          categories: [],
+          brands: [],
+          totalCount: 0,
+        },
+      });
+    }
+
+    const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const regex = new RegExp(escapedQuery.replace(/\s+/g, "[-\\s]*"), "i");
+
+    // 1. Fetch matching active products with their brand, category, and department
+    const products = await Product.find({
+      status: "Active",
+      $or: [
+        { title: regex },
+        { shortDescription: regex },
+        { slug: regex },
+      ],
+    })
+      .populate("brand", "name")
+      .populate("category", "name slug")
+      .populate("department", "name slug")
+      .limit(6)
+      .lean();
+
+    // 2. Also search products matching brand or category name if fewer than 6
+    let additionalProducts = [];
+    if (products.length < 6) {
+      const matchingBrands = await Brand.find({ name: regex }).select("_id").lean();
+      const matchingCategories = await Category.find({ name: regex }).select("_id").lean();
+
+      const excludeIds = products.map((p) => p._id);
+      const orConditions = [];
+      if (matchingBrands.length > 0) {
+        orConditions.push({ brand: { $in: matchingBrands.map((b) => b._id) } });
+      }
+      if (matchingCategories.length > 0) {
+        orConditions.push({ category: { $in: matchingCategories.map((c) => c._id) } });
+      }
+
+      if (orConditions.length > 0) {
+        additionalProducts = await Product.find({
+          status: "Active",
+          _id: { $nin: excludeIds },
+          $or: orConditions,
+        })
+          .populate("brand", "name")
+          .populate("category", "name slug")
+          .populate("department", "name slug")
+          .limit(6 - products.length)
+          .lean();
+      }
+    }
+
+    const allProducts = [...products, ...additionalProducts];
+    const productIds = allProducts.map((p) => p._id);
+
+    // Fetch active variants for these products directly from Variant collection
+    const variants = await Variant.find({
+      product: { $in: productIds },
+    })
+      .select("product price mrp mainImage sku stock")
+      .lean();
+
+    const variantsByProduct = {};
+    variants.forEach((v) => {
+      const pid = v.product.toString();
+      if (!variantsByProduct[pid]) variantsByProduct[pid] = [];
+      variantsByProduct[pid].push(v);
+    });
+
+    // Format products for quick recommendation display
+    const formattedProducts = allProducts.map((p) => {
+      const prodVariants = variantsByProduct[p._id.toString()] || [];
+      let minPrice = 0;
+      let minMRP = 0;
+      let thumbnail = "";
+
+      if (prodVariants.length > 0) {
+        const sorted = [...prodVariants].sort((a, b) => (a.price || 0) - (b.price || 0));
+        minPrice = sorted[0].price || 0;
+        minMRP = sorted[0].mrp || sorted[0].price || minPrice;
+        thumbnail = sorted[0].mainImage?.url || "";
+      }
+
+      const discountPercent =
+        minMRP > minPrice ? Math.round(((minMRP - minPrice) / minMRP) * 100) : 0;
+
+      return {
+        _id: p._id,
+        title: p.title,
+        slug: p.slug,
+        brand: p.brand?.name || "",
+        category: p.category?.name || "",
+        department: p.department?.name || "",
+        price: minPrice,
+        mrp: minMRP,
+        discountPercent,
+        image: thumbnail,
+      };
+    });
+
+    // 3. Fetch matching Categories
+    const categories = await Category.find({
+      name: regex,
+    })
+      .select("name slug")
+      .limit(4)
+      .lean();
+
+    // 4. Fetch matching Brands
+    const brands = await Brand.find({
+      name: regex,
+    })
+      .select("name slug")
+      .limit(4)
+      .lean();
+
+    // 5. Generate smart search query keyword suggestions
+    const keywordSet = new Set();
+    categories.forEach((c) => {
+      if (c.name) keywordSet.add(c.name);
+    });
+    brands.forEach((b) => {
+      if (b.name) keywordSet.add(b.name);
+    });
+    formattedProducts.forEach((p) => {
+      if (p.title) {
+        keywordSet.add(p.title);
+      }
+    });
+
+    const keywords = Array.from(keywordSet).slice(0, 5);
+
+    // 6. Count total matching products
+    const totalCount = await Product.countDocuments({
+      status: "Active",
+      $or: [
+        { title: regex },
+        { shortDescription: regex },
+        { slug: regex },
+      ],
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        keywords,
+        products: formattedProducts,
+        categories: categories.map((c) => ({ name: c.name, slug: c.slug })),
+        brands: brands.map((b) => ({ name: b.name, slug: b.slug })),
+        totalCount,
+      },
+    });
+  } catch (error) {
+    console.error("Error in getSearchSuggestions:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch search suggestions",
+      data: { products: [], categories: [], brands: [], totalCount: 0 },
     });
   }
 };

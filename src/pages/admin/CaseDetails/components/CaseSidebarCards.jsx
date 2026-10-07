@@ -99,9 +99,10 @@ const CaseSidebarCards = ({
     ? (returnRequest?.refundAmount || itemPrice)
     : Number(order?.totalAmount || itemPrice);
 
-  const gstAmount = !isReturnView
+  const rawGst = !isReturnView
     ? orderItems.reduce((acc, item) => acc + (Number(item?.gstAmount || 0) * Number(item?.quantity || 1)), 0)
     : 0;
+  const gstAmount = Math.round(rawGst * 100) / 100;
 
   // Next actionable button logic
   let primaryActionLabel = null;
@@ -330,14 +331,14 @@ const CaseSidebarCards = ({
                 <div className="flex items-center justify-between">
                   <span>Tax (Total GST)</span>
                   <span className="text-amber-700 font-mono font-semibold">
-                    ₹{Number(gstAmount).toLocaleString("en-IN")}
+                    +₹{gstAmount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
                 </div>
               )}
 
               <div className="pt-2 border-t border-slate-100 flex items-center justify-between font-bold text-sm text-slate-900">
                 <span>Total Amount</span>
-                <span className="font-mono text-base font-bold text-[#4F46E5]">₹{Number(totalAmount).toLocaleString("en-IN")}</span>
+                <span className="font-mono text-base font-bold text-[#4F46E5]">₹{Number(totalAmount).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
               </div>
             </>
           )}

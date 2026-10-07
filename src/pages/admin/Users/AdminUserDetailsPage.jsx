@@ -1450,10 +1450,10 @@ const AdminUserDetailsPage = () => {
                   </span>
                 </div>
 
-                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/70">
+                {/* <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/70">
                   <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Database Record ID</span>
                   <span className="font-mono text-xs text-slate-800 font-bold block mt-1 truncate">{user._id}</span>
-                </div>
+                </div> */}
               </div>
             </div>
           )}

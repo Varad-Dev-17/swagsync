@@ -45,7 +45,7 @@ const UsersSection = () => {
 
   // Filters & Sorting & Pagination
   const [search, setSearch] = useState("");
-  const [roleFilter, setRoleFilter] = useState("all");
+  const [roleFilter, setRoleFilter] = useState("user");
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
   const [page, setPage] = useState(1);
@@ -205,35 +205,50 @@ const UsersSection = () => {
         </button>
       </div>
 
-      {/* 2. Stat Cards - Compact & Left-Aligned */}
+      {/* 2. Stat Cards - Interactive Filters */}
       <div className="flex flex-wrap items-center gap-3.5 sm:gap-4">
         
         {/* Total Users */}
-        <div className="bg-white rounded-xl px-5 py-3.5 border border-slate-200/90 shadow-2xs flex items-center gap-3.5 hover:border-slate-300 transition-colors w-full sm:w-auto sm:min-w-[205px]">
+        <div 
+          onClick={() => { setRoleFilter("all"); setStatusFilter("all"); }}
+          className={`bg-white rounded-xl px-5 py-3.5 border shadow-2xs flex items-center gap-3.5 transition-all cursor-pointer w-full sm:w-auto sm:min-w-[205px] ${
+            roleFilter === "all" ? "border-[#4F46E5] ring-2 ring-indigo-100" : "border-slate-200/90 hover:border-slate-300"
+          }`}
+        >
           <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center shrink-0 text-[#4F46E5]">
             <Users size={19} className="stroke-[2.2]" />
           </div>
           <div className="min-w-0">
-            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider truncate">Total Users</p>
+            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider truncate">Total Accounts</p>
             <h3 className="text-xl font-extrabold text-slate-900 tracking-tight leading-tight mt-0.5">{stats.total}</h3>
-            <p className="text-[11px] text-slate-400 font-medium truncate">All registered users</p>
+            <p className="text-[11px] text-slate-400 font-medium truncate">All registered accounts</p>
           </div>
         </div>
 
-        {/* Active Users */}
-        <div className="bg-white rounded-xl px-5 py-3.5 border border-slate-200/90 shadow-2xs flex items-center gap-3.5 hover:border-slate-300 transition-colors w-full sm:w-auto sm:min-w-[205px]">
-          <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center shrink-0 text-emerald-600">
-            <CheckCircle2 size={19} className="stroke-[2.2]" />
+        {/* Regular Users */}
+        <div 
+          onClick={() => { setRoleFilter("user"); }}
+          className={`bg-white rounded-xl px-5 py-3.5 border shadow-2xs flex items-center gap-3.5 transition-all cursor-pointer w-full sm:w-auto sm:min-w-[205px] ${
+            roleFilter === "user" ? "border-[#4F46E5] ring-2 ring-indigo-100" : "border-slate-200/90 hover:border-slate-300"
+          }`}
+        >
+          <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0 text-blue-600">
+            <Users size={19} className="stroke-[2.2]" />
           </div>
           <div className="min-w-0">
-            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider truncate">Active Users</p>
-            <h3 className="text-xl font-extrabold text-emerald-600 tracking-tight leading-tight mt-0.5">{stats.active}</h3>
-            <p className="text-[11px] text-slate-400 font-medium truncate">Verified & active</p>
+            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider truncate">Standard Users</p>
+            <h3 className="text-xl font-extrabold text-blue-600 tracking-tight leading-tight mt-0.5">{stats.total - stats.admins}</h3>
+            <p className="text-[11px] text-slate-400 font-medium truncate">Customers & buyers</p>
           </div>
         </div>
 
         {/* Admins */}
-        <div className="bg-white rounded-xl px-5 py-3.5 border border-slate-200/90 shadow-2xs flex items-center gap-3.5 hover:border-slate-300 transition-colors w-full sm:w-auto sm:min-w-[205px]">
+        <div 
+          onClick={() => { setRoleFilter("admin"); }}
+          className={`bg-white rounded-xl px-5 py-3.5 border shadow-2xs flex items-center gap-3.5 transition-all cursor-pointer w-full sm:w-auto sm:min-w-[205px] ${
+            roleFilter === "admin" ? "border-purple-600 ring-2 ring-purple-100" : "border-slate-200/90 hover:border-slate-300"
+          }`}
+        >
           <div className="w-10 h-10 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center shrink-0 text-purple-600">
             <Shield size={19} className="stroke-[2.2]" />
           </div>
@@ -244,8 +259,30 @@ const UsersSection = () => {
           </div>
         </div>
 
+        {/* Active Users */}
+        <div 
+          onClick={() => { setStatusFilter(statusFilter === "verified" ? "all" : "verified"); }}
+          className={`bg-white rounded-xl px-5 py-3.5 border shadow-2xs flex items-center gap-3.5 transition-all cursor-pointer w-full sm:w-auto sm:min-w-[205px] ${
+            statusFilter === "verified" ? "border-emerald-600 ring-2 ring-emerald-100" : "border-slate-200/90 hover:border-slate-300"
+          }`}
+        >
+          <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center shrink-0 text-emerald-600">
+            <CheckCircle2 size={19} className="stroke-[2.2]" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider truncate">Active Users</p>
+            <h3 className="text-xl font-extrabold text-emerald-600 tracking-tight leading-tight mt-0.5">{stats.active}</h3>
+            <p className="text-[11px] text-slate-400 font-medium truncate">Verified & active</p>
+          </div>
+        </div>
+
         {/* Restricted Users */}
-        <div className="bg-white rounded-xl px-5 py-3.5 border border-slate-200/90 shadow-2xs flex items-center gap-3.5 hover:border-slate-300 transition-colors w-full sm:w-auto sm:min-w-[205px]">
+        <div 
+          onClick={() => { setStatusFilter(statusFilter === "blocked" ? "all" : "blocked"); }}
+          className={`bg-white rounded-xl px-5 py-3.5 border shadow-2xs flex items-center gap-3.5 transition-all cursor-pointer w-full sm:w-auto sm:min-w-[205px] ${
+            statusFilter === "blocked" ? "border-rose-600 ring-2 ring-rose-100" : "border-slate-200/90 hover:border-slate-300"
+          }`}
+        >
           <div className="w-10 h-10 rounded-xl bg-rose-50 border border-rose-100 flex items-center justify-center shrink-0 text-rose-600">
             <ShieldAlert size={19} className="stroke-[2.2]" />
           </div>
@@ -269,25 +306,15 @@ const UsersSection = () => {
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
             <input
               type="text"
-              placeholder="Search by name or email..."
+              placeholder={roleFilter === "admin" ? "Search admins by name or email..." : "Search by name or email..."}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full pl-10 pr-4 py-2 text-sm font-medium text-slate-800 placeholder:text-slate-400 bg-slate-50/60 hover:bg-slate-50 focus:bg-white border border-slate-200 rounded-lg outline-none focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5] transition-all shadow-2xs"
             />
           </div>
 
-          {/* Filter Dropdowns */}
+          {/* Right: Status and Sort Dropdowns */}
           <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
-            <select
-              value={roleFilter}
-              onChange={(e) => setRoleFilter(e.target.value)}
-              className="px-3.5 py-2 bg-slate-50/60 hover:bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 outline-none focus:border-[#4F46E5] cursor-pointer transition-colors shadow-2xs"
-            >
-              <option value="all">All Roles</option>
-              <option value="admin">Admin</option>
-              <option value="user">User</option>
-            </select>
-
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
@@ -343,7 +370,13 @@ const UsersSection = () => {
                     <div className="w-12 h-12 bg-slate-50 border border-slate-200 rounded-full flex items-center justify-center mx-auto mb-2.5 text-slate-400">
                       <Users size={24} />
                     </div>
-                    <p className="text-sm font-bold text-slate-700">No users found</p>
+                    <p className="text-sm font-bold text-slate-700">
+                      {roleFilter === "admin"
+                        ? "No administrators found"
+                        : roleFilter === "user"
+                        ? "No users found"
+                        : "No accounts found"}
+                    </p>
                     <p className="text-xs text-slate-400 mt-0.5">Try adjusting your search or filter options.</p>
                   </td>
                 </tr>
