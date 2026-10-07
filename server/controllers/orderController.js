@@ -377,8 +377,9 @@ export const initRazorpayOrder = async (req, res) => {
 
     let couponDiscount = 0;
     if (couponCode?.trim()) {
+      const cleanCode = couponCode.trim().toUpperCase();
       const coupon = await Coupon.findOne({
-        code: couponCode.trim().toUpperCase(),
+        code: cleanCode,
         status: "active",
       });
       if (coupon) {
@@ -389,7 +390,24 @@ export const initRazorpayOrder = async (req, res) => {
           (!coupon.usageLimit || coupon.usageLimit === 0 || (coupon.usedCount || 0) < coupon.usageLimit) &&
           subtotal >= (coupon.minimumOrderAmount || 0);
 
-        if (isValid) {
+        // Security: Prevent reusing coupons on multiple orders if restricted or already used
+        const alreadyUsed = await Order.findOne({
+          user: userId,
+          "coupon.code": cleanCode,
+          status: { $ne: "cancelled" },
+        });
+
+        // Security: Ensure first-purchase coupons (e.g. SWAGFIRST) are only used on the user's first order
+        let isFirstOrderEligible = true;
+        if (cleanCode === "SWAGFIRST" || (coupon.description || "").toLowerCase().includes("first purchase")) {
+          const priorCount = await Order.countDocuments({
+            user: userId,
+            status: { $ne: "cancelled" },
+          });
+          if (priorCount > 0) isFirstOrderEligible = false;
+        }
+
+        if (isValid && !alreadyUsed && isFirstOrderEligible) {
           const discountType = coupon.discountType || coupon.type;
           const discountValue = Number(coupon.discountValue ?? coupon.value ?? 0);
           const maxDiscount = Number(coupon.maximumDiscount ?? coupon.maxDiscountAmount ?? 0);
@@ -468,6 +486,18 @@ export const createOrder = async (req, res) => {
       });
     }
 
+    // Sanitize shipping address input against XSS and object injection
+    const cleanStr = (val) => String(val || "").replace(/[<>]/g, "").trim();
+    const sanitizedShippingAddress = {
+      name: cleanStr(shippingAddress.name).slice(0, 100),
+      address: cleanStr(shippingAddress.address).slice(0, 300),
+      city: cleanStr(shippingAddress.city).slice(0, 100),
+      state: cleanStr(shippingAddress.state).slice(0, 100),
+      pincode: cleanStr(shippingAddress.pincode).slice(0, 20),
+      phone: cleanStr(shippingAddress.phone).slice(0, 20),
+      country: cleanStr(shippingAddress.country || "India").slice(0, 50),
+    };
+
     if (paymentMethod === "razorpay") {
       if (!razorpayOrderId || !razorpayPaymentId || !razorpaySignature) {
         return res.status(400).json({
@@ -476,14 +506,33 @@ export const createOrder = async (req, res) => {
           data: null,
         });
       }
+
+      // Security 1: Prevent Payment Replay Attacks (cannot reuse a transaction id)
+      const duplicatePayment = await Order.findOne({ razorpayPaymentId });
+      if (duplicatePayment) {
+        return res.status(400).json({
+          success: false,
+          message: "This payment transaction ID has already been utilized for another order.",
+          data: null,
+        });
+      }
       
+      // Security 2: Timing-Safe Signature Verification (prevents timing attacks on HMAC)
       const body = razorpayOrderId + "|" + razorpayPaymentId;
       const expectedSignature = crypto
         .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
         .update(body.toString())
         .digest("hex");
         
-      if (expectedSignature !== razorpaySignature) {
+      const isSigValid =
+        typeof razorpaySignature === "string" &&
+        expectedSignature.length === razorpaySignature.length &&
+        crypto.timingSafeEqual(
+          Buffer.from(expectedSignature, "utf8"),
+          Buffer.from(razorpaySignature, "utf8")
+        );
+
+      if (!isSigValid) {
         return res.status(400).json({
           success: false,
           message: "Invalid payment signature",
@@ -555,44 +604,76 @@ export const createOrder = async (req, res) => {
     let couponApplied = null;
 
     if (couponCode?.trim()) {
-      const coupon = await Coupon.findOne({
-        code: couponCode.trim().toUpperCase(),
-        status: "active",
+      const cleanCode = couponCode.trim().toUpperCase();
+      const now = new Date();
+
+      // Security 3: Prevent duplicate usage across multiple orders by the same user
+      const alreadyUsedByUser = await Order.findOne({
+        user: userId,
+        "coupon.code": cleanCode,
+        status: { $ne: "cancelled" },
       });
 
-      if (coupon) {
-        const now = new Date();
-        const isValid =
-          (!coupon.startDate || now >= new Date(coupon.startDate)) &&
-          (!coupon.expiryDate || now <= new Date(coupon.expiryDate)) &&
-          (!coupon.usageLimit || coupon.usageLimit === 0 || (coupon.usedCount || 0) < coupon.usageLimit) &&
-          subtotal >= (coupon.minimumOrderAmount || 0);
+      // Security 4: Restrict first-order coupons (e.g. SWAGFIRST) strictly to first order
+      let isFirstOrderEligible = true;
+      if (cleanCode === "SWAGFIRST") {
+        const priorOrdersCount = await Order.countDocuments({
+          user: userId,
+          status: { $ne: "cancelled" },
+        });
+        if (priorOrdersCount > 0) isFirstOrderEligible = false;
+      }
 
-        if (isValid) {
-          const discountType = coupon.discountType || coupon.type;
-          const discountValue = Number(coupon.discountValue ?? coupon.value ?? 0);
-          const maxDiscount = Number(coupon.maximumDiscount ?? coupon.maxDiscountAmount ?? 0);
+      if (!alreadyUsedByUser && isFirstOrderEligible) {
+        // Security 5: Atomic find and increment to prevent TOCTOU concurrency race conditions
+        const coupon = await Coupon.findOneAndUpdate(
+          {
+            code: cleanCode,
+            status: "active",
+            $and: [
+              { $or: [{ startDate: { $exists: false } }, { startDate: null }, { startDate: { $lte: now } }] },
+              { $or: [{ expiryDate: { $exists: false } }, { expiryDate: null }, { expiryDate: { $gte: now } }] },
+              {
+                $or: [
+                  { usageLimit: 0 },
+                  { usageLimit: { $exists: false } },
+                  { usageLimit: null },
+                  { $expr: { $lt: ["$usedCount", "$usageLimit"] } },
+                ],
+              },
+            ],
+          },
+          { $inc: { usedCount: 1 } },
+          { new: true }
+        );
 
-          if (discountType === "percentage") {
-            couponDiscount = Math.round((subtotal * discountValue) / 100);
-            if (maxDiscount > 0 && couponDiscount > maxDiscount) {
-              couponDiscount = maxDiscount;
+        if (coupon) {
+          if (subtotal >= (coupon.minimumOrderAmount || 0)) {
+            const discountType = coupon.discountType || coupon.type;
+            const discountValue = Number(coupon.discountValue ?? coupon.value ?? 0);
+            const maxDiscount = Number(coupon.maximumDiscount ?? coupon.maxDiscountAmount ?? 0);
+
+            if (discountType === "percentage") {
+              couponDiscount = Math.round((subtotal * discountValue) / 100);
+              if (maxDiscount > 0 && couponDiscount > maxDiscount) {
+                couponDiscount = maxDiscount;
+              }
+            } else {
+              couponDiscount = Math.min(discountValue, subtotal);
             }
+
+            couponApplied = {
+              code: coupon.code,
+              discountType: discountType,
+              type: discountType,
+              discountValue: discountValue,
+              value: discountValue,
+              discountAmount: couponDiscount,
+            };
           } else {
-            couponDiscount = Math.min(discountValue, subtotal);
+            // Revert increment if min order requirement wasn't met
+            await Coupon.updateOne({ _id: coupon._id }, { $inc: { usedCount: -1 } });
           }
-
-          couponApplied = {
-            code: coupon.code,
-            discountType: discountType,
-            type: discountType,
-            discountValue: discountValue,
-            value: discountValue,
-            discountAmount: couponDiscount,
-          };
-
-          coupon.usedCount = (coupon.usedCount || 0) + 1;
-          await coupon.save();
         }
       }
     }
@@ -607,6 +688,30 @@ export const createOrder = async (req, res) => {
     // In inclusive GST model, selling prices already contain GST. Total is finalSubtotal + shipping.
     const totalAmount = finalSubtotal + shippingAmount;
     const totalDiscountAmount = (totalMRP - subtotal) + couponDiscount;
+
+    // Security 6: Verify paid amount on Razorpay matches calculated totalAmount (prevents amount tampering)
+    if (paymentMethod === "razorpay") {
+      try {
+        const razorpayInstance = new Razorpay({
+          key_id: process.env.RAZORPAY_KEY_ID,
+          key_secret: process.env.RAZORPAY_KEY_SECRET,
+        });
+        const rzpOrderDetails = await razorpayInstance.orders.fetch(razorpayOrderId);
+        const expectedPaise = Math.round(totalAmount * 100);
+        if (rzpOrderDetails && rzpOrderDetails.amount !== expectedPaise) {
+          if (couponApplied) {
+            await Coupon.updateOne({ code: couponApplied.code }, { $inc: { usedCount: -1 } });
+          }
+          return res.status(400).json({
+            success: false,
+            message: `Paid amount (₹${(rzpOrderDetails.amount / 100).toFixed(2)}) does not match order total (₹${totalAmount.toFixed(2)}). Payment rejected for security.`,
+            data: null,
+          });
+        }
+      } catch (rzpErr) {
+        console.error("Razorpay order amount validation error:", rzpErr);
+      }
+    }
     
     let orderId = "";
     try {
@@ -621,7 +726,7 @@ export const createOrder = async (req, res) => {
       orderId,
       user: userId,
       items: orderItems,
-      shippingAddress,
+      shippingAddress: sanitizedShippingAddress,
       totalMRP: Math.round(totalMRP * 100) / 100,
       subtotal: Math.round(subtotal * 100) / 100,
       discountAmount: Math.round(totalDiscountAmount * 100) / 100,
