@@ -262,7 +262,7 @@ const OrderDetails = () => {
 
         <div class="totals">
           <div><span>Items Subtotal:</span><span>₹${Number(displaySubtotal || 0).toLocaleString("en-IN")}</span></div>
-          ${displayCouponDiscount ? `<div style="color: #16a34a;"><span>Promo Discount:</span><span>-₹${Number(displayCouponDiscount).toLocaleString("en-IN")}</span></div>` : ""}
+          ${displayCouponDiscount ? `<div style="color: #16a34a;"><span>Coupon Discount ${order.coupon?.code ? `(${order.coupon.code})` : ""}:</span><span>-₹${Number(displayCouponDiscount).toLocaleString("en-IN")}</span></div>` : ""}
           <div><span>Delivery Charges:</span><span>${Number(displayShipping || 0) === 0 ? "FREE" : `₹${Number(displayShipping || 0).toLocaleString("en-IN")}`}</span></div>
           <div class="grand-total"><span>Total Paid Amount:</span><span>₹${Number(displayTotalPaid || 0).toLocaleString("en-IN")}</span></div>
         </div>
@@ -336,29 +336,43 @@ const OrderDetails = () => {
   const itemGrossMRP = unitMRP * selectedQty;
 
   // Coupon calculation
+  const explicitCouponDiscount = Number(order.coupon?.discountAmount || 0);
   const calculatedCouponDiff = Math.max(
     0,
     Math.round((orderSubtotal + shippingAmount) - totalPaidAmount)
   );
 
+  const couponVal = Number(order.coupon?.discountValue ?? order.coupon?.value ?? 0);
+  const couponType = order.coupon?.discountType || order.coupon?.type || "";
+
   const orderCouponDiscount =
-    calculatedCouponDiff > 0
+    explicitCouponDiscount > 0
+      ? explicitCouponDiscount
+      : calculatedCouponDiff > 0
       ? calculatedCouponDiff
-      : (order.coupon?.value
-          ? (order.coupon.type === "percentage"
-              ? Math.round((orderSubtotal * Number(order.coupon.value)) / 100)
-              : Number(order.coupon.value))
-          : (order.coupon?.code ? Number(order.discountAmount || 0) : 0));
+      : (couponVal > 0
+          ? (couponType === "percentage"
+              ? Math.round((orderSubtotal * couponVal) / 100)
+              : Math.min(couponVal, orderSubtotal))
+          : (order.coupon?.code ? Math.max(0, Number(order.discountAmount || 0) - Math.max(0, computedMRP - orderSubtotal)) : 0));
 
   const proportionalCouponDiscount =
-    selectedItem && orderSubtotal > 0 && itemGrossSelling > 0 && orderCouponDiscount > 0
-      ? Math.round((itemGrossSelling / orderSubtotal) * orderCouponDiscount)
-      : (selectedItem ? 0 : orderCouponDiscount);
+    selectedItem
+      ? (allOrderItems.length <= 1
+          ? orderCouponDiscount
+          : (orderSubtotal > 0 && itemGrossSelling > 0 && orderCouponDiscount > 0
+              ? Math.round((itemGrossSelling / orderSubtotal) * orderCouponDiscount)
+              : 0))
+      : orderCouponDiscount;
 
   const proportionalShipping =
-    selectedItem && orderSubtotal > 0 && itemGrossSelling > 0 && shippingAmount > 0
-      ? Math.round((itemGrossSelling / orderSubtotal) * shippingAmount)
-      : (selectedItem ? 0 : shippingAmount);
+    selectedItem
+      ? (allOrderItems.length <= 1
+          ? shippingAmount
+          : (orderSubtotal > 0 && itemGrossSelling > 0 && shippingAmount > 0
+              ? Math.round((itemGrossSelling / orderSubtotal) * shippingAmount)
+              : shippingAmount))
+      : shippingAmount;
 
   // Effective display values (switches to item-specific when user clicked a specific product)
   const displaySubtotal = selectedItem ? itemGrossSelling : orderSubtotal;

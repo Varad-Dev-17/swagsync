@@ -430,13 +430,13 @@ export const orderEmailTemplate = (order, user) => {
 
                       <!-- Coupon Discount if applicable -->
                       ${
-                        Number(order?.discountAmount || 0) > 0
+                        order?.coupon?.code && (Number(order?.coupon?.discountAmount || 0) > 0 || Number(order?.discountAmount || 0) > Math.max(0, Number(order?.totalMRP || 0) - Number(order?.subtotal || 0)))
                           ? `<tr>
                               <td style="font-size: 13px; color: #059669; padding-bottom: 8px;">
-                                Coupon Discount ${order?.coupon?.code ? `<span style="font-family: monospace; font-size: 11px; background-color: #DCFCE7; padding: 1px 5px; border-radius: 3px; font-weight: 600;">${order.coupon.code}</span>` : ""}
+                                Coupon Discount <span style="font-family: monospace; font-size: 11px; background-color: #DCFCE7; padding: 1px 5px; border-radius: 3px; font-weight: 600;">${order.coupon.code}</span>
                               </td>
                               <td align="right" style="font-size: 13px; font-weight: 600; color: #059669; padding-bottom: 8px;">
-                                - ${formatInr(order.discountAmount)}
+                                - ${formatInr(Number(order.coupon.discountAmount) || (Number(order.discountAmount || 0) - Math.max(0, Number(order.totalMRP || 0) - Number(order.subtotal || 0))))}
                               </td>
                             </tr>`
                           : ""

@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Banknote, Loader2, ShieldCheck } from 'lucide-react';
+import { Banknote, Loader2, ShieldCheck, Tag, Check, Sparkles } from 'lucide-react';
 import toast from 'react-hot-toast';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
 import CheckoutTracker from '../../components/bag/CheckoutTracker';
+import { calculateBagTotals } from '../../utils/BagUtils';
 
 const loadRazorpayScript = () => {
   return new Promise((resolve) => {
@@ -25,9 +26,31 @@ const Payment = () => {
   const [selectedMethod, setSelectedMethod] = useState('cod');
   const [isProcessing, setIsProcessing] = useState(false);
   const [selectedAddress, setSelectedAddress] = useState(null);
+
+  // Applied Coupon state from Bag
+  const [appliedCoupon] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem("swagsync_applied_coupon");
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const [couponDiscount] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem("swagsync_coupon_discount");
+      return saved ? Number(saved) : 0;
+    } catch {
+      return 0;
+    }
+  });
+
+  const [cartItems, setCartItems] = useState([]);
+  const [cartTotals, setCartTotals] = useState(null);
   
   useEffect(() => {
-    const fetchAddress = async () => {
+    const fetchAddressAndCart = async () => {
       const addressId = localStorage.getItem('checkout_address_id');
       if (!addressId) {
         toast.error('Please select an address first');
@@ -36,23 +59,35 @@ const Payment = () => {
       }
       
       try {
-        const response = await axios.get('/addresses', { headers: getAuthHeaders() });
-        if (response.data.success) {
-          const address = response.data.addresses.find(a => a._id === addressId);
+        const [addrRes, cartRes] = await Promise.all([
+          axios.get('/addresses', { headers: getAuthHeaders() }),
+          axios.get('/cart', { headers: getAuthHeaders() }).catch(() => null),
+        ]);
+
+        if (addrRes.data.success) {
+          const address = addrRes.data.addresses.find(a => a._id === addressId);
           if (address) {
             setSelectedAddress(address);
           } else {
             toast.error('Selected address not found');
             navigate('/checkout/address');
+            return;
           }
         }
+
+        if (cartRes?.data?.success && Array.isArray(cartRes.data.data?.items)) {
+          const items = cartRes.data.data.items;
+          setCartItems(items);
+          const computed = calculateBagTotals(items, couponDiscount);
+          setCartTotals(computed);
+        }
       } catch (error) {
-        toast.error('Failed to load address details');
+        toast.error('Failed to load checkout details');
       }
     };
     
-    fetchAddress();
-  }, [getAuthHeaders, navigate]);
+    fetchAddressAndCart();
+  }, [getAuthHeaders, navigate, couponDiscount]);
 
   const paymentMethods = [
     {
@@ -68,6 +103,14 @@ const Payment = () => {
       icon: <ShieldCheck size={24} className="text-[#FD7100]" />
     }
   ];
+
+  const formatPrice = (amount) => {
+    return new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
+      minimumFractionDigits: 0,
+    }).format(amount || 0);
+  };
 
   const handleConfirmOrder = async () => {
     if (!selectedMethod) {
@@ -90,6 +133,8 @@ const Payment = () => {
         phone: selectedAddress.phone
       };
 
+      const couponCode = appliedCoupon?.code || undefined;
+
       if (selectedMethod === 'razorpay') {
         const res = await loadRazorpayScript();
         if (!res) {
@@ -98,7 +143,10 @@ const Payment = () => {
           return;
         }
 
-        const payload = { shippingAddress };
+        const payload = { 
+          shippingAddress,
+          couponCode
+        };
         const initResponse = await axios.post('/orders/razorpay/init', payload, { headers: getAuthHeaders() });
         
         if (initResponse.data.success) {
@@ -115,6 +163,7 @@ const Payment = () => {
               try {
                 const verifyPayload = {
                   shippingAddress,
+                  couponCode,
                   paymentMethod: 'razorpay',
                   razorpayOrderId: response.razorpay_order_id,
                   razorpayPaymentId: response.razorpay_payment_id,
@@ -124,9 +173,13 @@ const Payment = () => {
                 const verifyRes = await axios.post('/orders', verifyPayload, { headers: getAuthHeaders() });
                 if (verifyRes.data.success) {
                   toast.success('Order placed successfully!');
+                  sessionStorage.removeItem("swagsync_applied_coupon");
+                  sessionStorage.removeItem("swagsync_coupon_discount");
+                  localStorage.removeItem('checkout_address_id');
                   updateCartCount(0);
                   refreshCart();
-                  navigate('/');
+                  const newOrderId = verifyRes.data.data?._id;
+                  navigate(newOrderId ? `/account/orders/${newOrderId}` : '/account/orders');
                 }
               } catch (err) {
                 toast.error(err.response?.data?.message || 'Payment verification failed');
@@ -156,6 +209,7 @@ const Payment = () => {
       } else {
         const payload = {
           shippingAddress,
+          couponCode,
           paymentMethod: selectedMethod
         };
 
@@ -163,13 +217,16 @@ const Payment = () => {
         
         if (response.data.success) {
           toast.success('Order placed successfully!');
+          sessionStorage.removeItem("swagsync_applied_coupon");
+          sessionStorage.removeItem("swagsync_coupon_discount");
+          localStorage.removeItem('checkout_address_id');
           
           // Clear cart globally
           updateCartCount(0);
           refreshCart();
           
-          // Redirect to success page or home
-          navigate('/');
+          const newOrderId = response.data.data?._id;
+          navigate(newOrderId ? `/account/orders/${newOrderId}` : '/account/orders');
         }
       }
     } catch (error) {
@@ -230,39 +287,118 @@ const Payment = () => {
             </div>
           </div>
 
-          {/* Right Column (Proceed Button Block) */}
+          {/* Right Column (Price Summary & Confirm Button Block) */}
           <div className="w-full lg:w-[440px] xl:w-[460px] shrink-0 lg:sticky lg:top-[76px] sm:lg:top-[82px] lg:self-start">
-             <div className="bg-white rounded-xl shadow-[0_2px_20px_-4px_rgba(0,0,0,0.05)] p-6 border border-gray-100">
-                <h3 className="font-bold text-[16px] text-[#111827] mb-4">Payment Summary</h3>
-                <p className="text-[#535766] text-[13px] mb-6">
-                  {selectedMethod === 'razorpay' ? (
-                    <>You are selecting <strong>Razorpay</strong> for secure online payment.</>
-                  ) : (
-                    <>You are selecting <strong>{paymentMethods.find(m => m.id === selectedMethod)?.title}</strong> for this order.</>
+             <div className="bg-white rounded-2xl shadow-[0_2px_20px_-4px_rgba(0,0,0,0.05)] border border-gray-100 overflow-hidden">
+                <div className="bg-gradient-to-r from-[#FD7100] to-[#E06400] px-6 py-4 flex justify-between items-center text-white">
+                  <h3 className="font-bold text-[16px]">Payment & Price Summary</h3>
+                  <div className="flex items-center gap-1 text-xs opacity-90 font-medium">
+                    <ShieldCheck className="w-4 h-4" />
+                    <span>100% Secure</span>
+                  </div>
+                </div>
+
+                <div className="p-6 space-y-4">
+                  {cartTotals && (
+                    <div className="space-y-3 pb-4 border-b border-gray-100 text-[13.5px]">
+                      <div className="flex justify-between items-center text-[#282c3f]">
+                        <span className="text-slate-500 font-medium">Item Total (MRP)</span>
+                        <span className="font-semibold text-slate-800">{formatPrice(cartTotals.totalMRP)}</span>
+                      </div>
+
+                      {cartTotals.discountOnMRP - cartTotals.couponDiscount > 0 && (
+                        <div className="flex justify-between items-center text-[#03a685] font-medium">
+                          <span>Discount on MRP</span>
+                          <span className="font-semibold">
+                            - {formatPrice(cartTotals.discountOnMRP - cartTotals.couponDiscount)}
+                          </span>
+                        </div>
+                      )}
+
+                      {appliedCoupon && couponDiscount > 0 && (
+                        <div className="flex justify-between items-center text-[#03a685] font-medium bg-emerald-50/70 p-2.5 rounded-xl border border-emerald-100">
+                          <span className="inline-flex items-center gap-1.5">
+                            <Tag className="w-3.5 h-3.5" />
+                            <span>Coupon Discount</span>
+                            <span className="bg-emerald-200/70 text-emerald-800 text-[10px] px-1.5 py-0.5 rounded font-mono font-bold uppercase">
+                              {appliedCoupon.code}
+                            </span>
+                          </span>
+                          <span className="font-bold">
+                            - {formatPrice(couponDiscount)}
+                          </span>
+                        </div>
+                      )}
+
+                      <div className="flex justify-between items-center text-[#282c3f]">
+                        <span className="text-slate-500 font-medium">Delivery Charges</span>
+                        <span className="font-semibold">
+                          {cartTotals.shipping === 0 ? (
+                            <span className="text-[#03a685]">FREE</span>
+                          ) : (
+                            formatPrice(cartTotals.shipping)
+                          )}
+                        </span>
+                      </div>
+
+                      <div className="flex justify-between items-center text-[#282c3f]">
+                        <div>
+                          <span className="text-slate-500 font-medium">Estimated GST</span>
+                          <span className="text-[11px] text-emerald-600 block">
+                            Included in item price
+                          </span>
+                        </div>
+                        <span className="font-mono text-xs text-slate-700 bg-slate-100 px-2 py-0.5 rounded">
+                          Included ({formatPrice(cartTotals.totalTax)})
+                        </span>
+                      </div>
+
+                      <div className="pt-2 border-t border-slate-100 flex justify-between items-center">
+                        <span className="font-bold text-slate-900 text-sm">
+                          {selectedMethod === 'razorpay' ? 'Total Amount (Online)' : 'Total Amount to Pay (COD)'}
+                        </span>
+                        <span className="font-extrabold text-lg text-[#FD7100] font-mono">
+                          {formatPrice(cartTotals.grandTotal)}
+                        </span>
+                      </div>
+
+                      {cartTotals.discountOnMRP > 0 && (
+                        <div className="bg-[#E6F6F1] text-[#03a685] text-xs font-semibold px-3 py-2 rounded-xl flex items-center gap-1.5 justify-center">
+                          <Sparkles className="w-3.5 h-3.5" />
+                          <span>You are saving {formatPrice(cartTotals.discountOnMRP)} on this order!</span>
+                        </div>
+                      )}
+                    </div>
                   )}
-                </p>
-                <button 
-                  onClick={handleConfirmOrder}
-                  disabled={isProcessing}
-                  className={`w-full text-white font-bold text-[14px] py-3.5 rounded-lg shadow-sm transition-colors flex items-center justify-center gap-2 ${
-                    isProcessing ? 'bg-[#E06400] opacity-70 cursor-not-allowed' : 'bg-[#FD7100] hover:bg-[#E06400]'
-                  }`}
-                >
-                  {isProcessing ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      Processing...
-                    </>
-                  ) : (
-                    <>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                      </svg>
-                      {selectedMethod === 'razorpay' ? 'Pay with Razorpay' : 'Confirm Order'}
-                    </>
-                  )}
-                </button>
+
+                  <p className="text-[#535766] text-xs">
+                    {selectedMethod === 'razorpay' ? (
+                      <>You are selecting <strong>Razorpay</strong> for online payment.</>
+                    ) : (
+                      <>You are selecting <strong>{paymentMethods.find(m => m.id === selectedMethod)?.title}</strong> for this order.</>
+                    )}
+                  </p>
+
+                  <button 
+                    onClick={handleConfirmOrder}
+                    disabled={isProcessing}
+                    className={`w-full text-white font-bold text-[14px] py-3.5 rounded-xl shadow-sm transition-colors flex items-center justify-center gap-2 cursor-pointer ${
+                      isProcessing ? 'bg-[#E06400] opacity-70 cursor-not-allowed' : 'bg-[#FD7100] hover:bg-[#E06400]'
+                    }`}
+                  >
+                    {isProcessing ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <span>Processing Order...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Check className="w-4 h-4 stroke-[3]" />
+                        <span>{selectedMethod === 'razorpay' ? 'Pay with Razorpay' : 'Confirm Order'}</span>
+                      </>
+                    )}
+                  </button>
+                </div>
              </div>
           </div>
         </div>

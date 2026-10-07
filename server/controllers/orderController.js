@@ -377,22 +377,30 @@ export const initRazorpayOrder = async (req, res) => {
 
     let couponDiscount = 0;
     if (couponCode?.trim()) {
-      const coupon = await Coupon.findOne({ code: couponCode.trim().toUpperCase(), status: "active", isActive: true });
+      const coupon = await Coupon.findOne({
+        code: couponCode.trim().toUpperCase(),
+        status: "active",
+      });
       if (coupon) {
         const now = new Date();
-        const isValid = (!coupon.startDate || now >= coupon.startDate) &&
-          (!coupon.endDate || now <= coupon.endDate) &&
-          (coupon.usageLimit === null || coupon.usageCount < coupon.usageLimit) &&
-          subtotal >= coupon.minOrderAmount;
+        const isValid =
+          (!coupon.startDate || now >= new Date(coupon.startDate)) &&
+          (!coupon.expiryDate || now <= new Date(coupon.expiryDate)) &&
+          (!coupon.usageLimit || coupon.usageLimit === 0 || (coupon.usedCount || 0) < coupon.usageLimit) &&
+          subtotal >= (coupon.minimumOrderAmount || 0);
 
         if (isValid) {
-          if (coupon.type === "percentage") {
-            couponDiscount = (subtotal * coupon.value) / 100;
+          const discountType = coupon.discountType || coupon.type;
+          const discountValue = Number(coupon.discountValue ?? coupon.value ?? 0);
+          const maxDiscount = Number(coupon.maximumDiscount ?? coupon.maxDiscountAmount ?? 0);
+
+          if (discountType === "percentage") {
+            couponDiscount = Math.round((subtotal * discountValue) / 100);
+            if (maxDiscount > 0 && couponDiscount > maxDiscount) {
+              couponDiscount = maxDiscount;
+            }
           } else {
-            couponDiscount = coupon.value;
-          }
-          if (coupon.maxDiscountAmount && couponDiscount > coupon.maxDiscountAmount) {
-            couponDiscount = coupon.maxDiscountAmount;
+            couponDiscount = Math.min(discountValue, subtotal);
           }
         }
       }
@@ -550,35 +558,40 @@ export const createOrder = async (req, res) => {
       const coupon = await Coupon.findOne({
         code: couponCode.trim().toUpperCase(),
         status: "active",
-        isActive: true,
       });
 
       if (coupon) {
         const now = new Date();
         const isValid =
-          (!coupon.startDate || now >= coupon.startDate) &&
-          (!coupon.endDate || now <= coupon.endDate) &&
-          (coupon.usageLimit === null || coupon.usageCount < coupon.usageLimit) &&
-          subtotal >= coupon.minOrderAmount;
+          (!coupon.startDate || now >= new Date(coupon.startDate)) &&
+          (!coupon.expiryDate || now <= new Date(coupon.expiryDate)) &&
+          (!coupon.usageLimit || coupon.usageLimit === 0 || (coupon.usedCount || 0) < coupon.usageLimit) &&
+          subtotal >= (coupon.minimumOrderAmount || 0);
 
         if (isValid) {
-          if (coupon.type === "percentage") {
-            couponDiscount = (subtotal * coupon.value) / 100;
-          } else {
-            couponDiscount = coupon.value;
-          }
+          const discountType = coupon.discountType || coupon.type;
+          const discountValue = Number(coupon.discountValue ?? coupon.value ?? 0);
+          const maxDiscount = Number(coupon.maximumDiscount ?? coupon.maxDiscountAmount ?? 0);
 
-          if (coupon.maxDiscountAmount && couponDiscount > coupon.maxDiscountAmount) {
-            couponDiscount = coupon.maxDiscountAmount;
+          if (discountType === "percentage") {
+            couponDiscount = Math.round((subtotal * discountValue) / 100);
+            if (maxDiscount > 0 && couponDiscount > maxDiscount) {
+              couponDiscount = maxDiscount;
+            }
+          } else {
+            couponDiscount = Math.min(discountValue, subtotal);
           }
 
           couponApplied = {
             code: coupon.code,
-            type: coupon.type,
-            value: coupon.value,
+            discountType: discountType,
+            type: discountType,
+            discountValue: discountValue,
+            value: discountValue,
+            discountAmount: couponDiscount,
           };
 
-          coupon.usageCount += 1;
+          coupon.usedCount = (coupon.usedCount || 0) + 1;
           await coupon.save();
         }
       }

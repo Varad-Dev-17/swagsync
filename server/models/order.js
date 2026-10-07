@@ -57,7 +57,10 @@ const OrderSchema = new mongoose.Schema(
     coupon: {
       code: String,
       type: { type: String },
+      discountType: { type: String },
       value: Number,
+      discountValue: Number,
+      discountAmount: Number,
     },
     paymentMethod: { type: String, default: "cod" },
     razorpayOrderId: { type: String },
