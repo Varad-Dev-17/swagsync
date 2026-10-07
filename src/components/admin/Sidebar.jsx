@@ -56,14 +56,14 @@ const Sidebar = ({ onClose, isCollapsed, toggleCollapse }) => {
       className="min-h-screen bg-white border-r border-gray-100 flex flex-col fixed left-0 top-0 z-40 overflow-hidden"
     >
       {/* Logo & Toggle */}
-      <div className={`pt-6 pb-4 flex overflow-hidden ${isCollapsed ? "flex-col items-center justify-center gap-4 px-0" : "items-center px-6 justify-between"}`}>
+      <div className={`pt-5 pb-3 flex overflow-hidden ${isCollapsed ? "flex-col items-center justify-center gap-4 px-0" : "items-center px-5 justify-between"}`}>
         {!isCollapsed && (
           <div className="flex items-center gap-2 overflow-hidden">
             <div className="w-8 h-8 rounded-xl bg-[#4648d4] flex items-center justify-center shrink-0 shadow-sm shadow-[#4648d4]/20">
               <span className="text-white font-bold text-sm">A</span>
             </div>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <h1 className="text-xl font-extrabold text-slate-900 mt-0.5 tracking-tight">SwagSync</h1>
+              <h1 className="text-lg font-extrabold text-slate-900 mt-0.5 tracking-tight">SwagSync</h1>
             </motion.div>
           </div>
         )}
@@ -74,14 +74,14 @@ const Sidebar = ({ onClose, isCollapsed, toggleCollapse }) => {
             className="hidden lg:flex items-center justify-center p-1.5 rounded-lg text-slate-400 hover:text-[#4648d4] hover:bg-[#4648d4]/10 transition-colors"
             title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
           >
-            {isCollapsed ? <PanelLeftOpen size={20} /> : <PanelLeftClose size={20} />}
+            {isCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
           </button>
         )}
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-3 mt-4 overflow-y-auto flex flex-col">
-        <div className="space-y-1 w-full my-auto">
+      <nav className="flex-1 px-3 mt-3 overflow-y-auto flex flex-col">
+        <div className="space-y-0.5 w-full my-auto">
           {menuItems.map((item) => {
             const Icon = item.icon;
             return (
@@ -91,7 +91,7 @@ const Sidebar = ({ onClose, isCollapsed, toggleCollapse }) => {
                 title={isCollapsed ? item.label : undefined}
                 onClick={() => onClose?.()}
                 className={({ isActive }) =>
-                  `w-full flex items-center gap-3 py-3 rounded-xl text-[15px] transition-all duration-200 ${isCollapsed ? "justify-center px-0" : "px-4"
+                  `w-full flex items-center gap-3 py-2.5 rounded-xl text-[13.5px] transition-all duration-200 ${isCollapsed ? "justify-center px-0" : "px-3.5"
                   } ${isActive
                     ? "bg-[#4648d4] text-white font-bold shadow-md shadow-[#4648d4]/20"
                     : "text-slate-600 font-medium hover:bg-slate-50 hover:text-slate-900"
@@ -100,7 +100,7 @@ const Sidebar = ({ onClose, isCollapsed, toggleCollapse }) => {
               >
                 {({ isActive }) => (
                   <>
-                    <Icon size={20} strokeWidth={isActive ? 2.5 : 2} className="shrink-0" />
+                    <Icon size={18} strokeWidth={isActive ? 2.5 : 2} className="shrink-0" />
                     {!isCollapsed && <span>{item.label}</span>}
                   </>
                 )}
@@ -111,7 +111,7 @@ const Sidebar = ({ onClose, isCollapsed, toggleCollapse }) => {
       </nav>
 
       {/* Profile Section */}
-      <div className={`border-t border-gray-100 relative ${isCollapsed ? "p-3 flex justify-center" : "p-4"}`} ref={profileRef}>
+      <div className={`border-t border-gray-100 relative ${isCollapsed ? "p-3 flex justify-center" : "p-3.5"}`} ref={profileRef}>
         <AnimatePresence>
           {isProfileOpen && !isCollapsed && (
             <motion.div
@@ -161,25 +161,25 @@ const Sidebar = ({ onClose, isCollapsed, toggleCollapse }) => {
             }
           }}
           className={`w-full flex items-center rounded-xl transition-all duration-200 ${isProfileOpen && !isCollapsed ? "bg-gray-50" : "hover:bg-gray-50"
-            } ${isCollapsed ? "justify-center p-2" : "justify-between p-3"}`}
+            } ${isCollapsed ? "justify-center p-2" : "justify-between p-2.5"}`}
           title={isCollapsed ? (user?.username || "Admin") : undefined}
         >
-          <div className={`flex items-center gap-3 ${isCollapsed ? "justify-center" : "overflow-hidden"}`}>
-            <div className="w-9 h-9 rounded-full bg-[#4648d4]/10 flex items-center justify-center shrink-0">
-              <UserIcon size={18} className="text-[#4648d4]" />
+          <div className={`flex items-center gap-2.5 ${isCollapsed ? "justify-center" : "overflow-hidden"}`}>
+            <div className="w-8 h-8 rounded-full bg-[#4648d4]/10 flex items-center justify-center shrink-0">
+              <UserIcon size={16} className="text-[#4648d4]" />
             </div>
             {!isCollapsed && (
               <div className="text-left truncate">
-                <p className="text-sm font-bold text-slate-900 truncate">
+                <p className="text-[13px] font-bold text-slate-900 truncate">
                   {user?.username || "Admin"}
                 </p>
-                <p className="text-xs text-slate-500 truncate">Admin</p>
+                <p className="text-[11px] text-slate-500 truncate">Admin</p>
               </div>
             )}
           </div>
           {!isCollapsed && (
             <motion.div animate={{ rotate: isProfileOpen ? 180 : 0 }}>
-              <ChevronUp size={18} className="text-gray-400 shrink-0" />
+              <ChevronUp size={16} className="text-gray-400 shrink-0" />
             </motion.div>
           )}
         </button>

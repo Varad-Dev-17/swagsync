@@ -326,9 +326,21 @@ const Coupons = () => {
           </button>
         </div>
 
-        {/* Stats Cards - Compact & Left-Aligned */}
+        {/* Stats Cards - Clickable Filters */}
         <div className="flex flex-wrap items-center gap-4">
-          <div className="bg-white rounded-xl border border-slate-200/90 px-6 py-4.5 shadow-2xs flex items-center gap-4 hover:border-slate-300 transition-colors w-full sm:w-auto sm:min-w-[220px]">
+          <button
+            type="button"
+            onClick={() => {
+              setStatusFilter("all");
+              setCurrentPage(1);
+            }}
+            className={`rounded-xl border px-6 py-4.5 shadow-2xs flex items-center gap-4 transition-all w-full sm:w-auto sm:min-w-[220px] text-left cursor-pointer active:scale-95 ${
+              statusFilter === "all"
+                ? "bg-blue-50/40 border-blue-500 ring-2 ring-blue-500/20 shadow-xs"
+                : "bg-white border-slate-200/90 hover:border-slate-300 hover:shadow-xs"
+            }`}
+            title="Click to view all coupons"
+          >
             <div className="w-11 h-11 rounded-xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center shrink-0">
               <Ticket size={21} />
             </div>
@@ -338,9 +350,21 @@ const Coupons = () => {
               </p>
               <h3 className="text-xl font-extrabold text-slate-900 leading-tight mt-0.5">{stats.total}</h3>
             </div>
-          </div>
+          </button>
 
-          <div className="bg-white rounded-xl border border-slate-200/90 px-6 py-4.5 shadow-2xs flex items-center gap-4 hover:border-slate-300 transition-colors w-full sm:w-auto sm:min-w-[220px]">
+          <button
+            type="button"
+            onClick={() => {
+              setStatusFilter(statusFilter === "active" ? "all" : "active");
+              setCurrentPage(1);
+            }}
+            className={`rounded-xl border px-6 py-4.5 shadow-2xs flex items-center gap-4 transition-all w-full sm:w-auto sm:min-w-[220px] text-left cursor-pointer active:scale-95 ${
+              statusFilter === "active"
+                ? "bg-emerald-50/40 border-emerald-500 ring-2 ring-emerald-500/20 shadow-xs"
+                : "bg-white border-slate-200/90 hover:border-slate-300 hover:shadow-xs"
+            }`}
+            title="Click to filter active vouchers"
+          >
             <div className="w-11 h-11 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
               <CheckCircle2 size={21} />
             </div>
@@ -350,9 +374,21 @@ const Coupons = () => {
               </p>
               <h3 className="text-xl font-extrabold text-emerald-600 leading-tight mt-0.5">{stats.active}</h3>
             </div>
-          </div>
+          </button>
 
-          <div className="bg-white rounded-xl border border-slate-200/90 px-6 py-4.5 shadow-2xs flex items-center gap-4 hover:border-slate-300 transition-colors w-full sm:w-auto sm:min-w-[220px]">
+          <button
+            type="button"
+            onClick={() => {
+              setStatusFilter(statusFilter === "expired" ? "all" : "expired");
+              setCurrentPage(1);
+            }}
+            className={`rounded-xl border px-6 py-4.5 shadow-2xs flex items-center gap-4 transition-all w-full sm:w-auto sm:min-w-[220px] text-left cursor-pointer active:scale-95 ${
+              statusFilter === "expired"
+                ? "bg-red-50/40 border-red-500 ring-2 ring-red-500/20 shadow-xs"
+                : "bg-white border-slate-200/90 hover:border-slate-300 hover:shadow-xs"
+            }`}
+            title="Click to filter expired coupons"
+          >
             <div className="w-11 h-11 rounded-xl bg-red-50 border border-red-100 text-red-600 flex items-center justify-center shrink-0">
               <Clock size={21} />
             </div>
@@ -362,7 +398,7 @@ const Coupons = () => {
               </p>
               <h3 className="text-xl font-extrabold text-red-500 leading-tight mt-0.5">{stats.expired}</h3>
             </div>
-          </div>
+          </button>
         </div>
 
         {/* Main Table Card */}
@@ -394,6 +430,7 @@ const Coupons = () => {
               >
                 <option value="all">All Status</option>
                 <option value="active">Active Only</option>
+                <option value="expired">Expired Only</option>
                 <option value="inactive">Inactive Only</option>
               </select>
 

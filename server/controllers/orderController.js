@@ -112,9 +112,25 @@ export const getAdminOrderById = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const order = await Order.findById(id)
-      .populate(ORDER_POPULATE_CONFIG)
-      .lean();
+    let order = null;
+    const mongoose = (await import("mongoose")).default;
+    if (mongoose.isValidObjectId(id)) {
+      order = await Order.findById(id)
+        .populate(ORDER_POPULATE_CONFIG)
+        .lean();
+    }
+    if (!order) {
+      const cleanId = String(id).replace(/^#/, "").trim();
+      order = await Order.findOne({
+        $or: [
+          { orderId: id },
+          { orderId: cleanId },
+          { orderId: `#${cleanId}` },
+        ]
+      })
+        .populate(ORDER_POPULATE_CONFIG)
+        .lean();
+    }
 
     if (!order) {
       return res.status(404).json({
@@ -136,7 +152,7 @@ export const getAdminOrderById = async (req, res) => {
 
     // Also fetch any return requests associated with this order
     const ReturnRequest = (await import("../models/returnRequest.js")).default;
-    const returnRequests = await ReturnRequest.find({ order: id })
+    const returnRequests = await ReturnRequest.find({ order: order._id })
       .populate("product", "title images brand price")
       .populate({
         path: "originalVariant",

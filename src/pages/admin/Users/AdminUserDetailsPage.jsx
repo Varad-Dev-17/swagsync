@@ -406,45 +406,45 @@ const AdminUserDetailsPage = () => {
           </div>
         </div>
 
-        {/* 2. User Hero Profile & KPI Cards Grid (Matching Image 3) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-3.5">
+        {/* 2. User Hero Profile & KPI Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-3 items-stretch">
           
           {/* Card 1: User Profile Card (4 cols on lg) */}
-          <div className="lg:col-span-4 bg-white rounded-2xl border border-slate-200/90 p-4.5 shadow-2xs flex items-center gap-4">
-            <UserAvatar user={user} initial={initial} size="xl" />
-            <div className="min-w-0 flex-1 space-y-1">
+          <div className="lg:col-span-4 bg-white rounded-2xl border border-slate-200/90 p-3.5 shadow-2xs flex items-center gap-3.5">
+            <UserAvatar user={user} initial={initial} size="lg" />
+            <div className="min-w-0 flex-1 space-y-0.5">
               <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-lg font-bold text-slate-900 tracking-tight truncate">
+                <h2 className="text-[15px] font-bold text-slate-900 tracking-tight truncate">
                   {user.username || "Garima Gupta"}
                 </h2>
                 {user.isBlocked ? (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200/80">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200/80">
                     <span className="w-1.5 h-1.5 rounded-full bg-rose-600"></span> Blocked
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/80">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/80">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-600"></span> Active
                   </span>
                 )}
               </div>
 
-              <div className="text-xs text-slate-500 font-medium space-y-0.5">
+              <div className="text-[11px] text-slate-500 font-medium space-y-0.5">
                 <div className="flex items-center gap-1.5 text-slate-600 truncate">
-                  <Mail size={12} className="text-slate-400 shrink-0" />
+                  <Mail size={11} className="text-slate-400 shrink-0" />
                   <span className="truncate">{user.email || "garima.gupta@cybaemtech.com"}</span>
                 </div>
                 <div className="flex items-center gap-1.5 text-slate-600">
-                  <Phone size={12} className="text-slate-400 shrink-0" />
+                  <Phone size={11} className="text-slate-400 shrink-0" />
                   <span>{user.mobileNo || "+91 98765 43210"}</span>
                 </div>
-                <div className="flex items-center gap-1.5 text-[11px] text-slate-500 pt-0.5 flex-wrap">
+                <div className="flex items-center gap-1.5 text-[10px] text-slate-500 pt-0.5 flex-wrap">
                   <span className="inline-flex items-center gap-1">
-                    <Calendar size={11} className="text-slate-400" />
+                    <Calendar size={10} className="text-slate-400" />
                     Joined on {user.createdAt ? new Date(user.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "23 Sept 2026"}
                   </span>
                   <span>•</span>
                   <span className="inline-flex items-center gap-1">
-                    <MapPin size={11} className="text-slate-400" />
+                    <MapPin size={10} className="text-slate-400" />
                     {userLocation}
                   </span>
                 </div>
@@ -452,96 +452,91 @@ const AdminUserDetailsPage = () => {
             </div>
           </div>
 
-          {/* KPI Stat Cards (4 cols on lg: 4 mini stat cards) */}
-          <div className="lg:col-span-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {/* 5 KPI Stat & Status Cards (8 cols on lg: 5 equal mini stat cards) */}
+          <div className="lg:col-span-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
             
             {/* Total Orders */}
-            <div className="bg-white rounded-2xl border border-slate-200/90 p-3.5 shadow-2xs flex flex-col justify-between">
-              <div className="flex items-center justify-between">
-                <div className="w-8 h-8 rounded-xl bg-blue-50 text-[#3B82F6] flex items-center justify-center">
-                  <ShoppingCart size={15} />
+            <div className="bg-white rounded-2xl border border-slate-200/90 p-3 shadow-2xs flex flex-col justify-between">
+              <div className="flex items-center justify-between gap-1">
+                <span className="text-[11px] font-semibold text-slate-500 leading-tight">Total Orders</span>
+                <div className="w-7 h-7 rounded-lg bg-blue-50 text-[#3B82F6] flex items-center justify-center shrink-0">
+                  <ShoppingCart size={13} />
                 </div>
               </div>
-              <div className="mt-2.5">
-                <div className="text-[11px] font-semibold text-slate-500">Total Orders</div>
-                <div className="text-xl font-bold text-slate-900 mt-0.5">
+              <div className="mt-2">
+                <div className="text-[15px] sm:text-base font-bold text-slate-900 tracking-tight leading-snug">
                   {stats.totalOrders ?? orders.length}
                 </div>
-                <div className="text-[10px] text-slate-400 mt-0.5">All time placed</div>
+                <div className="text-[10px] text-slate-400 mt-0.5 leading-tight">All time placed</div>
               </div>
             </div>
 
             {/* Total Spent */}
-            <div className="bg-white rounded-2xl border border-slate-200/90 p-3.5 shadow-2xs flex flex-col justify-between">
-              <div className="flex items-center justify-between">
-                <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                  <ShoppingBag size={15} />
+            <div className="bg-white rounded-2xl border border-slate-200/90 p-3 shadow-2xs flex flex-col justify-between">
+              <div className="flex items-center justify-between gap-1">
+                <span className="text-[11px] font-semibold text-slate-500 leading-tight">Total Spent</span>
+                <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                  <ShoppingBag size={13} />
                 </div>
               </div>
-              <div className="mt-2.5">
-                <div className="text-[11px] font-semibold text-slate-500">Total Spent</div>
-                <div className="text-xl font-bold text-slate-900 mt-0.5 truncate">
+              <div className="mt-2">
+                <div className="text-[14px] sm:text-[15px] font-bold text-slate-900 tracking-tight leading-snug truncate" title={`₹${(stats.totalSpent || orders.reduce((sum, o) => o.status !== "cancelled" ? sum + (o.totalAmount || 0) : sum, 0)).toLocaleString("en-IN")}`}>
                   ₹{(stats.totalSpent || orders.reduce((sum, o) => o.status !== "cancelled" ? sum + (o.totalAmount || 0) : sum, 0)).toLocaleString("en-IN")}
                 </div>
-                <div className="text-[10px] text-slate-400 mt-0.5">Valid orders</div>
+                <div className="text-[10px] text-slate-400 mt-0.5 leading-tight">Valid orders</div>
               </div>
             </div>
 
             {/* Total Returns */}
-            <div className="bg-white rounded-2xl border border-slate-200/90 p-3.5 shadow-2xs flex flex-col justify-between">
-              <div className="flex items-center justify-between">
-                <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
-                  <RotateCcw size={15} />
+            <div className="bg-white rounded-2xl border border-slate-200/90 p-3 shadow-2xs flex flex-col justify-between">
+              <div className="flex items-center justify-between gap-1">
+                <span className="text-[11px] font-semibold text-slate-500 leading-tight">Total Returns</span>
+                <div className="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                  <RotateCcw size={13} />
                 </div>
               </div>
-              <div className="mt-2.5">
-                <div className="text-[11px] font-semibold text-slate-500">Total Returns</div>
-                <div className="text-xl font-bold text-slate-900 mt-0.5">
+              <div className="mt-2">
+                <div className="text-[15px] sm:text-base font-bold text-slate-900 tracking-tight leading-snug">
                   {stats.totalReturns ?? returns.length}
                 </div>
-                <div className="text-[10px] text-slate-400 mt-0.5">Requested cases</div>
+                <div className="text-[10px] text-slate-400 mt-0.5 leading-tight">Requested cases</div>
               </div>
             </div>
 
             {/* Support Tickets */}
-            <div className="bg-white rounded-2xl border border-slate-200/90 p-3.5 shadow-2xs flex flex-col justify-between">
-              <div className="flex items-center justify-between">
-                <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
-                  <Headphones size={15} />
+            <div className="bg-white rounded-2xl border border-slate-200/90 p-3 shadow-2xs flex flex-col justify-between">
+              <div className="flex items-center justify-between gap-1">
+                <span className="text-[11px] font-semibold text-slate-500 leading-tight">Support Tickets</span>
+                <div className="w-7 h-7 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
+                  <Headphones size={13} />
                 </div>
               </div>
-              <div className="mt-2.5">
-                <div className="text-[11px] font-semibold text-slate-500">Support Tickets</div>
-                <div className="text-xl font-bold text-slate-900 mt-0.5">
+              <div className="mt-2">
+                <div className="text-[15px] sm:text-base font-bold text-slate-900 tracking-tight leading-snug">
                   {stats.totalTickets ?? tickets.length}
                 </div>
-                <div className="text-[10px] text-slate-400 mt-0.5">Support requests</div>
+                <div className="text-[10px] text-slate-400 mt-0.5 leading-tight">Support requests</div>
               </div>
             </div>
 
-          </div>
-
-          {/* Card 6: User Type Card (2 cols on lg) */}
-          <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200/90 p-4 shadow-2xs flex flex-col justify-between">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-500">User Type</span>
-              <button className="text-slate-400 hover:text-slate-600 p-0.5 rounded cursor-pointer">
-                <MoreVertical size={14} />
-              </button>
-            </div>
-            <div className="flex items-center gap-3 mt-3">
-              <div className="w-10 h-10 rounded-xl bg-indigo-50 text-[#4F46E5] flex items-center justify-center shrink-0">
-                <Users size={18} />
+            {/* User Type */}
+            <div className="bg-white rounded-2xl border border-slate-200/90 p-3 shadow-2xs flex flex-col justify-between">
+              <div className="flex items-center justify-between gap-1">
+                <span className="text-[11px] font-semibold text-slate-500 leading-tight">User Type</span>
+                <div className="w-7 h-7 rounded-lg bg-indigo-50 text-[#4F46E5] flex items-center justify-center shrink-0">
+                  <Users size={13} />
+                </div>
               </div>
-              <div>
-                <div className="text-sm font-bold text-slate-900">
+              <div className="mt-2">
+                <div className="text-[14px] sm:text-[15px] font-bold text-slate-900 tracking-tight leading-snug">
                   {user.isAdmin ? "Administrator" : "Customer"}
                 </div>
-                <div className="text-[11px] text-slate-400">
+                <div className="text-[10px] text-slate-400 mt-0.5 leading-tight">
                   {user.isAdmin ? "System manager" : "Registered user"}
                 </div>
               </div>
             </div>
+
           </div>
 
         </div>
@@ -702,9 +697,17 @@ const AdminUserDetailsPage = () => {
 
                                 {/* Order ID */}
                                 <td className="px-4 py-3.5">
-                                  <span className="font-mono font-bold text-[#4F46E5] hover:underline">
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      navigate(`/admin/orders/${order._id || order.orderId}`);
+                                    }}
+                                    className="font-mono font-bold text-[#4F46E5] hover:underline cursor-pointer text-left"
+                                    title="Go to full order details"
+                                  >
                                     {formatOrderId(order)}
-                                  </span>
+                                  </button>
                                 </td>
 
                                 {/* Date */}
@@ -838,9 +841,17 @@ const AdminUserDetailsPage = () => {
                             {selectedOrder === orders[0] ? "Latest Order" : "Selected Order"}
                           </h3>
                         </div>
-                        <span className="font-mono text-xs font-bold text-[#4F46E5]">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const targetId = selectedOrder?._id || selectedOrder?.orderId;
+                            if (targetId) navigate(`/admin/orders/${targetId}`);
+                          }}
+                          className="font-mono text-xs font-bold text-[#4F46E5] hover:underline cursor-pointer"
+                          title="Go to full order details"
+                        >
                           {formatOrderId(selectedOrder)}
-                        </span>
+                        </button>
                       </div>
 
                       {/* Sub-header: Status & Timestamp */}
@@ -927,13 +938,21 @@ const AdminUserDetailsPage = () => {
                       </div>
 
                       {/* View Full Order Details Button */}
-                      <Link
-                        to={`/admin/orders/${selectedOrder._id}`}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const targetId = selectedOrder?._id || selectedOrder?.orderId;
+                          if (targetId) {
+                            navigate(`/admin/orders/${targetId}`);
+                          } else {
+                            toast.error("Order details not found");
+                          }
+                        }}
                         className="w-full py-2.5 px-3 bg-indigo-50/70 hover:bg-indigo-100 text-[#4F46E5] border border-indigo-200/80 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-2xs"
                       >
                         <FileText size={14} />
                         <span>View Full Order Details</span>
-                      </Link>
+                      </button>
 
                     </div>
                   ) : (

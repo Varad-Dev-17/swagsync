@@ -15,6 +15,7 @@ export const getAllCoupons = async (req, res) => {
     } = req.query;
 
     const query = {};
+    const now = new Date();
 
     if (search && search.trim()) {
       query.$or = [
@@ -24,7 +25,16 @@ export const getAllCoupons = async (req, res) => {
     }
 
     if (status && status !== "all") {
-      query.status = status;
+      if (status === "expired") {
+        query.expiryDate = { $lt: now };
+      } else if (status === "active") {
+        query.status = "active";
+        query.expiryDate = { $gte: now };
+      } else if (status === "inactive") {
+        query.status = "inactive";
+      } else {
+        query.status = status;
+      }
     }
 
     if (discountType && discountType !== "all") {
@@ -38,11 +48,10 @@ export const getAllCoupons = async (req, res) => {
     const limitNum = Math.max(1, Number(limit));
     const skip = (pageNum - 1) * limitNum;
 
-    const now = new Date();
-
-    const [coupons, total, totalActive, totalExpired] = await Promise.all([
+    const [coupons, filteredTotal, allTotal, totalActive, totalExpired] = await Promise.all([
       Coupon.find(query).sort(sort).skip(skip).limit(limitNum).lean(),
       Coupon.countDocuments(query),
+      Coupon.countDocuments({}),
       Coupon.countDocuments({ status: "active", expiryDate: { $gte: now } }),
       Coupon.countDocuments({ expiryDate: { $lt: now } }),
     ]);
@@ -55,11 +64,11 @@ export const getAllCoupons = async (req, res) => {
         pagination: {
           page: pageNum,
           limit: limitNum,
-          total,
-          pages: Math.ceil(total / limitNum) || 1,
+          total: filteredTotal,
+          pages: Math.ceil(filteredTotal / limitNum) || 1,
         },
         stats: {
-          total,
+          total: allTotal,
           active: totalActive,
           expired: totalExpired,
         },

@@ -349,8 +349,26 @@ export default function VendorOrders() {
       {/* Top Stats Row */}
       <div className="flex flex-wrap items-center gap-3.5 sm:gap-4">
         {/* All Orders */}
-        <div className="bg-white rounded-xl px-5 py-3.5 border border-slate-200/90 shadow-2xs flex items-center gap-3.5 hover:border-slate-300 transition-colors w-full sm:w-auto sm:min-w-[185px]">
-          <div className="w-10 h-10 rounded-xl bg-orange-50 border border-orange-100 flex items-center justify-center text-[#fe4a03] shrink-0">
+        <button
+          type="button"
+          onClick={() => {
+            setStatusFilter("");
+            setPage(1);
+          }}
+          className={`rounded-xl px-5 py-3.5 border text-left flex items-center gap-3.5 transition-all duration-200 cursor-pointer w-full sm:w-auto sm:min-w-[185px] hover:-translate-y-0.5 active:translate-y-0 focus:outline-none ${
+            statusFilter === ""
+              ? "bg-orange-50/50 border-[#fe4a03] ring-2 ring-[#fe4a03]/20 shadow-xs"
+              : "bg-white border-slate-200/90 hover:border-orange-200 hover:shadow-2xs"
+          }`}
+          title="Filter all orders"
+        >
+          <div
+            className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 transition-colors ${
+              statusFilter === ""
+                ? "bg-[#fe4a03] border-[#fe4a03] text-white"
+                : "bg-orange-50 border-orange-100 text-[#fe4a03]"
+            }`}
+          >
             <Box size={19} className="stroke-[2.2]" />
           </div>
           <div className="min-w-0">
@@ -358,11 +376,29 @@ export default function VendorOrders() {
             <h3 className="text-xl font-extrabold text-slate-900 tracking-tight leading-tight mt-0.5">{stats.total}</h3>
             <p className="text-[11px] text-slate-400 font-medium truncate">All Time</p>
           </div>
-        </div>
+        </button>
 
         {/* Shipped */}
-        <div className="bg-white rounded-xl px-5 py-3.5 border border-slate-200/90 shadow-2xs flex items-center gap-3.5 hover:border-slate-300 transition-colors w-full sm:w-auto sm:min-w-[185px]">
-          <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 shrink-0">
+        <button
+          type="button"
+          onClick={() => {
+            setStatusFilter((prev) => (prev === "shipped" ? "" : "shipped"));
+            setPage(1);
+          }}
+          className={`rounded-xl px-5 py-3.5 border text-left flex items-center gap-3.5 transition-all duration-200 cursor-pointer w-full sm:w-auto sm:min-w-[185px] hover:-translate-y-0.5 active:translate-y-0 focus:outline-none ${
+            statusFilter === "shipped"
+              ? "bg-blue-50/50 border-blue-500 ring-2 ring-blue-500/20 shadow-xs"
+              : "bg-white border-slate-200/90 hover:border-blue-200 hover:shadow-2xs"
+          }`}
+          title={statusFilter === "shipped" ? "Clear filter" : "Filter shipped orders"}
+        >
+          <div
+            className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 transition-colors ${
+              statusFilter === "shipped"
+                ? "bg-blue-600 border-blue-600 text-white"
+                : "bg-blue-50 border-blue-100 text-blue-600"
+            }`}
+          >
             <Truck size={19} className="stroke-[2.2]" />
           </div>
           <div className="min-w-0">
@@ -372,11 +408,29 @@ export default function VendorOrders() {
             </h3>
             <p className="text-[11px] text-slate-400 font-medium truncate">Orders</p>
           </div>
-        </div>
+        </button>
 
         {/* Delivered */}
-        <div className="bg-white rounded-xl px-5 py-3.5 border border-slate-200/90 shadow-2xs flex items-center gap-3.5 hover:border-slate-300 transition-colors w-full sm:w-auto sm:min-w-[185px]">
-          <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
+        <button
+          type="button"
+          onClick={() => {
+            setStatusFilter((prev) => (prev === "delivered" ? "" : "delivered"));
+            setPage(1);
+          }}
+          className={`rounded-xl px-5 py-3.5 border text-left flex items-center gap-3.5 transition-all duration-200 cursor-pointer w-full sm:w-auto sm:min-w-[185px] hover:-translate-y-0.5 active:translate-y-0 focus:outline-none ${
+            statusFilter === "delivered"
+              ? "bg-emerald-50/50 border-emerald-500 ring-2 ring-emerald-500/20 shadow-xs"
+              : "bg-white border-slate-200/90 hover:border-emerald-200 hover:shadow-2xs"
+          }`}
+          title={statusFilter === "delivered" ? "Clear filter" : "Filter delivered orders"}
+        >
+          <div
+            className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 transition-colors ${
+              statusFilter === "delivered"
+                ? "bg-emerald-600 border-emerald-600 text-white"
+                : "bg-emerald-50 border-emerald-100 text-emerald-600"
+            }`}
+          >
             <CheckCircle2 size={19} className="stroke-[2.2]" />
           </div>
           <div className="min-w-0">
@@ -386,11 +440,29 @@ export default function VendorOrders() {
             </h3>
             <p className="text-[11px] text-slate-400 font-medium truncate">Orders</p>
           </div>
-        </div>
+        </button>
 
         {/* Cancelled */}
-        <div className="bg-white rounded-xl px-5 py-3.5 border border-slate-200/90 shadow-2xs flex items-center gap-3.5 hover:border-slate-300 transition-colors w-full sm:w-auto sm:min-w-[185px]">
-          <div className="w-10 h-10 rounded-xl bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-600 shrink-0">
+        <button
+          type="button"
+          onClick={() => {
+            setStatusFilter((prev) => (prev === "cancelled" ? "" : "cancelled"));
+            setPage(1);
+          }}
+          className={`rounded-xl px-5 py-3.5 border text-left flex items-center gap-3.5 transition-all duration-200 cursor-pointer w-full sm:w-auto sm:min-w-[185px] hover:-translate-y-0.5 active:translate-y-0 focus:outline-none ${
+            statusFilter === "cancelled"
+              ? "bg-rose-50/50 border-rose-500 ring-2 ring-rose-500/20 shadow-xs"
+              : "bg-white border-slate-200/90 hover:border-rose-200 hover:shadow-2xs"
+          }`}
+          title={statusFilter === "cancelled" ? "Clear filter" : "Filter cancelled orders"}
+        >
+          <div
+            className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 transition-colors ${
+              statusFilter === "cancelled"
+                ? "bg-rose-600 border-rose-600 text-white"
+                : "bg-rose-50 border-rose-100 text-rose-600"
+            }`}
+          >
             <XCircle size={19} className="stroke-[2.2]" />
           </div>
           <div className="min-w-0">
@@ -400,7 +472,7 @@ export default function VendorOrders() {
             </h3>
             <p className="text-[11px] text-slate-400 font-medium truncate">Orders</p>
           </div>
-        </div>
+        </button>
       </div>
 
       {/* Main PageCard */}
