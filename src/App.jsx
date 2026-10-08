@@ -38,6 +38,10 @@ const AdminSignInPage = lazy(() => import("./pages/admin/auth/AdminSignInPage"))
 const ChangePasswordPage = lazy(() => import("./pages/user/ChangePasswordPage"));
 const ForgotPasswordPage = lazy(() => import("./pages/user/ForgotPasswordPage"));
 const Products = lazy(() => import("./pages/shop-now/ProductsPage"));
+const AboutUs = lazy(() => import("./pages/about/AboutUs"));
+const TermsOfService = lazy(() => import("./pages/legal/TermsOfService"));
+const PrivacyPolicy = lazy(() => import("./pages/legal/LegalPrivacy"));
+const ShippingPolicy = lazy(() => import("./pages/legal/ShippingPolicy"));
 const ProductDetailsPage = lazy(() => import("./pages/product-details/ProductDetailsPage"));
 const Bag = lazy(() => import("./pages/bag/Bag"));
 const Address = lazy(() => import("./pages/checkout/Address"));
@@ -276,6 +280,66 @@ const AppRoutes = () => {
             <Products />
           </UserLayout>
         }
+      />
+      <Route
+        path="/about"
+        element={
+          <UserLayout>
+            <SmoothScrollProvider>
+              <SmoothScrollbar />
+              <AboutUs />
+            </SmoothScrollProvider>
+          </UserLayout>
+        }
+      />
+      <Route
+        path="/about-us"
+        element={<Navigate to="/about" replace />}
+      />
+      <Route
+        path="/terms"
+        element={
+          <UserLayout>
+            <SmoothScrollProvider>
+              <SmoothScrollbar />
+              <TermsOfService />
+            </SmoothScrollProvider>
+          </UserLayout>
+        }
+      />
+      <Route
+        path="/terms-of-service"
+        element={<Navigate to="/terms" replace />}
+      />
+      <Route
+        path="/privacy"
+        element={
+          <UserLayout>
+            <SmoothScrollProvider>
+              <SmoothScrollbar />
+              <PrivacyPolicy />
+            </SmoothScrollProvider>
+          </UserLayout>
+        }
+      />
+      <Route
+        path="/privacy-policy"
+        element={<Navigate to="/privacy" replace />}
+      />
+      <Route
+        path="/shipping-policy"
+        element={
+          <UserLayout>
+            <SmoothScrollProvider>
+              <SmoothScrollbar />
+              <ShippingPolicy />
+            </SmoothScrollProvider>
+          </UserLayout>
+        }
+      />
+      <Route
+        path="/shipping"
+        element={<Navigate to="/shipping-policy" replace />}
       />
       <Route
         path="/product/:slug"

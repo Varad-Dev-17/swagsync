@@ -40,7 +40,7 @@ const ProductForm = forwardRef(({ isEdit = false, isUnifiedMode = false, onFormC
     slug: '',
     shortDescription: '',
     longDescription: '',
-    status: 'Inactive',
+    status: 'Active',
     department: '',
     category: '',
     brand: '',
@@ -483,7 +483,7 @@ const ProductForm = forwardRef(({ isEdit = false, isUnifiedMode = false, onFormC
             slug: currentSlug,
             shortDescription: prod.shortDescription || '',
             longDescription: prod.longDescription || '',
-            status: prod.status || 'Inactive',
+            status: prod.status || 'Active',
             department: prod.department?._id || '',
             category: prod.category?._id || '',
             brand: prod.brand?._id || '',
@@ -1037,8 +1037,8 @@ const ProductForm = forwardRef(({ isEdit = false, isUnifiedMode = false, onFormC
               onChange={handleChange}
               className={`w-full px-4 h-11 border border-gray-200 rounded-lg outline-none ${isVendor ? 'focus:border-[#fe4a03] focus:ring-[#fe4a03]' : 'focus:border-[#4648d4] focus:ring-[#4648d4]'} focus:ring-1 transition-colors bg-white cursor-pointer`}
             >
-              <option value="Inactive">Inactive</option>
               <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
             </select>
           </div>
 

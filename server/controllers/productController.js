@@ -792,7 +792,7 @@ export const addProduct = async (req, res) => {
       category,
       brand,
       attributes: validatedAttributes,
-      status: status || "Inactive",
+      status: status || "Active",
       returnPolicy: {
         returnable: returnPolicy?.returnable ?? true,
         exchangeable: returnPolicy?.exchangeable ?? true,

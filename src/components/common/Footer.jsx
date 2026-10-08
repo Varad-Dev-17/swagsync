@@ -234,8 +234,8 @@ const Footer = () => {
               </li>
               <li>
                 <Link
-                  to="#"
-                  onClick={(e) => e.preventDefault()}
+                  to="/shipping-policy"
+                  onClick={handleNavClick}
                   className="text-gray-500 hover:text-[#FD7100] transition-colors block"
                 >
                   Shipping Policy
@@ -256,13 +256,13 @@ const Footer = () => {
           {/* About SwagSync */}
           <div className="lg:w-[16%] lg:border-l lg:border-gray-200 lg:pl-5 lg:pr-3">
             <h3 className="text-[16px] font-bold text-gray-900 mb-4 tracking-tight">
-              About SwagSync
+              Company & Legal
             </h3>
             <ul className="space-y-3 text-[14.5px]">
               <li>
                 <Link
-                  to="#"
-                  onClick={(e) => e.preventDefault()}
+                  to="/about"
+                  onClick={handleNavClick}
                   className="text-gray-500 hover:text-[#FD7100] transition-colors block"
                 >
                   About Us
@@ -270,8 +270,8 @@ const Footer = () => {
               </li>
               <li>
                 <Link
-                  to="#"
-                  onClick={(e) => e.preventDefault()}
+                  to="/terms"
+                  onClick={handleNavClick}
                   className="text-gray-500 hover:text-[#FD7100] transition-colors block"
                 >
                   Terms of Service
@@ -279,8 +279,8 @@ const Footer = () => {
               </li>
               <li>
                 <Link
-                  to="#"
-                  onClick={(e) => e.preventDefault()}
+                  to="/privacy"
+                  onClick={handleNavClick}
                   className="text-gray-500 hover:text-[#FD7100] transition-colors block"
                 >
                   Privacy Policy

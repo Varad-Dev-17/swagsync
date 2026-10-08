@@ -1371,7 +1371,7 @@ const AdminUserDetailsPage = () => {
             </div>
           )}
 
-          {/* ===================== TAB: SAVED ADDRESSES ===================== */}
+          {/* ======== SAVED ADDRESSES =========== */}
           {activeTab === "addresses" && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
