@@ -3,6 +3,7 @@ import { useParams, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import ProductImageGrid from "../../components/product-details/ProductImageGrid";
 import ProductInfo from "../../components/product-details/ProductInfo";
+import ManufacturerSellerDetails from "../../components/product-details/ManufacturerSellerDetails";
 import RecommendedProductsSection from "../../components/product-details/RecommendedProductsSection";
 import SyncLoader from "../../components/common/SyncLoader";
 
@@ -130,9 +131,10 @@ const ProductDetailsPage = () => {
             />
           </div>
 
-          {/* Right: Images */}
+          {/* Right: Images & Details */}
           <div className="w-full lg:w-[54%]">
             <ProductImageGrid variant={activeVariant} />
+            <ManufacturerSellerDetails product={product} />
           </div>
         </div>
 
