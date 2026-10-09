@@ -26,7 +26,7 @@ const shippingCards = [
         notified at checkout.
       </>
     ),
-    image: "/shippingpolicy/shipping_locations.png",
+    image: "/shippingpolicy/location.png",
     fallbackIcon: MapPin,
     fallbackText: "Delivery Locations Map",
     reverse: false,
@@ -42,7 +42,7 @@ const shippingCards = [
         will be processed on the next business day.
       </>
     ),
-    image: "/shippingpolicy/order_processing.png",
+    image: "/shippingpolicy/time.png",
     fallbackIcon: Calendar,
     fallbackText: "Processing & Dispatch Time",
     reverse: true,
@@ -59,7 +59,7 @@ const shippingCards = [
         non-metro areas.
       </>
     ),
-    image: "/shippingpolicy/delivery_time.png",
+    image: "/shippingpolicy/truck.png",
     fallbackIcon: Truck,
     fallbackText: "Express Courier Delivery",
     reverse: false,
@@ -78,7 +78,7 @@ const shippingCards = [
         checkout.
       </>
     ),
-    image: "/shippingpolicy/shipping_charges.png",
+    image: "/shippingpolicy/wallet.png",
     fallbackIcon: CreditCard,
     fallbackText: "Transparent Shipping Rates",
     reverse: true,
@@ -99,7 +99,7 @@ const shippingCards = [
         section in your account.
       </>
     ),
-    image: "/shippingpolicy/order_tracking.png",
+    image: "/shippingpolicy/tracking.png",
     fallbackIcon: Smartphone,
     fallbackText: "Live Order Tracking",
     reverse: false,
@@ -116,7 +116,7 @@ const shippingCards = [
         circumstances.
       </>
     ),
-    image: "/shippingpolicy/delivery_attempts.png",
+    image: "/shippingpolicy/boxes.png",
     fallbackIcon: Package,
     fallbackText: "Safe Handling & Delivery Attempts",
     reverse: true,
@@ -202,7 +202,7 @@ const ShippingPolicy = () => {
         {/* Full-bleed Hero Image */}
         {!heroError && (
           <img
-            src="/shippingpolicy/hero.png"
+            src="/shippingpolicy/delivery_boy.png"
             alt="Shipping Policy - SwagSync"
             className="shipping-hero-img absolute inset-0 w-full h-full object-cover object-[center_35%] select-none"
             loading="eager"
@@ -210,15 +210,17 @@ const ShippingPolicy = () => {
           />
         )}
 
-        {/* Cinematic gradient overlay on left for readable white text */}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/70 sm:via-black/45 to-transparent pointer-events-none" />
+        {/* Soft gradient overlay on left for readable text without darkening the image */}
+        <div className="absolute inset-y-0 left-0 w-full sm:w-3/5 lg:w-1/2 bg-gradient-to-r from-black/55 via-black/25 to-transparent pointer-events-none" />
 
-        {/* Ambient warm glow if hero image is pending */}
-        <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-[#FD7100]/20 rounded-full blur-3xl pointer-events-none" />
+        {/* Ambient warm glow fallback if hero image fails */}
+        {heroError && (
+          <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-[#FD7100]/20 rounded-full blur-3xl pointer-events-none" />
+        )}
 
         {/* Content Container aligned with site grid */}
         <div className="relative z-10 w-full max-w-[1460px] mx-auto px-6 sm:px-10 lg:px-14 py-12">
-          <div className="max-w-[580px] text-white space-y-4 sm:space-y-5">
+          <div className="max-w-[580px] text-white space-y-4 sm:space-y-5 drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]">
             <span className="shipping-hero-eyebrow inline-block text-[#FD7100] text-[13px] sm:text-[14px] font-black tracking-widest uppercase">
               FAST, SAFE AND RELIABLE
             </span>
@@ -240,50 +242,50 @@ const ShippingPolicy = () => {
       {/* ========================================================= */}
       {/* LOWER CONTENT SECTION                                     */}
       {/* ========================================================= */}
-      <div className="max-w-[1280px] mx-auto px-6 sm:px-10 lg:px-14 pt-16 sm:pt-20 lg:pt-24 space-y-16 sm:space-y-20">
+      <div className="max-w-[1380px] mx-auto px-5 sm:px-8 lg:px-10 pt-16 sm:pt-20 lg:pt-24 space-y-16 sm:space-y-20">
         {/* Intro Header */}
-        <div className="shipping-intro text-center max-w-[800px] mx-auto space-y-3.5">
-          <span className="inline-block text-[#FD7100] text-[13px] sm:text-[14px] font-extrabold tracking-widest uppercase">
+        <div className="shipping-intro text-center max-w-[1050px] mx-auto space-y-4">
+          <span className="inline-block text-[#FD7100] text-[14px] sm:text-[15px] font-extrabold tracking-widest uppercase">
             OUR SHIPPING POLICY
           </span>
 
-          <h2 className="text-3xl sm:text-4xl lg:text-[42px] font-black text-[#0F172A] tracking-tight leading-tight">
+          <h2 className="text-2xl sm:text-[32px] md:text-[38px] lg:text-[44px] font-black text-[#0F172A] tracking-tight leading-tight sm:whitespace-nowrap">
             Delivering Happiness to Your Doorstep
           </h2>
 
-          <p className="text-[14.5px] sm:text-[15.5px] text-gray-500 leading-relaxed font-normal">
+          <p className="text-[15.5px] sm:text-[17px] text-gray-500 leading-relaxed font-normal max-w-[820px] mx-auto">
             At SwagSync, we are committed to delivering your orders safely,
             quickly, and reliably. This Shipping Policy explains how we process,
             ship, and deliver your orders.
           </p>
         </div>
 
-        {/* 6 Alternating Policy Cards (01 to 06) */}
-        <div className="shipping-cards-container space-y-6 sm:space-y-8">
+        {/* 6 Alternating Policy Sections (01 to 06) */}
+        <div className="shipping-cards-container space-y-12 sm:space-y-16 lg:space-y-20">
           {shippingCards.map((card) => {
             const IconComponent = card.fallbackIcon;
             return (
               <div
                 key={card.number}
-                className="shipping-card rounded-2xl sm:rounded-3xl bg-[#FBFBFC] border border-gray-100/90 p-6 sm:p-8 lg:p-10 shadow-xs hover:shadow-md transition-shadow"
+                className="shipping-card"
               >
                 <div
-                  className={`grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center ${
+                  className={`grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-center ${
                     card.reverse ? "lg:flex-row-reverse" : ""
                   }`}
                 >
-                  {/* Left Column (Image on normal, Text on reverse) */}
+                  {/* Column (Image) */}
                   <div
                     className={`lg:col-span-5 ${
                       card.reverse ? "lg:order-2" : "lg:order-1"
                     }`}
                   >
-                    <div className="relative rounded-2xl bg-white border border-gray-100 p-6 sm:p-8 flex items-center justify-center aspect-[16/10] sm:aspect-[16/9] shadow-xs group overflow-hidden">
+                    <div className="relative rounded-2xl aspect-[16/10] sm:aspect-[16/9] group overflow-hidden flex items-center justify-center">
                       {!imgErrors[card.number] ? (
                         <img
                           src={card.image}
                           alt={card.title}
-                          className="w-full h-full object-contain max-h-[180px] sm:max-h-[220px] select-none transition-transform duration-500 group-hover:scale-105"
+                          className="w-full h-full object-cover select-none transition-transform duration-500 group-hover:scale-105"
                           onError={() => {
                             setImgErrors((prev) => ({
                               ...prev,
@@ -292,7 +294,7 @@ const ShippingPolicy = () => {
                           }}
                         />
                       ) : (
-                        <div className="flex flex-col items-center justify-center text-center p-4">
+                        <div className="flex flex-col items-center justify-center text-center p-6 sm:p-8 bg-gray-50 border border-gray-100 rounded-2xl w-full h-full">
                           <div className="w-14 h-14 rounded-2xl bg-[#FFF3E8] border border-orange-100 flex items-center justify-center text-[#FD7100] mb-3 group-hover:scale-110 transition-transform shadow-xs">
                             <IconComponent className="w-7 h-7 stroke-[2.2]" />
                           </div>
@@ -324,7 +326,7 @@ const ShippingPolicy = () => {
                       </h3>
                     </div>
 
-                    <p className="text-[14px] sm:text-[15px] text-gray-500 leading-relaxed font-normal">
+                    <p className="text-[15px] sm:text-[16px] text-gray-500 leading-relaxed font-normal">
                       {card.description}
                     </p>
                   </div>

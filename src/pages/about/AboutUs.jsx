@@ -231,11 +231,11 @@ const AboutUs = () => {
             </div>
 
             {/* Right Visual Container */}
-            <div className="lg:col-span-6 xl:col-span-6 relative flex justify-center lg:justify-end">
+            <div className="lg:col-span-6 xl:col-span-6 relative flex justify-center lg:justify-end items-center">
               <img
                 src="/aboutus/women_with_bag.png"
                 alt="About SwagSync"
-                className="hero-img w-full max-w-[620px] lg:max-w-[680px] h-auto object-contain select-none"
+                className="hero-img w-full max-w-[560px] sm:max-w-[620px] lg:max-w-[710px] xl:max-w-[730px] h-auto object-contain select-none"
                 loading="eager"
               />
             </div>
