@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import Vendor from "../models/vendor.js";
 import User from "../models/user.js";
 import { hashPassword, doHashValidation, hmacProcess } from "../utils/hash.js";
@@ -183,7 +184,7 @@ export const vendorRegister = async (req, res) => {
       // If exists as unverified vendor, update record and resend verification
       if (!existingVendor.emailVerified) {
         const hashedPassword = await hashPassword(password, 12);
-        const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+        const verificationCode = crypto.randomInt(100000, 1000000).toString();
         const hashedCodeValue = hmacProcess(
           verificationCode,
           process.env.HMAC_VERIFICATION_CODE_SECRET
@@ -226,8 +227,6 @@ export const vendorRegister = async (req, res) => {
         };
 
         await existingVendor.save();
-
-        console.log(`[Vendor Registration] Generated OTP ${verificationCode} for ${normalizedEmail}`);
 
         try {
           await transport.sendMail({
@@ -283,9 +282,8 @@ export const vendorRegister = async (req, res) => {
     // Hash password
     const hashedPassword = await hashPassword(password, 12);
 
-    // Generate 6-digit OTP
-    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-    console.log(`[Vendor Registration] Generated OTP ${verificationCode} for ${normalizedEmail}`);
+    // Generate 6-digit OTP securely
+    const verificationCode = crypto.randomInt(100000, 1000000).toString();
 
     const hashedCodeValue = hmacProcess(
       verificationCode,
@@ -461,8 +459,8 @@ export const verifyVendorEmail = async (req, res) => {
       });
     }
 
-    // Code validity: 1 hour (3600000ms)
-    if (Date.now() - vendor.verificationCodeValidation > 3600000) {
+    // Code validity: 10 minutes (600000ms)
+    if (Date.now() - vendor.verificationCodeValidation > 10 * 60 * 1000) {
       return res.status(400).json({
         success: false,
         message: "Verification code has expired. Please click 'Resend Code'.",
@@ -544,8 +542,7 @@ export const resendVendorOtp = async (req, res) => {
       });
     }
 
-    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-    console.log(`[Resend OTP] Generated OTP ${verificationCode} for ${normalizedEmail}`);
+    const verificationCode = crypto.randomInt(100000, 1000000).toString();
 
     const hashedCodeValue = hmacProcess(
       verificationCode,
@@ -689,6 +686,7 @@ export const vendorLogin = async (req, res) => {
       expires: new Date(Date.now() + 8 * 3600000),
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     });
 
     return res.status(200).json({
@@ -760,7 +758,7 @@ export const sendVendorForgotPasswordCode = async (req, res) => {
       return res.status(404).json({ success: false, message: "Vendor account does not exist with this email." });
     }
 
-    const codeValue = Math.floor(100000 + Math.random() * 900000).toString();
+    const codeValue = crypto.randomInt(100000, 1000000).toString();
     const info = await transport.sendMail({
       from: `"SwagSync" <${process.env.NODE_CODE_SENDING_EMAIL_ADDRESS}>`,
       to: vendor.email,
@@ -778,10 +776,7 @@ export const sendVendorForgotPasswordCode = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: info?.simulated
-        ? "Password reset code generated (Render Free Tier blocks SMTP, code provided)."
-        : "Password reset code sent to your email!",
-      code: info?.simulated ? codeValue : undefined,
+      message: "Password reset code sent to your email!",
     });
   } catch (error) {
     console.error("[Vendor Forgot Password] Error:", error);

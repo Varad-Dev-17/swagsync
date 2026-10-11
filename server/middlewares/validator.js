@@ -11,7 +11,7 @@ export const signupSchema = joi.object({
     .max(60)
     .required()
     .email({
-      tlds: { allow: ["com", "net"] },
+      tlds: { allow: false },
     }),
   password: joi
     .string()
@@ -30,7 +30,7 @@ export const acceptCodeSchema = joi.object({
     .max(60)
     .required()
     .email({
-      tlds: { allow: ["com", "net"] },
+      tlds: { allow: false },
     }),
   codeProvided: joi.number().required(),
 });
@@ -42,7 +42,7 @@ export const signinSchema = joi.object({
     .max(60)
     .required()
     .email({
-      tlds: { allow: ["com", "net"] },
+      tlds: { allow: false },
     }),
   password: joi
     .string()
@@ -78,7 +78,7 @@ export const acceptFPCodeSchema = joi.object({
     .max(60)
     .required()
     .email({
-      tlds: { allow: ["com", "net"] },
+      tlds: { allow: false },
     }),
   providedCode: joi.number().required(),
   newPassword: joi

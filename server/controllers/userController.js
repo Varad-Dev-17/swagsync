@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import User from "../models/user.js";
 import Admin from "../models/admin.js";
 import Order from "../models/order.js";
@@ -286,7 +287,7 @@ export const updateProfileInfo = async (req, res) => {
         return res.status(400).json({ success: false, message: "Email already in use" });
       }
 
-      const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+      const verificationCode = crypto.randomInt(100000, 1000000).toString();
       
       try {
         let info = await transport.sendMail({

@@ -49,12 +49,6 @@ export const uploadToCloudinary = async (buffer, mimetype, folder = "swagsync-pr
     const b64 = Buffer.from(optimizedBuffer).toString("base64");
     const dataURI = "data:" + optimizedMimetype + ";base64," + b64;
 
-    console.log({
-      cloudName: process.env.CLOUDINARY_CLOUD_NAME,
-      apiKey: process.env.CLOUDINARY_API_KEY,
-      apiSecretLoaded: !!process.env.CLOUDINARY_API_SECRET,
-    });
-
     cloudinary.uploader.upload(
       dataURI,
       { folder, resource_type: "image" },

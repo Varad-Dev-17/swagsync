@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import User from "../models/user.js";
 import Admin from "../models/admin.js";
 import Vendor from "../models/vendor.js";
@@ -51,30 +52,16 @@ export const signUp = async (req, res) => {
 
     const hashedPassword = await hashPassword(password, 12);
 
-    // Generate verification code
-    const verificationCode = Math.floor(
-      100000 + Math.random() * 900000
-    ).toString();
+    // Cryptographically secure 6-digit verification code
+    const verificationCode = crypto.randomInt(100000, 1000000).toString();
 
-    console.log("OTP generated");
-    console.log(
-      `[Signup Flow] Generated verification code ${verificationCode} for user ${email}`
-    );
-
-    let isEmailSimulated = false;
     try {
-      console.log("Sending email...");
       let info = await transport.sendMail({
         from: `"SwagSync" <${process.env.NODE_CODE_SENDING_EMAIL_ADDRESS}>`,
         to: email,
         subject: "Verify Your Email",
         html: verificationEmailTemplate(verificationCode, username),
       });
-
-      console.log("Email sent successfully or fallback activated:", info);
-      if (info.simulated) {
-        isEmailSimulated = true;
-      }
 
       if (!info.accepted || info.accepted.length === 0) {
         throw new Error(
@@ -128,13 +115,10 @@ export const signUp = async (req, res) => {
       entityId: result._id.toString(),
     });
 
-    console.log("Sending success response to frontend");
     res.status(201).json({
       success: true,
-      message: isEmailSimulated
-        ? "Account created! Render Free Tier blocks outbound SMTP, so your OTP code has been auto-provided."
-        : "Your account has been created successfully. A verification code has been sent to your email.",
-      verificationCode: isEmailSimulated ? verificationCode : undefined,
+      message:
+        "Your account has been created successfully. A verification code has been sent to your email.",
       result,
     });
   } catch (error) {
@@ -182,7 +166,8 @@ export const verifyVerificationCode = async (req, res) => {
         .json({ success: false, message: "Something is wrong with the code!" });
     }
 
-    if (Date.now() - existingUser.verificationCodeValidation > 3600000) {
+    // 10 minutes OTP validity
+    if (Date.now() - existingUser.verificationCodeValidation > 10 * 60 * 1000) {
       return res
         .status(400)
         .json({ success: false, message: "Verification code expired." });
@@ -305,6 +290,7 @@ export const signIn = async (req, res) => {
         expires: new Date(Date.now() + 8 * 3600000),
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       })
       .status(200)
       .json({
@@ -403,7 +389,7 @@ export const sendForgotPasswordCode = async (req, res) => {
         .json({ success: false, message: "User does not exists!" });
     }
 
-    const codeValue = Math.floor(Math.random() * 1000000).toString();
+    const codeValue = crypto.randomInt(100000, 1000000).toString();
     let info = await transport.sendMail({
       from: `"SwagSync" <${process.env.NODE_CODE_SENDING_EMAIL_ADDRESS}>`,
       to: existingUser.email,
@@ -421,10 +407,7 @@ export const sendForgotPasswordCode = async (req, res) => {
       await existingUser.save();
       return res.status(200).json({
         success: true,
-        message: info.simulated
-          ? "Forgot password code generated (Render Free Tier blocks SMTP, code provided)."
-          : "Forgot password code sent!",
-        code: info.simulated ? codeValue : undefined,
+        message: "Forgot password code sent!",
       });
     }
     res.status(400).json({ success: false, message: "Code sent failed!" });

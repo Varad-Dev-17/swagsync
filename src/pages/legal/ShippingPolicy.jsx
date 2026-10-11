@@ -239,9 +239,6 @@ const ShippingPolicy = () => {
         </div>
       </section>
 
-      {/* ========================================================= */}
-      {/* LOWER CONTENT SECTION                                     */}
-      {/* ========================================================= */}
       <div className="max-w-[1380px] mx-auto px-5 sm:px-8 lg:px-10 pt-16 sm:pt-20 lg:pt-24 space-y-16 sm:space-y-20">
         {/* Intro Header */}
         <div className="shipping-intro text-center max-w-[1050px] mx-auto space-y-4">
@@ -270,15 +267,13 @@ const ShippingPolicy = () => {
                 className="shipping-card"
               >
                 <div
-                  className={`grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-center ${
-                    card.reverse ? "lg:flex-row-reverse" : ""
-                  }`}
+                  className={`grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-center ${card.reverse ? "lg:flex-row-reverse" : ""
+                    }`}
                 >
                   {/* Column (Image) */}
                   <div
-                    className={`lg:col-span-5 ${
-                      card.reverse ? "lg:order-2" : "lg:order-1"
-                    }`}
+                    className={`lg:col-span-5 ${card.reverse ? "lg:order-2" : "lg:order-1"
+                      }`}
                   >
                     <div className="relative rounded-2xl aspect-[16/10] sm:aspect-[16/9] group overflow-hidden flex items-center justify-center">
                       {!imgErrors[card.number] ? (
@@ -311,9 +306,8 @@ const ShippingPolicy = () => {
 
                   {/* Right Column (Text on normal, Image on reverse) */}
                   <div
-                    className={`lg:col-span-7 space-y-3 ${
-                      card.reverse ? "lg:order-1" : "lg:order-2"
-                    }`}
+                    className={`lg:col-span-7 space-y-3 ${card.reverse ? "lg:order-1" : "lg:order-2"
+                      }`}
                   >
                     {/* Orange Number Badge + Title in Row */}
                     <div className="flex items-center gap-3 sm:gap-3.5">

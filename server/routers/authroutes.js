@@ -11,16 +11,17 @@ import {
 } from "../controllers/authController.js";
 
 import { identifier } from "../middlewares/identification.js";
+import { authLimiter, otpTriggerLimiter } from "../middlewares/rateLimiter.js";
 
 const router = express.Router();
 
-// Public routes
-router.post("/signup", signUp);
-router.patch("/verify-verification-code", verifyVerificationCode);
-router.post("/signin", signIn);
+// Public routes with rate limiting
+router.post("/signup", authLimiter, signUp);
+router.patch("/verify-verification-code", authLimiter, verifyVerificationCode);
+router.post("/signin", authLimiter, signIn);
 router.post("/signout", signOut);
-router.patch("/send-forgot-password-code", sendForgotPasswordCode);
-router.patch("/verify-forgot-password-code", verifyForgotPasswordCode);
+router.patch("/send-forgot-password-code", otpTriggerLimiter, sendForgotPasswordCode);
+router.patch("/verify-forgot-password-code", authLimiter, verifyForgotPasswordCode);
 
 // Protected routes
 router.patch("/change-password", identifier, changePassword);

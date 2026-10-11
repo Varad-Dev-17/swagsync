@@ -7,6 +7,8 @@ import express from "express";
 // Triggering server restart for database model separation (Admin, Vendor, User)
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import helmet from "helmet";
+import { apiLimiter } from "./middlewares/rateLimiter.js";
 import connectDB from "./config/db.js";
 
 // Routes
@@ -60,8 +62,21 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
+// Security Hardening: trust reverse proxies (Render, Cloudflare, etc.) and disable fingerprinting
+app.set("trust proxy", 1);
+app.disable("x-powered-by");
+
+// Security Headers
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    contentSecurityPolicy: false,
+  })
+);
+
 // Middleware
-app.use(express.json());
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 app.use(
   cors({
@@ -81,6 +96,9 @@ app.use(
 );
 
 app.use(cookieParser());
+
+// Apply global API rate limiting to all requests
+app.use(apiLimiter);
 
 // API Routes
 

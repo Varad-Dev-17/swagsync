@@ -5,7 +5,6 @@ import axios from "axios";
 import {
   Eye,
   EyeOff,
-  Diamond,
   ArrowRight,
   Loader2,
   CheckCircle2,
@@ -40,21 +39,14 @@ const SignUp = () => {
 
   const handleSignUp = async (e) => {
     e.preventDefault();
-    console.log("Signup started");
     setError("");
     setInfoNotice("");
     setIsLoading(true);
 
     try {
-      console.log("Sending signup request");
       const response = await api.post("/auth/signup", formData);
-      console.log("Signup response:", response);
 
       if (response.data.success) {
-        console.log("Navigating to OTP verification");
-        if (response.data.verificationCode) {
-          setVerificationCode(response.data.verificationCode);
-        }
         if (response.data.message) {
           setInfoNotice(response.data.message);
         }
