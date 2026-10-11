@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { 
   Ticket, 
@@ -6,12 +6,8 @@ import {
   Search, 
   Edit2, 
   Trash2, 
-  Check, 
   Clock, 
-  Tag, 
   CheckCircle2, 
-  XCircle, 
-  AlertCircle,
   Copy
 } from "lucide-react";
 import toast from "react-hot-toast";
@@ -19,7 +15,7 @@ import { useAuth } from "../../../context/AuthContext";
 import DataTable from "../../../components/admin/ui/DataTable";
 import Pagination from "../../../components/admin/ui/Pagination";
 import ConfirmDialog from "../../../components/admin/ui/ConfirmDialog";
-import CouponModal from "../../../components/admin/coupons/CouponModal";
+import CouponForm from "../../../components/admin/coupons/CouponForm";
 
 const Coupons = () => {
   const { getAuthHeaders } = useAuth();
@@ -31,7 +27,6 @@ const Coupons = () => {
   // Filters & Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
   const limit = 10;
 
   const [search, setSearch] = useState("");
@@ -39,8 +34,8 @@ const Coupons = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
 
-  // Modals
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  // View & Form state
+  const [view, setView] = useState("list"); // "list" | "form"
   const [couponToEdit, setCouponToEdit] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -72,7 +67,6 @@ const Coupons = () => {
       if (res.data.success) {
         setCoupons(res.data.data.coupons || []);
         setTotalPages(res.data.data.pagination.pages || 1);
-        setTotalItems(res.data.data.pagination.total || 0);
         if (res.data.data.stats) {
           setStats(res.data.data.stats);
         }
@@ -98,7 +92,7 @@ const Coupons = () => {
         });
         if (res.data.success) {
           toast.success(res.data.message || "Coupon updated successfully");
-          setIsModalOpen(false);
+          setView("list");
           setCouponToEdit(null);
           fetchCoupons();
         }
@@ -108,7 +102,7 @@ const Coupons = () => {
         });
         if (res.data.success) {
           toast.success(res.data.message || "Coupon created successfully");
-          setIsModalOpen(false);
+          setView("list");
           fetchCoupons();
         }
       }
@@ -130,7 +124,7 @@ const Coupons = () => {
         toast.success(res.data.message);
         fetchCoupons();
       }
-    } catch (err) {
+    } catch {
       toast.error("Failed to toggle status");
     }
   };
@@ -148,7 +142,7 @@ const Coupons = () => {
         setCouponToDelete(null);
         fetchCoupons();
       }
-    } catch (err) {
+    } catch {
       toast.error("Failed to delete coupon");
     } finally {
       setIsDeleting(false);
@@ -278,7 +272,7 @@ const Coupons = () => {
           <button
             onClick={() => {
               setCouponToEdit(row);
-              setIsModalOpen(true);
+              setView("form");
             }}
             className="p-1.5 text-gray-500 hover:text-[#4648d4] hover:bg-[#4648d4]/10 rounded-lg transition-colors cursor-pointer"
             title="Edit Coupon"
@@ -300,6 +294,24 @@ const Coupons = () => {
     },
   ];
 
+  if (view === "form") {
+    return (
+      <div className="w-full min-h-screen bg-slate-50/50 py-6 px-4 sm:px-8 lg:px-12">
+        <div className="w-full max-w-7xl mx-auto space-y-6">
+          <CouponForm
+            couponToEdit={couponToEdit}
+            onCancel={() => {
+              setView("list");
+              setCouponToEdit(null);
+            }}
+            onSave={handleCreateOrUpdate}
+            isLoading={isSaving}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full min-h-screen bg-slate-50/50 py-6 px-4 sm:px-8 lg:px-12">
       <div className="w-full max-w-7xl mx-auto space-y-6">
@@ -317,7 +329,7 @@ const Coupons = () => {
           <button
             onClick={() => {
               setCouponToEdit(null);
-              setIsModalOpen(true);
+              setView("form");
             }}
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#4648d4] hover:bg-[#3b3dbf] text-white font-bold text-sm shadow-md shadow-[#4648d4]/20 transition-all active:scale-95 cursor-pointer self-start sm:self-auto"
           >
@@ -468,18 +480,6 @@ const Coupons = () => {
             </div>
           )}
         </div>
-
-      {/* Coupon Modal (Create / Edit) */}
-      <CouponModal
-        isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false);
-          setCouponToEdit(null);
-        }}
-        onSave={handleCreateOrUpdate}
-        couponToEdit={couponToEdit}
-        isLoading={isSaving}
-      />
 
       {/* Delete Confirmation */}
       <ConfirmDialog

@@ -323,7 +323,7 @@ export const createCoupon = async (req, res) => {
       startDate: startDate ? new Date(startDate) : new Date(),
       expiryDate: new Date(expiryDate),
       status: status || "active",
-      createdBy: req.user?._id,
+      createdBy: req.user?.userId || req.user?._id || null,
     });
 
     // If coupon is active, notify all users of the new coupon
