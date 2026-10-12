@@ -2,6 +2,7 @@ import crypto from "crypto";
 import User from "../models/user.js";
 import Admin from "../models/admin.js";
 import Vendor from "../models/vendor.js";
+import Subscriber from "../models/subscriber.js";
 import { hashPassword, doHashValidation, hmacProcess } from "../utils/hash.js";
 import { verificationEmailTemplate } from "../utils/verificationEmailTemplate.js";
 import { forgotPasswordEmailTemplate } from "../utils/forgotPasswordEmailTemplate.js";
@@ -183,6 +184,22 @@ export const verifyVerificationCode = async (req, res) => {
       existingUser.verificationCode = undefined;
       existingUser.verificationCodeValidation = undefined;
       await existingUser.save();
+
+      // Automatically enroll verified customer into newsletter subscribers (skip admin)
+      if (!existingUser.isAdmin) {
+        Subscriber.findOneAndUpdate(
+          { email: existingUser.email.toLowerCase() },
+          {
+            $setOnInsert: {
+              email: existingUser.email.toLowerCase(),
+              isSubscribed: true,
+              source: "registration",
+              subscribedAt: new Date(),
+            },
+          },
+          { upsert: true }
+        ).catch((e) => console.error("Auto-subscribe user error:", e.message));
+      }
 
       const token = jwt.sign(
         {

@@ -52,6 +52,8 @@ import vendorRoutes from "./routers/vendorRoutes.js";
 import vendorAdminRoutes from "./routers/vendorAdminRoutes.js";
 import vendorPortalRoutes from "./routers/vendorPortalRoutes.js";
 import adminNotificationRoutes from "./routers/adminNotificationRoutes.js";
+import newsletterRoutes from "./routers/newsletterRoutes.js";
+import newsletterAdminRoutes from "./routers/newsletterAdminRoutes.js";
 
 import path from "path";
 import { fileURLToPath } from "url";
@@ -122,6 +124,7 @@ app.use("/admin/upload", uploadRoutes);
 app.use("/admin/tickets", ticketAdminRoutes);
 app.use("/admin/vendors", vendorAdminRoutes);
 app.use("/admin/notifications", adminNotificationRoutes);
+app.use("/admin/newsletter", newsletterAdminRoutes);
 
 // Public / User routes
 app.use("/auth", authRoutes);
@@ -144,6 +147,7 @@ app.use("/coupons", couponPublicRoutes);
 app.use("/return-requests", returnRequestRoutes);
 app.use("/tickets", ticketRoutes);
 app.use("/notifications", notificationRoutes);
+app.use("/newsletter", newsletterRoutes);
 
 // Static Files
 const distPath = path.join(__dirname, "../dist");

@@ -8,7 +8,7 @@ import HomeNewArrivalsSection from "../../components/home/HomeNewArrivalsSection
 import PromoBanners from "../../components/home/PromoBanners";
 import PopularCategories from "../../components/home/PopularCategories";
 import OfficialBrandStores from "../../components/home/OfficialBrandStores";
-import Newsletter from "../../components/common/Newsletter";
+import HomeAboutFeatures from "../../components/home/HomeAboutFeatures";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -72,7 +72,7 @@ const Home = () => {
           subtitle="Discover the latest additions to the SwagSync collection."
         />
         <OfficialBrandStores />
-        <Newsletter />
+        <HomeAboutFeatures />
       </div>
     </div>
   );

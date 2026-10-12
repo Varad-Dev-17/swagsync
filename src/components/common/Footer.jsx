@@ -89,6 +89,7 @@ const DEFAULT_DEPARTMENTS = [
 
 const Footer = () => {
   const [email, setEmail] = useState("");
+  const [isSubscribing, setIsSubscribing] = useState(false);
   const [departments, setDepartments] = useState(DEFAULT_DEPARTMENTS);
 
   // Fetch real active departments dynamically from API
@@ -127,14 +128,33 @@ const Footer = () => {
     };
   }, []);
 
-  const handleSubscribe = (e) => {
+  const handleSubscribe = async (e) => {
     e.preventDefault();
     if (!email || !email.includes("@")) {
       toast.error("Please enter a valid email address");
       return;
     }
-    toast.success("Thank you for subscribing to SwagSync newsletter!");
-    setEmail("");
+    setIsSubscribing(true);
+    try {
+      const res = await api.post("/newsletter/subscribe", { email });
+      if (res.data?.success) {
+        if (res.data.alreadySubscribed) {
+          toast(res.data.message || "You're already subscribed to our newsletter!", {
+            icon: "ℹ️",
+          });
+        } else {
+          toast.success(res.data.message || "Thank you for subscribing! Check your email for a welcome surprise.");
+        }
+        setEmail("");
+      } else {
+        toast.error(res.data?.message || "Failed to subscribe. Please try again.");
+      }
+    } catch (err) {
+      const msg = err.response?.data?.message || "Something went wrong while subscribing. Please try again.";
+      toast.error(msg);
+    } finally {
+      setIsSubscribing(false);
+    }
   };
 
   const handleNavClick = () => {
@@ -321,9 +341,17 @@ const Footer = () => {
               </div>
               <button
                 type="submit"
-                className="bg-[#FD7100] hover:bg-[#ea580c] text-white text-[14px] font-medium px-4.5 py-2.5 rounded-lg transition-colors cursor-pointer shadow-xs whitespace-nowrap active:scale-95 flex-shrink-0"
+                disabled={isSubscribing}
+                className="bg-[#FD7100] hover:bg-[#ea580c] disabled:opacity-70 text-white text-[14px] font-medium px-4.5 py-2.5 rounded-lg transition-colors cursor-pointer shadow-xs whitespace-nowrap active:scale-95 flex-shrink-0 flex items-center gap-1.5"
               >
-                Subscribe
+                {isSubscribing ? (
+                  <>
+                    <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                    <span>Subscribing...</span>
+                  </>
+                ) : (
+                  "Subscribe"
+                )}
               </button>
             </form>
           </div>
