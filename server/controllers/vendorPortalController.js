@@ -2123,6 +2123,19 @@ export const getVendorOrderById = async (req, res) => {
       })
       .lean();
 
+    let fulfillmentStatus = "pending";
+    if (vendorItems.every((it) => it.status === "delivered")) {
+      fulfillmentStatus = "delivered";
+    } else if (vendorItems.every((it) => it.status === "shipped" || it.status === "delivered")) {
+      fulfillmentStatus = "shipped";
+    } else if (vendorItems.every((it) => ["packed", "shipped", "delivered"].includes(it.status))) {
+      fulfillmentStatus = "packed";
+    } else if (vendorItems.some((it) => ["processing", "packed", "shipped"].includes(it.status))) {
+      fulfillmentStatus = "processing";
+    } else if (vendorItems.every((it) => it.status === "cancelled")) {
+      fulfillmentStatus = "cancelled";
+    }
+
     const customerName =
       order.shippingAddress?.name ||
       order.shippingAddress?.fullName ||
@@ -2136,6 +2149,9 @@ export const getVendorOrderById = async (req, res) => {
       success: true,
       data: {
         ...order,
+        overallOrderStatus: order.status,
+        fulfillmentStatus,
+        status: fulfillmentStatus,
         customerName,
         user: {
           ...order.user,
@@ -2193,9 +2209,18 @@ export const updateVendorOrderStatus = async (req, res) => {
         });
       }
 
+      const vendorProducts = await Product.find({ vendorId }).select("_id").lean();
+      const vendorProdIdSet = new Set(vendorProducts.map((p) => p._id.toString()));
+
       // Update vendor items in this order to the new status
       order.items.forEach((item) => {
-        if (item.vendor?.toString() === vendorId.toString()) {
+        const itemVendorId = item.vendor?.toString();
+        const prodVendorId = item.product?.vendorId?.toString() || item.product?.toString();
+        if (
+          itemVendorId === vendorId.toString() ||
+          prodVendorId === vendorId.toString() ||
+          vendorProdIdSet.has(prodVendorId)
+        ) {
           item.status = status;
           if (trackingNumber) item.trackingNumber = trackingNumber.trim();
           if (courier) item.courier = courier.trim();

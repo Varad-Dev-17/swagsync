@@ -118,7 +118,14 @@ export default function VendorCaseDetailsPage() {
 
   // Update Status handler
   const handleUpdateStatus = async (newStatus) => {
-    if (!newStatus) return;
+    if (!newStatus || newStatus === activeStatus) return;
+    if (isOrderView && newStatus === "shipped") {
+      setShippingTargetItemId(null);
+      setShippingCourier(orderData?.vendorItems?.[0]?.courier || "Delhivery");
+      setShippingTrackingNumber(orderData?.vendorItems?.[0]?.trackingNumber || "");
+      setShippingModalOpen(true);
+      return;
+    }
     setIsUpdatingStatus(true);
     try {
       if (isOrderView) {
@@ -268,11 +275,14 @@ export default function VendorCaseDetailsPage() {
 
   // Determine Case Mode & Status
   const isExchangeCase = isReturnView && returnData?.type === "exchange";
-  const activeStatus = isReturnView ? (returnData?.status || "pending") : (orderData?.status || "pending");
+  const activeStatus = isReturnView
+    ? (returnData?.status || "pending")
+    : (orderData?.fulfillmentStatus || (orderData?.status === "processing" ? "packed" : orderData?.status) || "pending");
 
   const orderStatusOptions = [
-    { value: "pending", label: "Order Confirmed" },
+    ...(activeStatus === "pending" ? [{ value: "pending", label: "Order Confirmed" }] : []),
     { value: "packed", label: "Packed" },
+    ...(activeStatus === "processing" ? [{ value: "processing", label: "Packed" }] : []),
     { value: "shipped", label: "Shipped" },
   ];
 
@@ -907,19 +917,42 @@ export default function VendorCaseDetailsPage() {
 
                           <div className="flex items-center gap-2">
                             <StatusBadge status={item.status || activeStatus} />
-                            {(!item.status || item.status === "pending" || item.status === "packed") && (
+                            {(!item.status || item.status === "pending" || item.status === "packed") ? (
                               <button
                                 onClick={() => {
                                   setShippingTargetItemId(item._id);
+                                  setShippingCourier(item.courier || "Delhivery");
+                                  setShippingTrackingNumber(item.trackingNumber || "");
                                   setShippingModalOpen(true);
                                 }}
                                 className="px-2.5 py-1 rounded-lg bg-orange-50 hover:bg-orange-100 text-[#fe4a03] font-bold text-[11px] border border-orange-200 transition-colors cursor-pointer"
                               >
                                 Ship Item
                               </button>
-                            )}
+                            ) : item.status === "shipped" ? (
+                              <button
+                                onClick={() => {
+                                  setShippingTargetItemId(item._id);
+                                  setShippingCourier(item.courier || "Delhivery");
+                                  setShippingTrackingNumber(item.trackingNumber || "");
+                                  setShippingModalOpen(true);
+                                }}
+                                className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[11px] transition-colors cursor-pointer"
+                              >
+                                Edit Tracking
+                              </button>
+                            ) : null}
                           </div>
                         </div>
+                        {(item.courier || item.trackingNumber) && (
+                          <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium pl-1">
+                            <Truck size={12} className="text-[#fe4a03] shrink-0" />
+                            <span>
+                              {item.courier || "Carrier"}:{" "}
+                              <strong className="text-slate-800 font-mono">{item.trackingNumber || "N/A"}</strong>
+                            </span>
+                          </div>
+                        )}
                       </div>
                     );
                   })}
@@ -1059,6 +1092,8 @@ export default function VendorCaseDetailsPage() {
                   <button
                     onClick={() => {
                       setShippingTargetItemId(null);
+                      setShippingCourier(orderItems[0]?.courier || "Delhivery");
+                      setShippingTrackingNumber(orderItems[0]?.trackingNumber || "");
                       setShippingModalOpen(true);
                     }}
                     disabled={isUpdatingStatus}
@@ -1067,14 +1102,17 @@ export default function VendorCaseDetailsPage() {
                     <Truck size={14} /> Dispatch & Enter Tracking
                   </button>
                 )}
-                {activeStatus === "shipped" && (
-                  <button
-                    onClick={() => handleUpdateStatus("delivered")}
-                    disabled={isUpdatingStatus}
-                    className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                  >
-                    <CheckCircle2 size={14} /> Confirm Delivered
-                  </button>
+                {(activeStatus === "shipped" || activeStatus === "on_the_way") && (
+                  <div className="p-3.5 bg-indigo-50 border border-indigo-200 rounded-xl text-center text-xs font-bold text-indigo-800 flex items-center justify-center gap-2">
+                    <Truck size={16} className="text-indigo-600" />
+                    Dispatched & Handed Over to Logistics
+                  </div>
+                )}
+                {(activeStatus === "delivered" || activeStatus === "completed") && (
+                  <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl text-center text-xs font-bold text-emerald-800 flex items-center justify-center gap-2">
+                    <CheckCircle2 size={16} className="text-emerald-600" />
+                    Delivered to Customer
+                  </div>
                 )}
               </div>
             )}
