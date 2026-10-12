@@ -8,7 +8,8 @@ import {
   Trash2, 
   Clock, 
   CheckCircle2, 
-  Copy
+  Copy,
+  Send
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useAuth } from "../../../context/AuthContext";
@@ -149,6 +150,24 @@ const Coupons = () => {
     }
   };
 
+  const handleBroadcastCoupon = async (coupon) => {
+    try {
+      toast.loading(`Broadcasting ${coupon.code} to subscribers...`, { id: "broadcast" });
+      const res = await axios.post(
+        `/admin/coupons/${coupon._id}/broadcast`,
+        {},
+        { headers: getAuthHeaders() }
+      );
+      if (res.data?.success) {
+        toast.success(res.data.message || `Broadcast sent for ${coupon.code}!`, { id: "broadcast" });
+      } else {
+        toast.error(res.data?.message || "Failed to broadcast coupon", { id: "broadcast" });
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to broadcast coupon email", { id: "broadcast" });
+    }
+  };
+
   const copyCode = (code) => {
     navigator.clipboard?.writeText(code);
     toast.success(`Copied "${code}"`);
@@ -269,6 +288,15 @@ const Coupons = () => {
       align: "center",
       render: (row) => (
         <div className="flex items-center justify-center gap-2">
+          {row.status === "active" && new Date(row.expiryDate) >= new Date() && (
+            <button
+              onClick={() => handleBroadcastCoupon(row)}
+              className="p-1.5 text-orange-600 hover:text-orange-700 hover:bg-orange-50 rounded-lg transition-colors cursor-pointer"
+              title="Broadcast to Newsletter Subscribers"
+            >
+              <Send size={16} />
+            </button>
+          )}
           <button
             onClick={() => {
               setCouponToEdit(row);

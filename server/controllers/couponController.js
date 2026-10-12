@@ -1,4 +1,7 @@
 import Coupon from "../models/coupon.js";
+import Subscriber from "../models/subscriber.js";
+import transport from "../middlewares/sendMail.js";
+import { generateCouponEmailHtml } from "../utils/couponEmailTemplate.js";
 import { createBroadcastNotification } from "../utils/notificationHelper.js";
 
 // GET ALL COUPONS (ADMIN)
@@ -326,7 +329,7 @@ export const createCoupon = async (req, res) => {
       createdBy: req.user?.userId || req.user?._id || null,
     });
 
-    // If coupon is active, notify all users of the new coupon
+    // If coupon is active, notify all users and email all newsletter subscribers
     if (coupon.status === "active") {
       const discountDesc =
         coupon.discountType === "percentage"
@@ -342,6 +345,11 @@ export const createCoupon = async (req, res) => {
         color: "emerald",
         entityId: coupon._id.toString(),
       });
+
+      // Email all active subscribers with adaptive festive/discount template
+      broadcastCouponToSubscribers(coupon).catch((err) =>
+        console.error("Failed to broadcast coupon email:", err.message)
+      );
     }
 
     return res.status(201).json({
@@ -354,6 +362,92 @@ export const createCoupon = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: error.message || "Failed to create coupon",
+    });
+  }
+};
+
+/**
+ * Broadcasts a coupon email to all active subscribers.
+ */
+export const broadcastCouponToSubscribers = async (coupon) => {
+  try {
+    const subscribers = await Subscriber.find({ isSubscribed: true }).select("email").lean();
+    if (!subscribers || subscribers.length === 0) return 0;
+
+    const senderEmail =
+      process.env.NODE_CODE_SENDING_EMAIL_ADDRESS ||
+      process.env.SMTP_USER ||
+      "no-reply@swagsync.com";
+    const siteUrl = process.env.FRONTEND_URL || "https://swagsync.onrender.com";
+
+    const uniqueEmails = [...new Set(subscribers.map((s) => s.email.trim().toLowerCase()))];
+
+    const discountText =
+      coupon.discountType === "percentage"
+        ? `${coupon.discountValue}% OFF`
+        : `₹${coupon.discountValue} FLAT OFF`;
+
+    const subject = `🎉 Special Offer: Enjoy ${discountText} with code ${coupon.code}!`;
+
+    for (let i = 0; i < uniqueEmails.length; i += 25) {
+      const batch = uniqueEmails.slice(i, i + 25);
+      await Promise.allSettled(
+        batch.map((targetEmail) => {
+          const emailHtml = generateCouponEmailHtml({
+            couponCode: coupon.code,
+            description: coupon.description,
+            discountType: coupon.discountType,
+            discountValue: coupon.discountValue,
+            minimumOrderAmount: coupon.minimumOrderAmount,
+            maximumDiscount: coupon.maximumDiscount,
+            expiryDate: coupon.expiryDate,
+            siteUrl,
+            recipientEmail: targetEmail,
+          });
+
+          return transport.sendMail({
+            from: `"SwagSync Offers" <${senderEmail}>`,
+            to: targetEmail,
+            subject,
+            html: emailHtml,
+          });
+        })
+      );
+    }
+
+    console.log(`[Coupon Broadcast] Dispatched coupon "${coupon.code}" to ${uniqueEmails.length} subscribers.`);
+    return uniqueEmails.length;
+  } catch (err) {
+    console.error("[Coupon Broadcast Error]:", err.message);
+    return 0;
+  }
+};
+
+// POST /admin/coupons/:id/broadcast (ADMIN manually trigger broadcast)
+export const sendCouponBroadcastToSubscribers = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const coupon = await Coupon.findById(id);
+
+    if (!coupon) {
+      return res.status(404).json({
+        success: false,
+        message: "Coupon not found",
+      });
+    }
+
+    const count = await broadcastCouponToSubscribers(coupon);
+
+    return res.status(200).json({
+      success: true,
+      message: `Coupon "${coupon.code}" email broadcast sent to ${count} subscriber(s).`,
+      sentCount: count,
+    });
+  } catch (error) {
+    console.error("Error in sendCouponBroadcastToSubscribers:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to broadcast coupon email",
     });
   }
 };

@@ -112,78 +112,106 @@ export const subscribe = async (req, res) => {
     const siteUrl = process.env.FRONTEND_URL || "http://localhost:3000";
 
     const emailHtml = `
-    <!DOCTYPE html>
-    <html lang="en">
+    <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+    <html xmlns="http://www.w3.org/1999/xhtml" lang="en">
     <head>
-      <meta charset="UTF-8" />
-      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+      <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+      <meta name="x-apple-disable-message-reformatting" />
       <title>Welcome to SwagSync</title>
-      <style>
-        body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc; color: #1e293b; }
-        .wrapper { width: 100%; max-width: 600px; margin: 30px auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.06); }
-        .header { background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%); padding: 36px 30px; text-align: center; }
-        .brand { font-size: 28px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px; }
-        .brand span { color: #FD7100; }
-        .content { padding: 36px 32px; }
-        .title { font-size: 24px; font-weight: 800; color: #0F172A; margin-top: 0; margin-bottom: 12px; }
-        .desc { font-size: 15px; line-height: 1.6; color: #64748b; margin-bottom: 24px; }
-        .coupon-card { background: linear-gradient(135deg, #FFF7ED 0%, #FFEDD5 100%); border: 2px dashed #FD7100; border-radius: 12px; padding: 24px; text-align: center; margin: 24px 0; }
-        .coupon-label { font-size: 12px; font-weight: 700; color: #C2410C; text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 8px; }
-        .coupon-code { display: inline-block; background-color: #FD7100; color: #ffffff; font-size: 26px; font-weight: 900; letter-spacing: 3px; padding: 10px 24px; border-radius: 8px; box-shadow: 0 4px 12px rgba(253,113,0,0.3); }
-        .coupon-desc { font-size: 13px; color: #9A3412; margin-top: 10px; font-weight: 600; }
-        .perks { margin: 28px 0; border-top: 1px solid #f1f5f9; padding-top: 24px; }
-        .perk-item { display: flex; align-items: flex-start; margin-bottom: 14px; }
-        .perk-dot { color: #FD7100; font-weight: bold; margin-right: 10px; font-size: 16px; }
-        .perk-text { font-size: 14px; color: #334155; line-height: 1.4; }
-        .btn-container { text-align: center; margin: 32px 0 16px; }
-        .btn { display: inline-block; background-color: #FD7100; color: #ffffff !important; text-decoration: none; font-size: 15px; font-weight: 700; padding: 14px 36px; border-radius: 9999px; box-shadow: 0 4px 14px rgba(253,113,0,0.35); }
-        .footer { background-color: #f8fafc; padding: 24px 32px; text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px solid #e2e8f0; }
-        .footer a { color: #64748b; text-decoration: underline; }
+      <style type="text/css">
+        body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+        table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+        body { margin: 0 !important; padding: 0 !important; width: 100% !important; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        @media only screen and (max-width: 620px) {
+          .email-card { width: 100% !important; border-radius: 0 !important; }
+          .pad-content { padding: 24px 18px !important; }
+          .title-mob { font-size: 22px !important; }
+          .code-pill-mob { font-size: 22px !important; padding: 10px 18px !important; letter-spacing: 2px !important; }
+          .btn-mob { display: block !important; width: 100% !important; max-width: 280px !important; padding: 14px 20px !important; box-sizing: border-box !important; }
+        }
       </style>
     </head>
-    <body>
-      <div class="wrapper">
-        <div class="header">
-          <div class="brand">Swag<span>Sync</span></div>
-        </div>
-        <div class="content">
-          <h1 class="title">Welcome to SwagSync! 🎉</h1>
-          <p class="desc">
-            Thank you for subscribing to our newsletter! You're now on the VIP list to receive exclusive drops, secret deals, and curated fashion recommendations.
-          </p>
+    <body style="margin: 0; padding: 0; background-color: #f1f5f9;">
+      <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f1f5f9;">
+        <tr>
+          <td align="center" style="padding: 20px 0 30px;">
+            <table role="presentation" class="email-card" border="0" cellpadding="0" cellspacing="0" width="600" style="width: 600px; max-width: 600px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(15,23,42,0.08);">
+              <!-- Header -->
+              <tr>
+                <td align="center" style="background: #0F172A; background-image: linear-gradient(135deg, #0F172A 0%, #1E293B 100%); padding: 34px 28px; text-align: center;">
+                  <div style="font-size: 28px; font-weight: 900; letter-spacing: -0.5px; color: #ffffff;">
+                    Swag<span style="color: #FD7100;">Sync</span>
+                  </div>
+                </td>
+              </tr>
+              <!-- Content -->
+              <tr>
+                <td class="pad-content" style="padding: 32px 28px; background-color: #ffffff;">
+                  <h1 class="title-mob" style="font-size: 24px; font-weight: 900; color: #0F172A; margin: 0 0 12px; line-height: 1.3;">
+                    Welcome to SwagSync! 🎉
+                  </h1>
+                  <p style="font-size: 15px; line-height: 1.6; color: #64748b; margin: 0 0 20px;">
+                    Thank you for subscribing to our newsletter! You're now on the VIP list to receive exclusive drops, secret deals, and curated fashion recommendations.
+                  </p>
 
-          <div class="coupon-card">
-            <div class="coupon-label">Your Exclusive Welcome Gift</div>
-            <div class="coupon-code">${couponCode}</div>
-            <div class="coupon-desc">Get ${discountText} on your next order (Min. spend ₹499)</div>
-          </div>
+                  <!-- Coupon Card -->
+                  <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #FFF7ED; background-image: linear-gradient(135deg, #FFF7ED 0%, #FFEDD5 100%); border: 2px dashed #FD7100; border-radius: 12px; margin: 20px 0;">
+                    <tr>
+                      <td align="center" style="padding: 22px 16px;">
+                        <div style="font-size: 12px; font-weight: 800; color: #C2410C; text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 8px;">
+                          Your Exclusive Welcome Gift
+                        </div>
+                        <div>
+                          <span class="code-pill-mob" style="display: inline-block; background-color: #FD7100; color: #ffffff; font-size: 26px; font-weight: 900; letter-spacing: 3px; padding: 10px 24px; border-radius: 8px; box-shadow: 0 4px 12px rgba(253,113,0,0.3);">
+                            ${couponCode}
+                          </span>
+                        </div>
+                        <div style="font-size: 13px; color: #9A3412; margin-top: 10px; font-weight: 600;">
+                          Get ${discountText} on your next order (Min. spend ₹499)
+                        </div>
+                      </td>
+                    </tr>
+                  </table>
 
-          <div class="perks">
-            <div class="perk-item">
-              <span class="perk-dot">✓</span>
-              <span class="perk-text"><strong>Flash Deals & Secret Discounts:</strong> Early access before public sales.</span>
-            </div>
-            <div class="perk-item">
-              <span class="perk-dot">✓</span>
-              <span class="perk-text"><strong>New Arrivals:</strong> First look at trending fashion, lifestyle & tech.</span>
-            </div>
-            <div class="perk-item">
-              <span class="perk-dot">✓</span>
-              <span class="perk-text"><strong>Curated Picks:</strong> Handpicked selections matching the season.</span>
-            </div>
-          </div>
+                  <!-- Perks -->
+                  <div style="margin: 24px 0; border-top: 1px solid #f1f5f9; padding-top: 20px;">
+                    <div style="margin-bottom: 12px; font-size: 14px; color: #334155; line-height: 1.4;">
+                      <strong style="color: #FD7100;">✓ Flash Deals & Secret Discounts:</strong> Early access before public sales.
+                    </div>
+                    <div style="margin-bottom: 12px; font-size: 14px; color: #334155; line-height: 1.4;">
+                      <strong style="color: #FD7100;">✓ New Arrivals:</strong> First look at trending fashion, lifestyle & tech.
+                    </div>
+                    <div style="font-size: 14px; color: #334155; line-height: 1.4;">
+                      <strong style="color: #FD7100;">✓ Curated Picks:</strong> Handpicked selections matching the season.
+                    </div>
+                  </div>
 
-          <div class="btn-container">
-            <a href="${siteUrl}/products" class="btn">Explore Collections →</a>
-          </div>
-        </div>
-
-        <div class="footer">
-          <p>© ${new Date().getFullYear()} SwagSync. All rights reserved.</p>
-          <p>You received this email because you subscribed to our newsletter on our website.</p>
-          <p><a href="${siteUrl}/newsletter/unsubscribe?email=${encodeURIComponent(cleanEmail)}">Unsubscribe from future emails</a></p>
-        </div>
-      </div>
+                  <!-- CTA Button -->
+                  <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 28px 0 10px;">
+                    <tr>
+                      <td align="center">
+                        <a href="${siteUrl}/products" class="btn-mob" style="display: inline-block; background-color: #FD7100; color: #ffffff !important; text-decoration: none; font-size: 15px; font-weight: 800; padding: 15px 38px; border-radius: 9999px; box-shadow: 0 4px 14px rgba(253,113,0,0.35); text-align: center;">
+                          Explore Collections →
+                        </a>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              <!-- Footer -->
+              <tr>
+                <td align="center" style="background-color: #f8fafc; padding: 22px 24px; text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px solid #e2e8f0; line-height: 1.6;">
+                  <p style="margin: 0 0 4px;">© ${new Date().getFullYear()} SwagSync. All rights reserved.</p>
+                  <p style="margin: 0 0 6px;">You received this email because you subscribed to our newsletter on our website.</p>
+                  <p style="margin: 0;"><a href="${siteUrl}/newsletter/unsubscribe?email=${encodeURIComponent(cleanEmail)}" style="color: #64748b; text-decoration: underline;">Unsubscribe from future emails</a></p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
     </body>
     </html>
     `;

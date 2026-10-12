@@ -7,6 +7,7 @@ import {
   updateCoupon,
   toggleCouponStatus,
   deleteCoupon,
+  sendCouponBroadcastToSubscribers,
 } from "../controllers/couponController.js";
 import { identifier } from "../middlewares/identification.js";
 import { isAdmin } from "../middlewares/isAdmin.js";
@@ -17,6 +18,7 @@ const router = express.Router();
 router.get("/", identifier, isAdmin, getAllCoupons);
 router.get("/:id", identifier, isAdmin, getCouponById);
 router.post("/", identifier, isAdmin, createCoupon);
+router.post("/:id/broadcast", identifier, isAdmin, sendCouponBroadcastToSubscribers);
 router.put("/:id", identifier, isAdmin, updateCoupon);
 router.patch("/:id/toggle-status", identifier, isAdmin, toggleCouponStatus);
 router.delete("/:id", identifier, isAdmin, deleteCoupon);
