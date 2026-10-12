@@ -3010,13 +3010,13 @@ export const getVendorReviews = async (req, res) => {
 
     const [reviews, total, allReviewsForStats] = await Promise.all([
       ProductReview.find(query)
-        .populate("product", "title slug images")
+        .populate("product", "title slug images productId")
         .populate({
           path: "variant",
           select: "attributes sku mainImage",
-          populate: [{ path: "attributes.attribute", select: "name" }, { path: "attributes.option", select: "displayName" }],
+          populate: [{ path: "attributes.attribute", select: "name" }, { path: "attributes.option", select: "displayName storedValue" }],
         })
-        .populate("user", "name profileImage email")
+        .populate("user", "name username profileImage email")
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limitNum)
@@ -3081,6 +3081,8 @@ export const replyToVendorReview = async (req, res) => {
     review.vendorReply = {
       message: message.trim(),
       repliedAt: new Date(),
+      repliedBy: "vendor",
+      authorName: req.vendor?.vendorProfile?.storeName || req.vendor?.username || "Merchant Response",
       vendor: vendorId,
     };
 
@@ -3125,6 +3127,52 @@ export const deleteVendorReviewReply = async (req, res) => {
   } catch (error) {
     console.error("[Delete Vendor Review Reply] Error:", error);
     return res.status(500).json({ success: false, message: "Server error removing review reply" });
+  }
+};
+
+/**
+ * 26B. DELETE VENDOR REVIEW (Delete review for vendor's own product)
+ */
+export const deleteVendorReview = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const vendorId = req.vendor._id;
+
+    const review = await ProductReview.findById(id).populate("product", "vendorId");
+    if (!review) {
+      return res.status(404).json({ success: false, message: "Review not found" });
+    }
+
+    if (review.product?.vendorId?.toString() !== vendorId.toString()) {
+      return res.status(403).json({ success: false, message: "Access denied. Product does not belong to your store." });
+    }
+
+    const productId = review.product._id;
+    await ProductReview.findByIdAndDelete(id);
+
+    // Recalculate product ratings
+    const allReviews = await ProductReview.find({ product: productId });
+    let ratingAverage = 0;
+    let ratingCount = 0;
+
+    if (allReviews.length > 0) {
+      const totalRating = allReviews.reduce((sum, r) => sum + r.rating, 0);
+      ratingAverage = Math.round((totalRating / allReviews.length) * 10) / 10;
+      ratingCount = allReviews.length;
+    }
+
+    await Product.findByIdAndUpdate(productId, {
+      ratingAverage,
+      ratingCount,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Customer review deleted and product ratings recalculated",
+    });
+  } catch (error) {
+    console.error("[Delete Vendor Review] Error:", error);
+    return res.status(500).json({ success: false, message: "Server error deleting review" });
   }
 };
 

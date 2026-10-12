@@ -48,7 +48,10 @@ const ProductReviewSchema = new mongoose.Schema(
     vendorReply: {
       message: { type: String, trim: true },
       repliedAt: { type: Date },
+      repliedBy: { type: String, enum: ["vendor", "admin"], default: "vendor" },
+      authorName: { type: String, default: "Merchant Response" },
       vendor: { type: mongoose.Schema.Types.ObjectId, ref: "Vendor" },
+      admin: { type: mongoose.Schema.Types.ObjectId, ref: "Admin" },
     },
   },
   { timestamps: true }

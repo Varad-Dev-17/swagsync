@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import PageCard from "../../../components/admin/ui/PageCard";
-import { Star, Trash2, ShieldCheck, Search, Filter, Eye, Loader2, X, AlertCircle, Camera } from "lucide-react";
+import { Star, Trash2, ShieldCheck, Search, Filter, Eye, Loader2, X, AlertCircle, Camera, MessageSquare, CornerDownRight, Send } from "lucide-react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { useAuth } from "../../../context/AuthContext";
@@ -13,6 +13,15 @@ const Reviews = () => {
   const [selectedRating, setSelectedRating] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedImageModal, setSelectedImageModal] = useState(null);
+
+  // Reply Composer State
+  const [replyModal, setReplyModal] = useState({
+    open: false,
+    reviewId: null,
+    reviewItem: null,
+    message: "",
+    submitting: false,
+  });
 
   const fetchAdminReviews = async (ratingFilter = "all") => {
     setIsLoading(true);
@@ -57,6 +66,51 @@ const Reviews = () => {
     } catch (error) {
       console.error("Error deleting review:", error);
       toast.error(error.response?.data?.message || "Failed to delete review");
+    }
+  };
+
+  // Submit admin reply
+  const handleSaveReply = async (e) => {
+    e.preventDefault();
+    if (!replyModal.message.trim() || !replyModal.reviewId) {
+      toast.error("Please enter a reply message");
+      return;
+    }
+
+    setReplyModal((prev) => ({ ...prev, submitting: true }));
+    try {
+      const res = await axios.post(
+        `/admin/reviews/${replyModal.reviewId}/reply`,
+        { message: replyModal.message.trim() },
+        { headers: getAuthHeaders() }
+      );
+      if (res.data?.success) {
+        toast.success("Official reply posted successfully!");
+        setReplyModal({ open: false, reviewId: null, reviewItem: null, message: "", submitting: false });
+        fetchAdminReviews(selectedRating);
+      }
+    } catch (error) {
+      console.error("Error posting review reply:", error);
+      toast.error(error.response?.data?.message || "Failed to post reply");
+    } finally {
+      setReplyModal((prev) => ({ ...prev, submitting: false }));
+    }
+  };
+
+  // Delete admin reply
+  const handleDeleteReply = async (reviewId) => {
+    if (!window.confirm("Are you sure you want to remove the response to this review?")) return;
+    try {
+      const res = await axios.delete(`/admin/reviews/${reviewId}/reply`, {
+        headers: getAuthHeaders(),
+      });
+      if (res.data?.success) {
+        toast.success("Response removed");
+        fetchAdminReviews(selectedRating);
+      }
+    } catch (error) {
+      console.error("Delete review reply error:", error);
+      toast.error(error.response?.data?.message || "Failed to delete reply");
     }
   };
 
@@ -299,6 +353,29 @@ const Reviews = () => {
                             No commentary provided.
                           </span>
                         )}
+
+                        {/* Store / Admin Reply */}
+                        {rev.vendorReply?.message && (
+                          <div className="mt-2.5 p-2.5 bg-indigo-50/70 border border-indigo-200/80 rounded-none space-y-1">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[11px] font-bold text-indigo-700 flex items-center gap-1">
+                                <CornerDownRight size={12} />
+                                {rev.vendorReply.repliedBy === "admin"
+                                  ? `Platform Admin Reply (${rev.vendorReply.authorName || "Administrator"})`
+                                  : `Merchant Response (${rev.vendorReply.authorName || "Store"})`}
+                              </span>
+                              <button
+                                onClick={() => handleDeleteReply(rev._id)}
+                                className="text-[10px] text-rose-600 hover:underline font-semibold cursor-pointer"
+                              >
+                                Delete Reply
+                              </button>
+                            </div>
+                            <p className="text-xs text-slate-800 leading-relaxed whitespace-pre-wrap">
+                              {rev.vendorReply.message}
+                            </p>
+                          </div>
+                        )}
                       </td>
 
                       {/* Attached Photos Column */}
@@ -340,13 +417,32 @@ const Reviews = () => {
                       </td>
 
                       <td className="py-4 px-4 align-top text-right">
-                        <button
-                          onClick={() => handleDeleteReview(rev._id)}
-                          className="p-2 text-rose-500 hover:text-white hover:bg-rose-600 rounded-none transition-all duration-200 cursor-pointer border border-transparent hover:border-rose-700 shadow-2xs"
-                          title="Delete / Remove Review"
-                        >
-                          <Trash2 size={18} />
-                        </button>
+                        <div className="flex items-center justify-end gap-1.5">
+                          {!rev.vendorReply?.message && (
+                            <button
+                              onClick={() =>
+                                setReplyModal({
+                                  open: true,
+                                  reviewId: rev._id,
+                                  reviewItem: rev,
+                                  message: "",
+                                  submitting: false,
+                                })
+                              }
+                              className="p-2 text-indigo-600 hover:text-white hover:bg-indigo-600 rounded-none transition-all duration-200 cursor-pointer border border-indigo-200 hover:border-indigo-700 shadow-2xs"
+                              title="Reply to Customer Review"
+                            >
+                              <MessageSquare size={16} />
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleDeleteReview(rev._id)}
+                            className="p-2 text-rose-500 hover:text-white hover:bg-rose-600 rounded-none transition-all duration-200 cursor-pointer border border-transparent hover:border-rose-700 shadow-2xs"
+                            title="Delete / Remove Review"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -417,6 +513,87 @@ const Reviews = () => {
                   Close Inspection
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Reply Composer Modal */}
+        {replyModal.open && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
+            onClick={() => setReplyModal({ ...replyModal, open: false })}
+          >
+            <div
+              className="bg-white rounded-none shadow-2xl w-full max-w-md overflow-hidden p-6 space-y-4 border border-slate-300 animate-in fade-in zoom-in-95 duration-150"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">Reply to Customer Review</h3>
+                  <p className="text-xs text-slate-500 font-medium mt-0.5">
+                    Post official administration message to {replyModal.reviewItem?.product?.title || "Product"}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setReplyModal({ ...replyModal, open: false })}
+                  className="p-1 text-slate-400 hover:text-slate-600 cursor-pointer"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Review Quote */}
+              <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-none">
+                <span className="text-[10px] font-bold uppercase text-slate-400 block mb-1">
+                  Customer Review ({replyModal.reviewItem?.user?.username || "Customer"}):
+                </span>
+                <p className="text-xs text-slate-700 italic line-clamp-3">
+                  "{replyModal.reviewItem?.review || "Rating without written commentary."}"
+                </p>
+              </div>
+
+              <form onSubmit={handleSaveReply} className="space-y-4">
+                <div>
+                  <label className="text-[11px] font-bold text-slate-700 uppercase block mb-1">
+                    Official Support Response *
+                  </label>
+                  <textarea
+                    rows={4}
+                    value={replyModal.message}
+                    onChange={(e) => setReplyModal((prev) => ({ ...prev, message: e.target.value }))}
+                    placeholder="Write a professional resolution or appreciation message to this customer..."
+                    className="w-full p-3 border border-slate-300 rounded-none text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 resize-none font-medium"
+                    required
+                  />
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => setReplyModal({ ...replyModal, open: false })}
+                    className="px-4 py-2 border border-slate-300 text-slate-700 hover:bg-slate-50 text-xs font-bold rounded-none transition-colors cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={replyModal.submitting}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#1E1B4B] hover:bg-indigo-900 text-white text-xs font-bold rounded-none transition-colors disabled:opacity-50 cursor-pointer shadow-sm"
+                  >
+                    {replyModal.submitting ? (
+                      <>
+                        <Loader2 size={13} className="animate-spin" />
+                        Posting...
+                      </>
+                    ) : (
+                      <>
+                        <Send size={13} />
+                        Post Response
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         )}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Star, ThumbsUp, ShieldCheck, Edit3, Trash2, Camera, X, CheckCircle2, MessageSquare, User, Loader2 } from "lucide-react";
+import { Star, ThumbsUp, ShieldCheck, Edit3, Trash2, Camera, X, CheckCircle2, MessageSquare, User, Loader2, CornerDownRight } from "lucide-react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { useAuth } from "../../context/AuthContext";
@@ -345,6 +345,34 @@ const ProductReviewsSection = ({ product, onReviewsUpdate, onVariantChange }) =>
                           </div>
                         ))}
                       </div>
+                    </div>
+                  )}
+
+                  {/* Store / Admin Official Response */}
+                  {(rev.vendorReply?.message || rev.vendorReply?.reply) && (
+                    <div className="mt-4 p-4 rounded-xl bg-orange-50/70 border border-orange-200/80 space-y-2 relative">
+                      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-orange-200/50 pb-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-5 h-5 rounded-full bg-[#fe4a03] text-white flex items-center justify-center text-[10px] font-black uppercase shadow-xs">
+                            S
+                          </div>
+                          <span className="text-xs font-black tracking-wide text-[#fe4a03] flex items-center gap-1.5 uppercase">
+                            Replied by SwagSync
+                          </span>
+                        </div>
+                        {rev.vendorReply.repliedAt && (
+                          <span className="text-[11px] text-gray-500 font-medium">
+                            {new Date(rev.vendorReply.repliedAt).toLocaleDateString("en-IN", {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            })}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[13.5px] text-slate-800 leading-relaxed whitespace-pre-wrap pt-0.5">
+                        {rev.vendorReply.message || rev.vendorReply.reply}
+                      </p>
                     </div>
                   )}
                 </div>

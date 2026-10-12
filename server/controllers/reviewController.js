@@ -468,3 +468,77 @@ export const deleteAdminReview = async (req, res) => {
     });
   }
 };
+
+// ADMIN: REPLY TO REVIEW
+export const replyAdminReview = async (req, res) => {
+  try {
+    const { reviewId } = req.params;
+    const { message } = req.body;
+
+    if (!message || !message.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Reply message cannot be empty",
+      });
+    }
+
+    const review = await ProductReview.findById(reviewId);
+    if (!review) {
+      return res.status(404).json({
+        success: false,
+        message: "Review not found",
+      });
+    }
+
+    review.vendorReply = {
+      message: message.trim(),
+      repliedAt: new Date(),
+      repliedBy: "admin",
+      authorName: req.user?.name || req.user?.username || "SwagSync Administration",
+      admin: req.user?.userId || req.user?._id,
+    };
+
+    await review.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Admin response saved successfully",
+      data: review,
+    });
+  } catch (error) {
+    console.error("Error in replyAdminReview:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to save review reply",
+    });
+  }
+};
+
+// ADMIN: DELETE REVIEW REPLY
+export const deleteAdminReviewReply = async (req, res) => {
+  try {
+    const { reviewId } = req.params;
+    const review = await ProductReview.findById(reviewId);
+    if (!review) {
+      return res.status(404).json({
+        success: false,
+        message: "Review not found",
+      });
+    }
+
+    review.vendorReply = undefined;
+    await review.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Review reply removed successfully",
+      data: review,
+    });
+  } catch (error) {
+    console.error("Error in deleteAdminReviewReply:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to delete review reply",
+    });
+  }
+};

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import PageCard from "../../../../components/admin/ui/PageCard";
 import {
   Star,
@@ -14,22 +14,14 @@ import {
   MessageSquare,
   CornerDownRight,
   Send,
-  Package,
-  CheckCircle2,
-  User,
-  Sparkles,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "../../../../api/axiosConfig";
 import Pagination from "../../../../components/admin/ui/Pagination";
+import { Link } from "react-router-dom";
 
 export default function VendorReviews() {
   const [reviews, setReviews] = useState([]);
-  const [stats, setStats] = useState({
-    totalReviews: 0,
-    avgRating: 0,
-    ratingCounts: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
-  });
   const [isLoading, setIsLoading] = useState(true);
   const [selectedRating, setSelectedRating] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
@@ -39,6 +31,7 @@ export default function VendorReviews() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
+  const limit = 10;
 
   // Reply Composer State
   const [replyModal, setReplyModal] = useState({
@@ -54,18 +47,17 @@ export default function VendorReviews() {
     try {
       const params = new URLSearchParams({
         page,
-        limit: 10,
+        limit,
         rating: selectedRating,
       });
 
       const res = await api.get(`/vendor/portal/reviews?${params.toString()}`);
       if (res.data?.success) {
         setReviews(res.data.data?.reviews || []);
-        if (res.data.data?.stats) {
-          setStats(res.data.data.stats);
-        }
         setTotalPages(res.data.data?.pagination?.totalPages || 1);
-        setTotalItems(res.data.data?.pagination?.total || 0);
+        setTotalItems(
+          res.data.data?.pagination?.total ?? res.data.data?.stats?.totalReviews ?? (res.data.data?.reviews?.length || 0)
+        );
       }
     } catch (error) {
       console.error("Error fetching vendor reviews:", error);
@@ -134,366 +126,532 @@ export default function VendorReviews() {
     }
   };
 
-  const renderStars = (rating) => {
-    return (
-      <div className="flex items-center gap-0.5">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <Star
-            key={star}
-            size={14}
-            className={star <= rating ? "text-[#FFB800] fill-[#FFB800]" : "text-slate-200 fill-slate-100"}
-          />
-        ))}
-      </div>
-    );
+  // Delete customer review
+  const handleDeleteReview = async (reviewId) => {
+    if (
+      !window.confirm(
+        "Are you sure you want to delete this customer review? The product rating and review count will be automatically recalculated."
+      )
+    ) {
+      return;
+    }
+    try {
+      const res = await api.delete(`/vendor/portal/reviews/${reviewId}`);
+      if (res.data?.success) {
+        toast.success("Customer review deleted successfully");
+        fetchVendorReviews();
+      }
+    } catch (error) {
+      console.error("Delete review error:", error);
+      toast.error(error.response?.data?.message || "Failed to delete review");
+    }
   };
 
   return (
-    <div className="p-6 min-h-screen bg-slate-50/50 font-sans">
-      <PageCard>
-        <div className="flex flex-col gap-6 p-6 bg-white w-full">
-          {/* Header & Title */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-5">
-            <div>
-              <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2.5">
-                <Star className="text-[#FFB800] fill-[#FFB800]" size={28} />
-                Customer Reviews & Store Feedback
-              </h1>
-              <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">
-                Inspect customer ratings, review attached photos, and build merchant trust with official store replies.
-              </p>
-            </div>
-
-            <div className="flex items-center gap-2 bg-orange-50 text-[#fe4a03] px-4 py-2 rounded-xl font-bold text-xs sm:text-sm border border-orange-200 self-start sm:self-center shadow-2xs">
-              <span>Total Reviews:</span>
-              <span className="text-base font-extrabold text-[#fe4a03]">{stats.totalReviews || reviews.length}</span>
-            </div>
+    <PageCard>
+      <div className="flex flex-col gap-6 p-6 bg-white w-full">
+        {/* Header & Title */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-200/80 pb-5">
+          <div>
+            <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2.5">
+              <Star className="text-[#FFB800] fill-[#FFB800]" size={28} />
+              Customer Reviews & Moderation
+            </h1>
+            <p className="text-sm text-slate-500 mt-1">
+              Inspect user-submitted feedback, verify photo uploads, and moderate defamatory or spam ratings across your product catalog.
+            </p>
           </div>
 
-          {/* Star Rating Breakdown Panel */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-5 rounded-2xl bg-slate-50/70 border border-slate-200/80">
-            {/* Score Overview */}
-            <div className="flex flex-col items-center justify-center text-center p-4 border-b md:border-b-0 md:border-r border-slate-200/80">
-              <span className="text-5xl font-black text-slate-900 tracking-tight">
-                {Number(stats.avgRating || 0).toFixed(1)}
-              </span>
-              <div className="flex items-center gap-1 my-2">
-                {[1, 2, 3, 4, 5].map((s) => (
-                  <Star
-                    key={s}
-                    size={18}
-                    className={
-                      s <= Math.round(stats.avgRating || 0)
-                        ? "text-[#FFB800] fill-[#FFB800]"
-                        : "text-slate-200 fill-slate-100"
-                    }
-                  />
-                ))}
-              </div>
-              <p className="text-xs font-semibold text-slate-500">
-                Based on {stats.totalReviews || 0} customer reviews
-              </p>
-            </div>
-
-            {/* Star Distribution Bars */}
-            <div className="md:col-span-2 space-y-2 justify-center flex flex-col">
-              {[5, 4, 3, 2, 1].map((stars) => {
-                const count = stats.ratingCounts?.[stars] || 0;
-                const percentage =
-                  stats.totalReviews > 0 ? Math.round((count / stats.totalReviews) * 100) : 0;
-                return (
-                  <div key={stars} className="flex items-center gap-3 text-xs">
-                    <span className="w-12 font-bold text-slate-700 flex items-center gap-1">
-                      {stars} <Star size={12} className="text-[#FFB800] fill-[#FFB800]" />
-                    </span>
-                    <div className="flex-1 bg-slate-200 h-2 rounded-full overflow-hidden">
-                      <div
-                        className="bg-[#fe4a03] h-full rounded-full transition-all duration-300"
-                        style={{ width: `${percentage}%` }}
-                      />
-                    </div>
-                    <span className="w-10 text-right text-slate-400 font-medium">{percentage}%</span>
-                    <span className="w-10 text-right font-bold text-slate-800">({count})</span>
-                  </div>
-                );
-              })}
-            </div>
+          <div className="flex items-center gap-2 bg-indigo-50 text-[#4F46E5] px-4 py-2 rounded-none font-bold text-sm border border-indigo-100 self-start sm:self-center shadow-2xs">
+            <span>Total Reviews:</span>
+            <span className="text-base font-black text-indigo-700">{totalItems || reviews.length}</span>
           </div>
+        </div>
 
-          {/* Filter Toolbar */}
-          <div className="flex flex-col md:flex-row gap-4 items-stretch md:items-center justify-between bg-slate-50/70 p-4 rounded-xl border border-slate-200/80">
-            {/* Search Input */}
-            <div className="relative flex-1 max-w-sm">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                placeholder="Search by product, customer, or review..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-white border border-slate-300 rounded-xl text-xs sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#fe4a03]/20 focus:border-[#fe4a03] shadow-2xs font-medium"
-              />
-              {searchTerm && (
-                <button
-                  onClick={() => setSearchTerm("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer"
-                >
-                  <X size={16} />
-                </button>
-              )}
-            </div>
-
-            {/* Rating Filter Pills */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 no-scrollbar">
-              {[
-                { id: "all", label: "All Stars" },
-                { id: "5", label: "5 ★" },
-                { id: "4", label: "4 ★" },
-                { id: "3", label: "3 ★" },
-                { id: "2", label: "2 ★" },
-                { id: "1", label: "1 ★" },
-              ].map((pill) => {
-                const active = selectedRating === pill.id;
-                return (
-                  <button
-                    key={pill.id}
-                    onClick={() => {
-                      setSelectedRating(pill.id);
-                      setPage(1);
-                    }}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap shadow-2xs ${
-                      active
-                        ? "bg-[#fe4a03] text-white"
-                        : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-100"
-                    }`}
-                  >
-                    {pill.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Reviews List */}
-          <div className="space-y-4">
-            {isLoading ? (
-              <div className="p-12 text-center text-slate-400">
-                <Loader2 className="w-6 h-6 animate-spin mx-auto text-[#fe4a03] mb-2" />
-                Loading product reviews...
-              </div>
-            ) : filteredReviews.length === 0 ? (
-              <div className="p-12 text-center text-slate-500 font-medium border border-dashed border-slate-200 rounded-2xl">
-                No customer reviews found matching your filter criteria.
-              </div>
-            ) : (
-              filteredReviews.map((r) => {
-                const productName = r.product?.title || "Product";
-                const prodImg =
-                  r.variant?.mainImage?.url ||
-                  r.product?.images?.[0]?.url ||
-                  r.product?.images?.[0] ||
-                  "";
-
-                return (
-                  <div
-                    key={r._id}
-                    className="p-5 rounded-2xl border border-slate-200 bg-white hover:border-slate-300 transition-colors shadow-2xs space-y-3"
-                  >
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
-                      {/* Product reference */}
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden shrink-0">
-                          {prodImg ? (
-                            <img
-                              src={typeof prodImg === "string" ? prodImg : prodImg.url}
-                              alt={productName}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <Package size={18} className="m-auto text-slate-400 mt-2.5" />
-                          )}
-                        </div>
-                        <div>
-                          <p className="font-bold text-slate-900 text-xs sm:text-sm line-clamp-1">{productName}</p>
-                          <p className="text-[11px] text-slate-400">
-                            Reviewed on {new Date(r.createdAt).toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" })}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Customer info & Rating */}
-                      <div className="flex items-center gap-4">
-                        {renderStars(r.rating || 5)}
-                        <div className="flex items-center gap-1.5 text-xs text-slate-700 font-semibold">
-                          <User size={13} className="text-slate-400" />
-                          <span>{r.user?.username || r.user?.name || "Customer"}</span>
-                          <span className="inline-flex items-center gap-0.5 text-[10px] text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
-                            <CheckCircle2 size={10} /> Verified
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Commentary */}
-                    <div className="space-y-2">
-                      <p className="text-xs sm:text-sm text-slate-700 leading-relaxed font-normal">
-                        {r.review || r.comment || "No written review text provided."}
-                      </p>
-
-                      {/* Review Photos */}
-                      {r.images && r.images.length > 0 && (
-                        <div className="flex gap-2 pt-1">
-                          {r.images.map((img, i) => {
-                            const imgUrl = typeof img === "string" ? img : img.url;
-                            return (
-                              <div
-                                key={i}
-                                onClick={() => setSelectedImageModal(imgUrl)}
-                                className="w-16 h-16 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden cursor-pointer hover:opacity-90"
-                              >
-                                <img src={imgUrl} alt="Review attachment" className="w-full h-full object-cover" />
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Store Reply if present */}
-                    {r.vendorReply?.message && (
-                      <div className="mt-3 p-3.5 rounded-xl bg-orange-50/70 border border-orange-200/80 space-y-1.5">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-bold text-[#fe4a03] flex items-center gap-1.5">
-                            <CornerDownRight size={13} />
-                            Store Response
-                          </span>
-                          <button
-                            onClick={() => handleDeleteReply(r._id)}
-                            className="text-[11px] text-rose-600 hover:underline font-semibold cursor-pointer"
-                          >
-                            Delete Reply
-                          </button>
-                        </div>
-                        <p className="text-xs text-slate-800 leading-relaxed">{r.vendorReply.message}</p>
-                      </div>
-                    )}
-
-                    {/* Action buttons */}
-                    {!r.vendorReply?.message && (
-                      <div className="flex justify-end pt-1">
-                        <button
-                          onClick={() =>
-                            setReplyModal({
-                              open: true,
-                              reviewId: r._id,
-                              reviewItem: r,
-                              message: "",
-                              submitting: false,
-                            })
-                          }
-                          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-orange-50 hover:bg-orange-100 text-[#fe4a03] border border-orange-100 text-xs font-bold transition-colors cursor-pointer"
-                        >
-                          <MessageSquare size={13} />
-                          Reply to Customer
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                );
-              })
+        {/* Filter Toolbar */}
+        <div className="flex flex-col md:flex-row gap-4 items-stretch md:items-center justify-between bg-slate-50/70 p-4 rounded-none border border-slate-200/80">
+          {/* Search Input */}
+          <div className="relative flex-1 max-w-sm">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Search by product name, customer, or commentary..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 bg-white border border-slate-300 rounded-none text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/20 focus:border-[#4F46E5] shadow-2xs"
+            />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer"
+              >
+                <X size={16} />
+              </button>
             )}
           </div>
 
-          {/* Pagination */}
-          <Pagination
-            currentPage={page}
-            totalPages={totalPages}
-            onPageChange={setPage}
-            totalItems={totalItems}
-            itemsPerPage={10}
-          />
+          {/* Rating Filter Pills */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 no-scrollbar">
+            {[
+              { id: "all", label: "All Stars" },
+              { id: "5", label: "5 ★" },
+              { id: "4", label: "4 ★" },
+              { id: "3", label: "3 ★" },
+              { id: "2", label: "2 ★" },
+              { id: "1", label: "1 ★" },
+            ].map((pill) => {
+              const active = selectedRating === pill.id;
+              return (
+                <button
+                  key={pill.id}
+                  onClick={() => {
+                    setSelectedRating(pill.id);
+                    setPage(1);
+                  }}
+                  className={`px-4 py-2 rounded-none font-bold text-xs transition-all shrink-0 cursor-pointer shadow-2xs ${
+                    active
+                      ? "bg-[#1E1B4B] text-white shadow-sm"
+                      : "bg-white text-slate-700 border border-slate-300 hover:bg-slate-100"
+                  }`}
+                >
+                  {pill.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
-      </PageCard>
 
-      {/* Reply Composer Modal */}
-      {replyModal.open && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
-          onClick={() => setReplyModal({ ...replyModal, open: false })}
-        >
+        {/* Reviews Data Table */}
+        {isLoading ? (
+          <div className="flex justify-center items-center py-28">
+            <Loader2 className="w-10 h-10 text-[#4F46E5] animate-spin" />
+          </div>
+        ) : filteredReviews.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-24 text-center bg-slate-50 rounded-none border border-slate-200/80 my-4">
+            <AlertCircle size={48} className="text-slate-300 mb-3" />
+            <h3 className="text-lg font-bold text-slate-800 mb-1">No customer reviews found</h3>
+            <p className="text-sm text-slate-500 max-w-sm mb-4">
+              There are no reviews matching your search criteria or star rating filter.
+            </p>
+            {(searchTerm || selectedRating !== "all") && (
+              <button
+                onClick={() => {
+                  setSearchTerm("");
+                  setSelectedRating("all");
+                  setPage(1);
+                }}
+                className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-xs rounded-none transition-colors cursor-pointer"
+              >
+                Reset Filters
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="overflow-x-auto border border-slate-200 rounded-none shadow-xs">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-50 text-slate-600 font-extrabold text-xs uppercase tracking-wider border-b border-slate-200">
+                  <th className="py-4 px-4 min-w-[220px]">Product Info</th>
+                  <th className="py-4 px-4 min-w-[180px]">Customer & Order</th>
+                  <th className="py-4 px-4 text-center w-28">Score</th>
+                  <th className="py-4 px-4 min-w-[280px]">Customer Review</th>
+                  <th className="py-4 px-4 text-center w-36">Attached Photos</th>
+                  <th className="py-4 px-4 text-right w-24">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200 text-sm">
+                {filteredReviews.map((rev) => {
+                  const productImg =
+                    rev.variant?.mainImage?.url ||
+                    rev.product?.images?.[0]?.url ||
+                    (typeof rev.product?.images?.[0] === "string" ? rev.product?.images?.[0] : "") ||
+                    "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'><rect fill='%23f1f5f9' width='80' height='80'/><path fill='%23cbd5e1' d='M25 35a8 8 0 1016 0 8 8 0 00-16 0zm35 28H20a4 4 0 01-3-6l12-16a4 4 0 016 0l5 7 8-10a4 4 0 016 0l12 16a4 4 0 01-3 9z'/></svg>";
+                  const prodSlugOrId = rev.product?.slug || rev.product?._id || rev.product;
+                  const variantId = rev.variant?._id || (typeof rev.variant === "string" ? rev.variant : null);
+                  const productVariantUrl = prodSlugOrId
+                    ? `/product/${prodSlugOrId}${variantId ? `?variant=${variantId}` : ""}`
+                    : "#";
+
+                  // Extract variant attributes (e.g. Color: Green • Size: XXL)
+                  const variantDetails = [];
+                  if (rev.variant && Array.isArray(rev.variant.attributes)) {
+                    rev.variant.attributes.forEach((attr) => {
+                      const attrName = attr.attribute?.name || attr.name;
+                      const optVal = attr.option?.displayName || attr.option?.storedValue || attr.value;
+                      if (optVal) {
+                        variantDetails.push(attrName ? `${attrName}: ${optVal}` : optVal);
+                      }
+                    });
+                  }
+                  const variantLabel =
+                    variantDetails.length > 0
+                      ? variantDetails.join(" • ")
+                      : rev.variant?.sku
+                      ? `SKU: ${rev.variant.sku}`
+                      : null;
+
+                  // Score Styling
+                  let scoreBadgeBg = "bg-emerald-600";
+                  if (rev.rating <= 2) scoreBadgeBg = "bg-rose-600";
+                  else if (rev.rating === 3) scoreBadgeBg = "bg-amber-600";
+
+                  return (
+                    <tr key={rev._id} className="hover:bg-slate-50/80 transition-colors group">
+                      {/* Product Column */}
+                      <td className="py-4 px-4 align-top">
+                        <div className="flex items-start gap-3">
+                          <Link
+                            to={productVariantUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-14 h-18 rounded-none border border-slate-200 overflow-hidden shrink-0 bg-white shadow-2xs block relative group/thumb hover:border-[#4F46E5] hover:shadow-sm transition-all cursor-pointer"
+                            title="Click image to view reviewed variant"
+                          >
+                            <img
+                              src={productImg}
+                              alt="Product thumbnail"
+                              className="w-full h-full object-cover group-hover/thumb:scale-105 transition-transform duration-300"
+                              loading="lazy"
+                              decoding="async"
+                            />
+                            <div className="absolute inset-0 bg-black/0 group-hover/thumb:bg-black/10 transition-colors" />
+                          </Link>
+                          <div className="min-w-0">
+                            <span className="font-bold text-slate-900 line-clamp-2 block">
+                              {rev.product?.title || "Product"}
+                            </span>
+                            <span className="text-xs font-mono text-slate-400 block mt-0.5">
+                              ID: {rev.product?.productId || String(rev.product?._id || rev.product || "")}
+                            </span>
+                            {variantLabel && (
+                              <span className="inline-block text-[11px] font-semibold text-slate-700 bg-slate-100/90 px-2 py-0.5 rounded-none border border-slate-200 mt-1.5">
+                                {variantLabel}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Customer Column */}
+                      <td className="py-4 px-4 align-top">
+                        <div className="font-bold text-slate-900">
+                          {rev.user?.username || rev.user?.name || "Verified Customer"}
+                        </div>
+                        <div className="text-xs text-slate-500 mt-0.5 mb-1.5 truncate max-w-[160px]">
+                          {rev.user?.email || "No Email"}
+                        </div>
+                        <div className="text-[11px] text-slate-400 mt-1.5">
+                          {new Date(rev.createdAt).toLocaleDateString("en-GB", {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                          })}
+                        </div>
+                      </td>
+
+                      {/* Rating Score Column */}
+                      <td className="py-4 px-4 align-top text-center">
+                        <span
+                          className={`inline-flex items-center justify-center gap-1 text-white font-black px-3 py-1 rounded-none shadow-2xs text-xs ${scoreBadgeBg}`}
+                        >
+                          <span>{rev.rating}</span>
+                          <Star size={12} className="fill-white text-white" />
+                        </span>
+                      </td>
+
+                      {/* Review Text Column */}
+                      <td className="py-4 px-4 align-top">
+                        {rev.review ? (
+                          <p className="text-slate-700 text-sm leading-relaxed whitespace-pre-wrap font-normal max-h-36 overflow-y-auto pr-2">
+                            {rev.review}
+                          </p>
+                        ) : (
+                          <span className="italic text-slate-400 text-xs">
+                            No commentary provided.
+                          </span>
+                        )}
+
+                        {/* Store / Admin Reply */}
+                        {rev.vendorReply?.message && (
+                          <div
+                            className={`mt-2.5 p-2.5 rounded-none space-y-1 border ${
+                              rev.vendorReply.repliedBy === "admin"
+                                ? "bg-indigo-50/70 border-indigo-200/80 text-indigo-950"
+                                : "bg-orange-50/70 border-orange-200/80 text-slate-800"
+                            }`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <span
+                                className={`text-[11px] font-bold flex items-center gap-1 ${
+                                  rev.vendorReply.repliedBy === "admin"
+                                    ? "text-indigo-700"
+                                    : "text-[#fe4a03]"
+                                }`}
+                              >
+                                <CornerDownRight size={12} />
+                                {rev.vendorReply.repliedBy === "admin"
+                                  ? `Platform Admin Reply (${rev.vendorReply.authorName || "Platform Administration"})`
+                                  : `Your Store Response (${rev.vendorReply.authorName || "Merchant"})`}
+                              </span>
+                              <button
+                                onClick={() => handleDeleteReply(rev._id)}
+                                className="text-[10px] text-rose-600 hover:underline font-semibold cursor-pointer"
+                              >
+                                Delete Reply
+                              </button>
+                            </div>
+                            <p className="text-xs text-slate-800 leading-relaxed whitespace-pre-wrap">
+                              {rev.vendorReply.message}
+                            </p>
+                          </div>
+                        )}
+                      </td>
+
+                      {/* Attached Photos Column */}
+                      <td className="py-4 px-4 align-top text-center">
+                        {rev.images && rev.images.length > 0 ? (
+                          <div className="flex flex-wrap items-center justify-center gap-1.5">
+                            {rev.images.map((img, idx) => {
+                              const imgUrl = typeof img === "string" ? img : img.url;
+                              return (
+                                <div
+                                  key={idx}
+                                  onClick={() =>
+                                    setSelectedImageModal({
+                                      url: imgUrl,
+                                      author: rev.user?.username || rev.user?.name || "Customer",
+                                      productTitle: rev.product?.title || "Product",
+                                      rating: rev.rating,
+                                      comment: rev.review || "",
+                                      createdAt: rev.createdAt,
+                                    })
+                                  }
+                                  className="w-10 h-12 rounded-none border border-slate-300 overflow-hidden cursor-pointer hover:scale-110 hover:shadow-md transition-all relative group/thumb bg-white"
+                                  title="Click to inspect photo"
+                                >
+                                  <img
+                                    src={imgUrl}
+                                    alt="Customer photo"
+                                    className="w-full h-full object-cover"
+                                    loading="lazy"
+                                    decoding="async"
+                                  />
+                                  <div className="absolute inset-0 bg-black/0 group-hover/thumb:bg-black/30 transition-colors flex items-center justify-center">
+                                    <Eye
+                                      size={14}
+                                      className="text-white opacity-0 group-hover/thumb:opacity-100 transition-opacity"
+                                    />
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <span className="text-xs text-slate-300 font-mono">
+                            No Photos
+                          </span>
+                        )}
+                      </td>
+
+                      {/* Action Column */}
+                      <td className="py-4 px-4 align-top text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          {!rev.vendorReply?.message && (
+                            <button
+                              onClick={() =>
+                                setReplyModal({
+                                  open: true,
+                                  reviewId: rev._id,
+                                  reviewItem: rev,
+                                  message: "",
+                                  submitting: false,
+                                })
+                              }
+                              className="p-2 text-indigo-600 hover:text-white hover:bg-indigo-600 rounded-none transition-all duration-200 cursor-pointer border border-indigo-200 hover:border-indigo-700 shadow-2xs"
+                              title="Reply to Customer Review"
+                            >
+                              <MessageSquare size={16} />
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleDeleteReview(rev._id)}
+                            className="p-2 text-rose-500 hover:text-white hover:bg-rose-600 rounded-none transition-all duration-200 cursor-pointer border border-transparent hover:border-rose-700 shadow-2xs"
+                            title="Delete / Remove Review"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="pt-2">
+            <Pagination
+              currentPage={page}
+              totalPages={totalPages}
+              onPageChange={setPage}
+              totalItems={totalItems}
+              itemsPerPage={limit}
+              itemLabel="reviews"
+            />
+          </div>
+        )}
+
+        {/* Photo Inspector Zoom Modal */}
+        {selectedImageModal && (
           <div
-            className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150"
-            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+            onClick={() => setSelectedImageModal(null)}
           >
-            <div>
-              <h3 className="text-base font-bold text-slate-900">Reply to Review</h3>
-              <p className="text-xs text-slate-500 font-medium mt-0.5">
-                Posting official merchant response to {replyModal.reviewItem?.product?.title || "Product"}
-              </p>
-            </div>
+            <div
+              className="bg-white rounded-none overflow-hidden max-w-2xl w-full flex flex-col md:flex-row shadow-2xl relative border border-slate-200"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={() => setSelectedImageModal(null)}
+                className="absolute top-3 right-3 z-10 p-1.5 bg-black/70 text-white hover:bg-slate-800 rounded-none transition-colors cursor-pointer"
+              >
+                <X size={18} />
+              </button>
 
-            {/* Original review snippet */}
-            <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl">
-              <span className="text-[10px] font-bold uppercase text-slate-400 block mb-1">
-                Customer commentary:
-              </span>
-              <p className="text-xs text-slate-700 italic line-clamp-2">
-                "{replyModal.reviewItem?.review || "Rating provided without text."}"
-              </p>
-            </div>
-
-            <form onSubmit={handleSaveReply} className="space-y-4">
-              <div>
-                <label className="text-[11px] font-bold text-slate-700 uppercase block mb-1">
-                  Your Store Message *
-                </label>
-                <textarea
-                  rows={4}
-                  placeholder="Thank the customer or address their concern constructively..."
-                  value={replyModal.message}
-                  onChange={(e) => setReplyModal({ ...replyModal, message: e.target.value })}
-                  className="w-full p-3 rounded-xl border border-slate-200 text-xs font-medium text-slate-800 outline-none focus:border-[#fe4a03] focus:ring-2 focus:ring-[#fe4a03]/20"
+              <div className="bg-slate-950 flex items-center justify-center w-full md:w-3/5 p-4 max-h-[75vh]">
+                <img
+                  src={selectedImageModal.url}
+                  alt="Inspection view"
+                  className="w-full h-full object-contain max-h-[70vh] rounded-none"
+                  loading="lazy"
+                  decoding="async"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+              <div className="p-6 w-full md:w-2/5 flex flex-col justify-between bg-white">
+                <div>
+                  <div className="border-b border-slate-100 pb-3 mb-3">
+                    <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                      Photo Inspection
+                    </div>
+                    <div className="font-extrabold text-base text-slate-900 mt-0.5 line-clamp-2">
+                      {selectedImageModal.productTitle}
+                    </div>
+                  </div>
+
+                  <div className="text-xs text-slate-500 mb-2">
+                    Uploaded by <strong className="text-slate-800">{selectedImageModal.author}</strong>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 mb-3">
+                    <span className="bg-slate-900 text-white text-xs font-bold px-2 py-0.5 rounded-none flex items-center gap-1">
+                      {selectedImageModal.rating} <Star size={11} className="fill-white text-white" />
+                    </span>
+                    <span className="text-[11px] text-slate-400">
+                      {new Date(selectedImageModal.createdAt).toLocaleDateString("en-GB")}
+                    </span>
+                  </div>
+
+                  <div className="p-3 bg-slate-50 rounded-none border border-slate-200/80 text-xs text-slate-700 italic max-h-48 overflow-y-auto">
+                    "{selectedImageModal.comment || "No commentary provided."}"
+                  </div>
+                </div>
+
                 <button
-                  type="button"
-                  onClick={() => setReplyModal({ ...replyModal, open: false })}
-                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                  onClick={() => setSelectedImageModal(null)}
+                  className="w-full mt-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs uppercase tracking-wider rounded-none transition-colors cursor-pointer shadow-sm"
                 >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={replyModal.submitting}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#fe4a03] hover:bg-[#e03f00] text-white rounded-xl text-xs font-bold transition-colors shadow-sm shadow-[#fe4a03]/20 cursor-pointer"
-                >
-                  <Send size={13} />
-                  {replyModal.submitting ? "Posting..." : "Post Reply"}
+                  Close Inspection
                 </button>
               </div>
-            </form>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Lightbox for review photos */}
-      {selectedImageModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
-          onClick={() => setSelectedImageModal(null)}
-        >
-          <div className="relative max-w-xl max-h-[85vh] overflow-hidden rounded-2xl bg-black">
-            <button
-              onClick={() => setSelectedImageModal(null)}
-              className="absolute top-3 right-3 p-2 bg-black/60 hover:bg-black/80 text-white rounded-full transition-colors cursor-pointer"
+        {/* Reply Composer Modal */}
+        {replyModal.open && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
+            onClick={() => setReplyModal({ ...replyModal, open: false })}
+          >
+            <div
+              className="bg-white rounded-none shadow-2xl w-full max-w-md overflow-hidden p-6 space-y-4 border border-slate-300 animate-in fade-in zoom-in-95 duration-150"
+              onClick={(e) => e.stopPropagation()}
             >
-              <X size={20} />
-            </button>
-            <img src={selectedImageModal} alt="Review Photo" className="w-full h-auto object-contain max-h-[80vh]" />
+              <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">Reply to Customer Review</h3>
+                  <p className="text-xs text-slate-500 font-medium mt-0.5">
+                    Post store message to {replyModal.reviewItem?.product?.title || "Product"}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setReplyModal({ ...replyModal, open: false })}
+                  className="p-1 text-slate-400 hover:text-slate-600 cursor-pointer"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Review Quote */}
+              <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-none">
+                <span className="text-[10px] font-bold uppercase text-slate-400 block mb-1">
+                  Customer Review ({replyModal.reviewItem?.user?.username || replyModal.reviewItem?.user?.name || "Customer"}):
+                </span>
+                <p className="text-xs text-slate-700 italic line-clamp-3">
+                  "{replyModal.reviewItem?.review || "Rating without written commentary."}"
+                </p>
+              </div>
+
+              <form onSubmit={handleSaveReply} className="space-y-4">
+                <div>
+                  <label className="text-[11px] font-bold text-slate-700 uppercase block mb-1">
+                    Store Response *
+                  </label>
+                  <textarea
+                    rows={4}
+                    value={replyModal.message}
+                    onChange={(e) => setReplyModal((prev) => ({ ...prev, message: e.target.value }))}
+                    placeholder="Write a professional resolution or appreciation message to this customer..."
+                    className="w-full p-3 border border-slate-300 rounded-none text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 resize-none font-medium"
+                    required
+                  />
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => setReplyModal({ ...replyModal, open: false })}
+                    className="px-4 py-2 border border-slate-300 text-slate-700 hover:bg-slate-50 text-xs font-bold rounded-none transition-colors cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={replyModal.submitting}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#1E1B4B] hover:bg-indigo-900 text-white text-xs font-bold rounded-none transition-colors disabled:opacity-50 cursor-pointer shadow-sm"
+                  >
+                    {replyModal.submitting ? (
+                      <>
+                        <Loader2 size={13} className="animate-spin" />
+                        Posting...
+                      </>
+                    ) : (
+                      <>
+                        <Send size={13} />
+                        Post Response
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+    </PageCard>
   );
 }

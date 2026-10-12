@@ -38,6 +38,7 @@ import {
   getVendorReviews,
   replyToVendorReview,
   deleteVendorReviewReply,
+  deleteVendorReview,
   getVendorEarningsSummary,
   getVendorTransactions,
   getVendorPayoutHistory,
@@ -149,6 +150,7 @@ router.patch("/tickets/:id/status", updateVendorTicketStatus);
 router.get("/reviews", getVendorReviews);
 router.post("/reviews/:id/reply", replyToVendorReview);
 router.delete("/reviews/:id/reply", deleteVendorReviewReply);
+router.delete("/reviews/:id", deleteVendorReview);
 
 // 11. Payments & Earnings (Phase 4)
 router.get("/payments/summary", getVendorEarningsSummary);
