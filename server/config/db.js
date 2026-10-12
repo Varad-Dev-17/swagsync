@@ -18,9 +18,6 @@ const migrateAccounts = async () => {
       .toArray();
 
     if (vendorDocs.length > 0) {
-      console.log(
-        `[DB Migration] Found ${vendorDocs.length} vendor account(s) in 'users' collection. Migrating to 'vendors'...`
-      );
       for (const v of vendorDocs) {
         const vendorPayload = {
           _id: v._id,
@@ -59,9 +56,6 @@ const migrateAccounts = async () => {
         // Remove from users collection so users table is dedicated to customers
         await rawUsersCollection.deleteOne({ _id: v._id });
       }
-      console.log(
-        `[DB Migration] Successfully migrated ${vendorDocs.length} vendor(s) to 'vendors' collection.`
-      );
     }
 
     // 2. Migrate Admins from 'users' to 'admins'
@@ -70,9 +64,6 @@ const migrateAccounts = async () => {
       .toArray();
 
     if (adminDocs.length > 0) {
-      console.log(
-        `[DB Migration] Found ${adminDocs.length} admin account(s) in 'users' collection. Syncing to 'admins'...`
-      );
       for (const a of adminDocs) {
         const adminPayload = {
           _id: a._id,
@@ -98,9 +89,6 @@ const migrateAccounts = async () => {
           await rawAdminsCollection.insertOne(adminPayload);
         }
       }
-      console.log(
-        `[DB Migration] Successfully synced ${adminDocs.length} admin(s) to 'admins' collection.`
-      );
     }
   } catch (migErr) {
     console.error("[DB Migration] Error during automatic account separation:", migErr);

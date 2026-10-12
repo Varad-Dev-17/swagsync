@@ -54,6 +54,7 @@ import vendorPortalRoutes from "./routers/vendorPortalRoutes.js";
 import adminNotificationRoutes from "./routers/adminNotificationRoutes.js";
 import newsletterRoutes from "./routers/newsletterRoutes.js";
 import newsletterAdminRoutes from "./routers/newsletterAdminRoutes.js";
+import { initPromoCronJobs } from "./cron/promoCron.js";
 
 import path from "path";
 import { fileURLToPath } from "url";
@@ -164,6 +165,9 @@ const PORT = process.env.PORT || 8000;
 
 const startServer = async () => {
   await connectDB();
+
+  // Initialize background promotional cron schedulers
+  initPromoCronJobs();
 
   app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);

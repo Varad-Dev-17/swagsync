@@ -174,64 +174,68 @@ const SavedAddressSection = () => {
                 </button>
               </div>
             ) : (
-              <div className="space-y-5">
-                <div className="grid grid-cols-1 gap-5">
+              <div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-stretch">
                   {addresses.map((address) => (
                     <div 
                       key={address._id} 
-                      className={`border border-gray-100 rounded-xl overflow-hidden transition-all relative shadow-sm ${
-                        address.isDefault ? 'border-l-4 border-l-[#FD7100]' : 'border-l-4 border-l-transparent hover:border-l-gray-300'
+                      className={`border border-gray-100 rounded-xl overflow-hidden transition-all relative shadow-sm hover:shadow-md flex flex-col justify-between ${
+                        address.isDefault ? 'border-l-4 border-l-[#FD7100] bg-white' : 'border-l-4 border-l-transparent bg-white hover:border-l-gray-300'
                       }`}
                     >
-                      <div className={`p-5 md:p-6 pb-4 ${address.isDefault ? 'bg-[#FFF5ED]/30' : 'bg-white'}`}>
-                        {/* Header Row: Name & Badge */}
-                        <div className="flex justify-between items-start mb-3">
-                          <div className="flex items-center gap-3">
+                      <div className={`p-5 flex-1 ${address.isDefault ? 'bg-[#FFF5ED]/25' : 'bg-white'}`}>
+                        {/* Header Row: Name & Badges */}
+                        <div className="flex justify-between items-start mb-3 gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <h4 className="text-base font-bold text-slate-800 tracking-tight">
                               {address.fullName}
                             </h4>
-                            <div className="px-2.5 py-0.5 bg-[#FFF5ED] text-[#FD7100] text-[10px] font-bold rounded-md">
+                            <span className="px-2.5 py-0.5 bg-[#FFF5ED] text-[#FD7100] text-[10px] font-bold rounded-md">
                               {address.label}
-                            </div>
+                            </span>
                           </div>
                           {address.isDefault && (
-                            <div className="px-2.5 py-1 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded-md">
+                            <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded-md whitespace-nowrap">
                               Default Address
-                            </div>
+                            </span>
                           )}
                         </div>
 
                         {/* Address Details */}
-                        <div className="text-[14px] text-gray-500 space-y-1">
-                          <p>
+                        <div className="text-[13px] text-gray-500 space-y-1 leading-relaxed">
+                          <p className="line-clamp-2">
                             {address.addressLine1}
                             {address.addressLine2 ? `, ${address.addressLine2}` : ''}
                             {address.landmark ? `, ${address.landmark}` : ''}
                           </p>
                           <p>{address.city}, {address.state} - {address.pincode}</p>
                           <p>{address.country}</p>
-                          <p className="pt-2 font-medium">Mobile: <span className="text-slate-800">{address.phone}</span></p>
+                          <p className="pt-2 font-medium text-slate-600">
+                            Mobile: <span className="text-slate-800 font-semibold">{address.phone}</span>
+                          </p>
                         </div>
                       </div>
 
                       {/* Bottom Action Bar */}
-                      <div className="border-t border-gray-100 px-5 py-3 flex items-center gap-8 bg-white">
-                        <button 
-                          onClick={() => handleEditClick(address)}
-                          className="flex items-center gap-1.5 text-sm font-bold text-[#FD7100] hover:text-[#E06400] transition-colors cursor-pointer"
-                        >
-                          <Pencil size={14} /> Edit
-                        </button>
-                        <button 
-                          onClick={() => handleDeleteClick(address)}
-                          className="flex items-center gap-1.5 text-sm font-bold text-red-500 hover:text-red-600 transition-colors cursor-pointer"
-                        >
-                          <Trash2 size={14} /> Remove
-                        </button>
+                      <div className="border-t border-gray-100 px-5 py-3 flex items-center justify-between bg-white text-xs sm:text-sm">
+                        <div className="flex items-center gap-5">
+                          <button 
+                            onClick={() => handleEditClick(address)}
+                            className="flex items-center gap-1.5 font-bold text-[#FD7100] hover:text-[#E06400] transition-colors cursor-pointer"
+                          >
+                            <Pencil size={13} /> Edit
+                          </button>
+                          <button 
+                            onClick={() => handleDeleteClick(address)}
+                            className="flex items-center gap-1.5 font-bold text-red-500 hover:text-red-600 transition-colors cursor-pointer"
+                          >
+                            <Trash2 size={13} /> Remove
+                          </button>
+                        </div>
                         {!address.isDefault && (
                           <button 
                             onClick={() => handleSetDefault(address._id)}
-                            className="flex items-center gap-1.5 text-sm font-bold text-[#FD7100] hover:text-[#E06400] transition-colors ml-auto cursor-pointer"
+                            className="flex items-center gap-1.5 font-bold text-[#FD7100] hover:text-[#E06400] transition-colors cursor-pointer"
                           >
                             Set as Default
                           </button>

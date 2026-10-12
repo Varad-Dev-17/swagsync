@@ -1,8 +1,4 @@
-/**
- * Generates an ultra-clean, 100% mobile-responsive HTML email template for coupons.
- * Adapts theme, colors, and badges dynamically based on festival/occasion or general discount.
- * Optimized for Gmail (Android & iOS), Apple Mail, Outlook Mobile, Samsung Mail, and Webmail.
- */
+
 export const generateCouponEmailHtml = ({
   couponCode,
   description,
@@ -18,7 +14,6 @@ export const generateCouponEmailHtml = ({
   const desc = description || "";
   const combinedText = `${code} ${desc}`.toLowerCase();
 
-  // Detect festival/event context
   let themeBadge = "🎉 SPECIAL OFFER";
   let themeHeader = "Exclusive Savings Just for You!";
   let primaryColor = "#FD7100";

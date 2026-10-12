@@ -3187,21 +3187,36 @@ export const getVendorEarningsSummary = async (req, res) => {
     return res.status(200).json({
       success: true,
       data: {
+        grossSales,
+        deliveredSales,
+        commissionRate,
+        commissionAmount,
+        commission: commissionAmount,
+        netEarnings,
+        availablePayout,
+        availableBalance: availablePayout,
+        completedPayouts,
+        pendingPayouts,
+        totalItemsSold,
+        deliveredItemsCount,
+        currency: "INR",
+        bankDetails: req.vendor.vendorProfile?.bankDetails || {},
+        storeName: req.vendor.vendorProfile?.storeName || req.vendor.username,
         summary: {
           grossSales,
           deliveredSales,
           commissionRate,
           commissionAmount,
+          commission: commissionAmount,
           netEarnings,
           availablePayout,
+          availableBalance: availablePayout,
           completedPayouts,
           pendingPayouts,
           totalItemsSold,
           deliveredItemsCount,
           currency: "INR",
         },
-        bankDetails: req.vendor.vendorProfile?.bankDetails || {},
-        storeName: req.vendor.vendorProfile?.storeName || req.vendor.username,
       },
     });
   } catch (error) {
@@ -3251,15 +3266,21 @@ export const getVendorTransactions = async (req, res) => {
         transactions.push({
           id: `${order.orderId}-${item._id}`,
           orderId: order.orderId,
+          orderNumber: order.orderId,
           orderDate: order.createdAt,
+          deliveredAt: order.deliveredAt || order.updatedAt || order.createdAt,
           productTitle: item.product?.title || "Item",
           sku: item.variant?.sku || item.sku || "-",
           quantity: item.quantity,
+          itemCount: item.quantity,
           unitPrice: item.sellingPrice,
           totalPrice: lineTotal,
+          grossAmount: lineTotal,
           commissionRate,
           commissionAmount: commission,
+          commission,
           netEarnings: netVendorShare,
+          netAmount: netVendorShare,
           itemStatus: item.status || "pending",
           orderStatus: order.status,
           paymentStatus: order.paymentStatus,
@@ -3278,7 +3299,7 @@ export const getVendorTransactions = async (req, res) => {
           total: transactions.length,
           page: pageNum,
           limit: limitNum,
-          totalPages: Math.ceil(transactions.length / limitNum),
+          totalPages: Math.ceil(transactions.length / limitNum) || 1,
         },
       },
     });
@@ -3294,8 +3315,29 @@ export const getVendorTransactions = async (req, res) => {
 export const getVendorPayoutHistory = async (req, res) => {
   try {
     const vendorId = req.vendor._id;
-    const payouts = await VendorPayout.find({ vendor: vendorId }).sort({ createdAt: -1 }).lean();
-    return res.status(200).json({ success: true, data: payouts });
+    const pageNum = Math.max(1, parseInt(req.query.page || 1, 10));
+    const limitNum = Math.max(1, Math.min(100, parseInt(req.query.limit || 10, 10)));
+    const skip = (pageNum - 1) * limitNum;
+
+    const total = await VendorPayout.countDocuments({ vendor: vendorId });
+    const payouts = await VendorPayout.find({ vendor: vendorId })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNum)
+      .lean();
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        payouts,
+        pagination: {
+          total,
+          page: pageNum,
+          limit: limitNum,
+          totalPages: Math.ceil(total / limitNum) || 1,
+        },
+      },
+    });
   } catch (error) {
     console.error("[Get Vendor Payout History] Error:", error);
     return res.status(500).json({ success: false, message: "Server error fetching payout history" });
@@ -3311,10 +3353,10 @@ export const requestVendorPayout = async (req, res) => {
     const { amount, payoutMethod = "bank_transfer", notes = "" } = req.body;
 
     const numAmount = Number(amount);
-    if (!numAmount || numAmount < 500) {
+    if (!numAmount || numAmount < 50) {
       return res.status(400).json({
         success: false,
-        message: "Minimum withdrawal amount is ₹500",
+        message: "Minimum withdrawal amount is ₹50",
       });
     }
 
@@ -3322,7 +3364,7 @@ export const requestVendorPayout = async (req, res) => {
     if (!bankDetails || (!bankDetails.accountNumber && !bankDetails.upiId)) {
       return res.status(400).json({
         success: false,
-        message: "Please configure your Bank Account or UPI details in Store Profile before requesting payouts.",
+        message: "Please configure your Bank Account or UPI details in Settlement Bank Account before requesting payouts.",
       });
     }
 
@@ -3389,6 +3431,46 @@ export const requestVendorPayout = async (req, res) => {
   } catch (error) {
     console.error("[Request Vendor Payout] Error:", error);
     return res.status(500).json({ success: false, message: "Server error creating payout request" });
+  }
+};
+
+/**
+ * 31. UPDATE VENDOR BANK DETAILS
+ */
+export const updateVendorBankDetails = async (req, res) => {
+  try {
+    const vendorId = req.vendor._id;
+    const { bankName, accountNumber, ifscCode, accountHolderName, upiId } = req.body;
+
+    const VendorModel = (await import("../models/vendor.js")).default;
+    const vendor = await VendorModel.findById(vendorId);
+    if (!vendor) {
+      return res.status(404).json({ success: false, message: "Vendor not found" });
+    }
+
+    if (!vendor.vendorProfile) {
+      vendor.vendorProfile = {};
+    }
+    if (!vendor.vendorProfile.bankDetails) {
+      vendor.vendorProfile.bankDetails = {};
+    }
+
+    if (bankName !== undefined) vendor.vendorProfile.bankDetails.bankName = String(bankName).trim();
+    if (accountNumber !== undefined) vendor.vendorProfile.bankDetails.accountNumber = String(accountNumber).trim();
+    if (ifscCode !== undefined) vendor.vendorProfile.bankDetails.ifscCode = String(ifscCode).trim().toUpperCase();
+    if (accountHolderName !== undefined) vendor.vendorProfile.bankDetails.accountHolderName = String(accountHolderName).trim();
+    if (upiId !== undefined) vendor.vendorProfile.bankDetails.upiId = String(upiId).trim();
+
+    await vendor.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Settlement bank details updated successfully",
+      data: vendor.vendorProfile.bankDetails,
+    });
+  } catch (error) {
+    console.error("[Update Vendor Bank Details] Error:", error);
+    return res.status(500).json({ success: false, message: "Server error updating bank details" });
   }
 };
 

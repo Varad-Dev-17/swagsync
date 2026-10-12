@@ -21,6 +21,9 @@ const VendorVariantGroupView = () => {
   const [analytics, setAnalytics] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('sales');
+  const [timeRange, setTimeRange] = useState('3 Months');
+  const [selectedMetric, setSelectedMetric] = useState('revenue');
+  const [isMetricDropdownOpen, setIsMetricDropdownOpen] = useState(false);
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -107,6 +110,53 @@ const VendorVariantGroupView = () => {
     return { groupName, groupLabel, mainImage, galleryImages, firstVariant };
   }, [variants, primaryOptionId]);
 
+  const { 
+    counts = {}, 
+    salesChart = [], 
+    timeSeries = {},
+    orderStats = {}, 
+    inventorySummary = {}, 
+    recentOrders = [], 
+    reviews = [],
+    stockHistory = [],
+    qa = [],
+    activity = [] 
+  } = analytics || {};
+
+  const METRIC_CONFIG = {
+    revenue: {
+      label: 'Revenue',
+      color: '#fe4a03',
+      yFormatter: (val) => val >= 1000 ? `₹${(val / 1000).toFixed(1)}k` : `₹${val}`,
+      tooltipFormatter: (val) => [`₹${Number(val || 0).toLocaleString('en-IN')}`, 'Revenue'],
+    },
+    orders: {
+      label: 'Orders',
+      color: '#3b82f6',
+      yFormatter: (val) => (Number.isInteger(val) ? val : ''),
+      tooltipFormatter: (val) => [`${val} orders`, 'Orders'],
+    },
+    units: {
+      label: 'Units Sold',
+      color: '#10b981',
+      yFormatter: (val) => (Number.isInteger(val) ? val : ''),
+      tooltipFormatter: (val) => [`${val} units`, 'Units Sold'],
+    },
+    avgOrderValue: {
+      label: 'Avg. Order Value',
+      color: '#f59e0b',
+      yFormatter: (val) => val >= 1000 ? `₹${(val / 1000).toFixed(1)}k` : `₹${val}`,
+      tooltipFormatter: (val) => [`₹${Number(val || 0).toLocaleString('en-IN')}`, 'Avg. Order Value'],
+    },
+  };
+
+  const activeChartData = useMemo(() => {
+    if (timeSeries && timeSeries[timeRange] && timeSeries[timeRange].length > 0) {
+      return timeSeries[timeRange];
+    }
+    return salesChart || [];
+  }, [timeSeries, timeRange, salesChart]);
+
   if (isLoading) {
     return (
       <div className="flex flex-col flex-1 items-center justify-center min-h-[400px]">
@@ -125,18 +175,6 @@ const VendorVariantGroupView = () => {
       </div>
     );
   }
-
-  const { 
-    counts = {}, 
-    salesChart = [], 
-    orderStats = {}, 
-    inventorySummary = {}, 
-    recentOrders = [], 
-    reviews = [],
-    stockHistory = [],
-    qa = [],
-    activity = [] 
-  } = analytics || {};
 
   // Donut chart colors
   const orderPieData = [
@@ -176,18 +214,22 @@ const VendorVariantGroupView = () => {
         </div>
         <div className="flex items-center gap-2">
           <button 
-            onClick={() => navigate(`/vendor/portal/products/${id}/edit`)}
+            onClick={() => navigate(`/vendor/portal/products/${id}/variants`, { state: { action: 'edit', primaryOptionId, isolatedMode: true } })}
             className="flex items-center gap-1.5 px-4 py-1.5 border border-orange-200 text-[#fe4a03] bg-white rounded-md hover:bg-orange-50 text-xs font-bold transition-colors cursor-pointer"
           >
             <Edit2 size={12} /> Edit Variant
           </button>
           <button 
-            onClick={() => navigate(`/vendor/portal/products/${id}/edit`)}
+            onClick={() => navigate(`/vendor/portal/products/${id}/variants`, { state: { action: 'delete', primaryOptionId } })}
             className="flex items-center gap-1.5 px-4 py-1.5 border border-red-200 text-red-500 bg-white rounded-md hover:bg-red-50 text-xs font-bold transition-colors cursor-pointer"
           >
             <Trash2 size={12} /> Delete Variant
           </button>
-          <button className="p-1.5 border border-gray-200 text-gray-400 bg-white rounded-md hover:bg-gray-50 transition-colors cursor-pointer">
+          <button 
+            onClick={() => navigate(`/vendor/portal/products/${id}/view`)}
+            className="p-1.5 border border-gray-200 text-gray-500 bg-white rounded-md hover:bg-gray-50 transition-colors cursor-pointer"
+            title="View Product"
+          >
             <MoreVertical size={16} />
           </button>
         </div>
@@ -234,7 +276,7 @@ const VendorVariantGroupView = () => {
               <span>{product?.brand?.name || 'SwagSync'}</span>
               <span className="text-gray-300">•</span>
               <span className="flex items-center gap-1 text-yellow-500 font-bold">
-                <Star size={12} fill="currentColor" /> {avgRating} <span className="text-[#fe4a03] hover:underline cursor-pointer font-medium">({totalReviews} Reviews)</span>
+                <Star size={12} fill="currentColor" /> {avgRating} <span className="text-[#fe4a03] hover:underline cursor-pointer font-medium" onClick={() => navigate('/vendor/portal/reviews')}>({totalReviews} Reviews)</span>
               </span>
             </div>
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-gray-400 font-medium mb-5">
@@ -299,58 +341,159 @@ const VendorVariantGroupView = () => {
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
           {/* Sales Performance Chart */}
           <div className="xl:col-span-2 bg-white rounded-xl p-5 border border-gray-100 shadow-sm flex flex-col">
-            <div className="flex justify-between items-center mb-4">
+            <div className="flex flex-wrap justify-between items-center gap-2 mb-4">
               <h3 className="text-sm font-bold text-slate-800">Sales Performance</h3>
               <div className="flex items-center gap-1.5 text-[11px] font-bold text-gray-500">
-                <span className="cursor-pointer hover:text-gray-800">7 Days</span>
-                <span className="cursor-pointer hover:text-gray-800">30 Days</span>
-                <span className="px-2.5 py-1 bg-orange-50 text-[#fe4a03] rounded-md cursor-pointer font-bold">3 Months</span>
-                <span className="cursor-pointer hover:text-gray-800">6 Months</span>
-                <span className="cursor-pointer hover:text-gray-800">1 Year</span>
-                <span className="ml-2 flex items-center gap-1 px-2 py-1 border border-gray-200 rounded-md cursor-pointer hover:bg-gray-50 text-gray-600">
-                  Revenue <ChevronDown size={12} />
-                </span>
+                {['7 Days', '30 Days', '3 Months', '6 Months', '1 Year'].map((range) => (
+                  <button
+                    key={range}
+                    type="button"
+                    onClick={() => setTimeRange(range)}
+                    className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all ${
+                      timeRange === range
+                        ? 'bg-orange-50 text-[#fe4a03] shadow-xs'
+                        : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'
+                    }`}
+                  >
+                    {range}
+                  </button>
+                ))}
+
+                <div className="relative ml-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsMetricDropdownOpen(!isMetricDropdownOpen)}
+                    className="flex items-center gap-1.5 px-2.5 py-1 border border-gray-200 rounded-md cursor-pointer hover:bg-gray-50 text-[11px] font-bold text-gray-700 bg-white transition-colors"
+                  >
+                    <span
+                      className="w-2 h-2 rounded-full"
+                      style={{ backgroundColor: METRIC_CONFIG[selectedMetric]?.color || '#fe4a03' }}
+                    />
+                    <span>{METRIC_CONFIG[selectedMetric]?.label || 'Revenue'}</span>
+                    <ChevronDown
+                      size={12}
+                      className={`transition-transform duration-200 ${isMetricDropdownOpen ? 'rotate-180' : ''}`}
+                    />
+                  </button>
+
+                  {isMetricDropdownOpen && (
+                    <>
+                      <div
+                        className="fixed inset-0 z-20"
+                        onClick={() => setIsMetricDropdownOpen(false)}
+                      />
+                      <div className="absolute right-0 top-full mt-1.5 w-40 bg-white border border-gray-100 rounded-xl shadow-lg py-1.5 z-30">
+                        {Object.entries(METRIC_CONFIG).map(([key, config]) => (
+                          <button
+                            key={key}
+                            type="button"
+                            onClick={() => {
+                              setSelectedMetric(key);
+                              setIsMetricDropdownOpen(false);
+                            }}
+                            className={`w-full text-left px-3 py-1.5 text-xs font-semibold flex items-center gap-2 hover:bg-orange-50 hover:text-[#fe4a03] transition-colors ${
+                              selectedMetric === key ? 'text-[#fe4a03] bg-orange-50/70 font-bold' : 'text-slate-700'
+                            }`}
+                          >
+                            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: config.color }} />
+                            {config.label}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
             <div className="h-[200px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={salesChart} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
+                <AreaChart data={activeChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorVendorSales" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#fe4a03" stopOpacity={0.2} />
-                      <stop offset="95%" stopColor="#fe4a03" stopOpacity={0} />
+                      <stop offset="5%" stopColor={METRIC_CONFIG[selectedMetric]?.color || '#fe4a03'} stopOpacity={0.25} />
+                      <stop offset="95%" stopColor={METRIC_CONFIG[selectedMetric]?.color || '#fe4a03'} stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                   <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8' }} dy={5} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8' }} tickFormatter={(val) => `₹${val/1000}k`} />
-                  <RechartsTooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
-                  <Area type="monotone" dataKey="revenue" stroke="#fe4a03" strokeWidth={2} fillOpacity={1} fill="url(#colorVendorSales)" />
+                  <YAxis
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 10, fill: '#94a3b8' }}
+                    tickFormatter={METRIC_CONFIG[selectedMetric]?.yFormatter}
+                  />
+                  <RechartsTooltip
+                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                    formatter={METRIC_CONFIG[selectedMetric]?.tooltipFormatter}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey={selectedMetric}
+                    stroke={METRIC_CONFIG[selectedMetric]?.color || '#fe4a03'}
+                    strokeWidth={2}
+                    fillOpacity={1}
+                    fill="url(#colorVendorSales)"
+                  />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
-            {/* Sales Overview directly below chart */}
-            <div className="mt-4 pt-4 border-t border-gray-100 flex justify-between items-center px-4">
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-[#fe4a03]"></span>
-                <span className="text-[11px] font-bold text-gray-500 uppercase">Revenue</span>
-                <span className="text-sm font-extrabold text-slate-800 ml-1">₹{(counts.totalSales || 0).toLocaleString()}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-                <span className="text-[11px] font-bold text-gray-500 uppercase">Orders</span>
-                <span className="text-sm font-extrabold text-slate-800 ml-1">{counts.totalOrders || 0}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                <span className="text-[11px] font-bold text-gray-500 uppercase">Units Sold</span>
-                <span className="text-sm font-extrabold text-slate-800 ml-1">{counts.unitsSold || 0}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-orange-500"></span>
-                <span className="text-[11px] font-bold text-gray-500 uppercase">Avg. Order Value</span>
-                <span className="text-sm font-extrabold text-slate-800 ml-1">₹{counts.avgOrderValue || 0}</span>
-              </div>
+            {/* Sales Overview directly below chart - Interactive metric quick selectors */}
+            <div className="mt-4 pt-4 border-t border-gray-100 grid grid-cols-2 sm:grid-cols-4 gap-3 px-2">
+              <button
+                type="button"
+                onClick={() => setSelectedMetric('revenue')}
+                className={`flex items-center gap-2 p-1.5 rounded-lg transition-all text-left ${
+                  selectedMetric === 'revenue' ? 'bg-orange-50/80 ring-1 ring-[#fe4a03]/40' : 'hover:bg-gray-50'
+                }`}
+              >
+                <span className="w-2.5 h-2.5 rounded-full bg-[#fe4a03] shrink-0"></span>
+                <div>
+                  <span className="text-[10px] font-bold text-gray-500 uppercase block leading-none">Revenue</span>
+                  <span className="text-xs sm:text-sm font-extrabold text-slate-800">₹{(counts.totalSales || 0).toLocaleString()}</span>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setSelectedMetric('orders')}
+                className={`flex items-center gap-2 p-1.5 rounded-lg transition-all text-left ${
+                  selectedMetric === 'orders' ? 'bg-blue-50/80 ring-1 ring-blue-500/40' : 'hover:bg-gray-50'
+                }`}
+              >
+                <span className="w-2.5 h-2.5 rounded-full bg-blue-500 shrink-0"></span>
+                <div>
+                  <span className="text-[10px] font-bold text-gray-500 uppercase block leading-none">Orders</span>
+                  <span className="text-xs sm:text-sm font-extrabold text-slate-800">{counts.totalOrders || 0}</span>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setSelectedMetric('units')}
+                className={`flex items-center gap-2 p-1.5 rounded-lg transition-all text-left ${
+                  selectedMetric === 'units' ? 'bg-emerald-50/80 ring-1 ring-emerald-500/40' : 'hover:bg-gray-50'
+                }`}
+              >
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></span>
+                <div>
+                  <span className="text-[10px] font-bold text-gray-500 uppercase block leading-none">Units Sold</span>
+                  <span className="text-xs sm:text-sm font-extrabold text-slate-800">{counts.unitsSold || 0}</span>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setSelectedMetric('avgOrderValue')}
+                className={`flex items-center gap-2 p-1.5 rounded-lg transition-all text-left ${
+                  selectedMetric === 'avgOrderValue' ? 'bg-amber-50/80 ring-1 ring-amber-500/40' : 'hover:bg-gray-50'
+                }`}
+              >
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0"></span>
+                <div>
+                  <span className="text-[10px] font-bold text-gray-500 uppercase block leading-none">Avg. Order Value</span>
+                  <span className="text-xs sm:text-sm font-extrabold text-slate-800">₹{counts.avgOrderValue || 0}</span>
+                </div>
+              </button>
             </div>
           </div>
 
@@ -393,9 +536,33 @@ const VendorVariantGroupView = () => {
         {/* 9. SALES OVERVIEW TABS */}
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm flex flex-col">
           <div className="flex gap-6 border-b border-gray-100 px-5 pt-4">
-            <div className={`pb-2.5 text-xs font-bold border-b-2 cursor-pointer transition-colors ${activeTab === 'sales' ? 'border-[#fe4a03] text-[#fe4a03]' : 'border-transparent text-gray-400 hover:text-gray-600'}`} onClick={() => setActiveTab('sales')}>Sales Overview</div>
-            <div className={`pb-2.5 text-xs font-bold border-b-2 cursor-pointer transition-colors ${activeTab === 'returns' ? 'border-[#fe4a03] text-[#fe4a03]' : 'border-transparent text-gray-400 hover:text-gray-600'}`} onClick={() => setActiveTab('returns')}>Returns Overview</div>
-            <div className={`pb-2.5 text-xs font-bold border-b-2 cursor-pointer transition-colors ${activeTab === 'refunds' ? 'border-[#fe4a03] text-[#fe4a03]' : 'border-transparent text-gray-400 hover:text-gray-600'}`} onClick={() => setActiveTab('refunds')}>Refunds Overview</div>
+            <button
+              type="button"
+              className={`pb-2.5 text-xs font-bold border-b-2 cursor-pointer transition-colors ${
+                activeTab === 'sales' ? 'border-[#fe4a03] text-[#fe4a03]' : 'border-transparent text-gray-400 hover:text-gray-600'
+              }`}
+              onClick={() => setActiveTab('sales')}
+            >
+              Sales Overview
+            </button>
+            <button
+              type="button"
+              className={`pb-2.5 text-xs font-bold border-b-2 cursor-pointer transition-colors ${
+                activeTab === 'returns' ? 'border-[#fe4a03] text-[#fe4a03]' : 'border-transparent text-gray-400 hover:text-gray-600'
+              }`}
+              onClick={() => setActiveTab('returns')}
+            >
+              Returns Overview
+            </button>
+            <button
+              type="button"
+              className={`pb-2.5 text-xs font-bold border-b-2 cursor-pointer transition-colors ${
+                activeTab === 'refunds' ? 'border-[#fe4a03] text-[#fe4a03]' : 'border-transparent text-gray-400 hover:text-gray-600'
+              }`}
+              onClick={() => setActiveTab('refunds')}
+            >
+              Refunds Overview
+            </button>
           </div>
           
           <div className="p-5">
@@ -404,22 +571,22 @@ const VendorVariantGroupView = () => {
                 <div className="flex flex-col">
                   <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Total Revenue</span>
                   <span className="text-base font-extrabold text-slate-800">₹{(counts.totalSales || 0).toLocaleString()}</span>
-                  <span className="text-[10px] text-gray-400 mt-1">-</span>
+                  <span className="text-[10px] text-emerald-600 font-semibold mt-1">From completed orders</span>
                 </div>
                 <div className="flex flex-col">
                   <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Total Orders</span>
                   <span className="text-base font-extrabold text-slate-800">{counts.totalOrders || 0}</span>
-                  <span className="text-[10px] text-gray-400 mt-1">-</span>
+                  <span className="text-[10px] text-gray-400 mt-1">Unique orders placed</span>
                 </div>
                 <div className="flex flex-col">
                   <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Units Sold</span>
                   <span className="text-base font-extrabold text-slate-800">{counts.unitsSold || 0}</span>
-                  <span className="text-[10px] text-gray-400 mt-1">-</span>
+                  <span className="text-[10px] text-gray-400 mt-1">Items across variants</span>
                 </div>
                 <div className="flex flex-col">
                   <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Average Order Value</span>
                   <span className="text-base font-extrabold text-slate-800">₹{counts.avgOrderValue || 0}</span>
-                  <span className="text-[10px] text-gray-400 mt-1">-</span>
+                  <span className="text-[10px] text-gray-400 mt-1">Per transaction</span>
                 </div>
               </div>
             )}
@@ -428,12 +595,24 @@ const VendorVariantGroupView = () => {
                 <div className="flex flex-col">
                   <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Return Requests</span>
                   <span className="text-base font-extrabold text-slate-800">{counts.returns || 0}</span>
+                  <span className="text-[10px] text-gray-400 mt-1">Total customer claims</span>
                 </div>
                 <div className="flex flex-col">
                   <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Return Rate</span>
                   <span className="text-base font-extrabold text-slate-800">
-                    {counts.totalOrders > 0 ? ((counts.returns / counts.totalOrders) * 100).toFixed(1) : 0}%
+                    {counts.returnRate !== undefined ? counts.returnRate : (counts.totalOrders > 0 ? ((counts.returns / counts.totalOrders) * 100).toFixed(1) : 0)}%
                   </span>
+                  <span className="text-[10px] text-gray-400 mt-1">Relative to total orders</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Exchanges / Replacements</span>
+                  <span className="text-base font-extrabold text-slate-800">{counts.exchangeCount || 0}</span>
+                  <span className="text-[10px] text-gray-400 mt-1">Size/color replacement</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">QC Passed Returns</span>
+                  <span className="text-base font-extrabold text-emerald-600">{counts.qcPassedCount || 0}</span>
+                  <span className="text-[10px] text-gray-400 mt-1">Verified by warehouse</span>
                 </div>
               </div>
             )}
@@ -442,6 +621,22 @@ const VendorVariantGroupView = () => {
                 <div className="flex flex-col">
                   <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Refund Amount</span>
                   <span className="text-base font-extrabold text-slate-800">₹{(counts.refundAmount || 0).toLocaleString()}</span>
+                  <span className="text-[10px] text-rose-500 font-semibold mt-1">Total refunded payout</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Refunded Orders</span>
+                  <span className="text-base font-extrabold text-slate-800">{counts.refundedOrdersCount || 0}</span>
+                  <span className="text-[10px] text-gray-400 mt-1">Settled or initiated</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Avg Refund / Return</span>
+                  <span className="text-base font-extrabold text-slate-800">₹{(counts.avgRefundPerReturn || 0).toLocaleString()}</span>
+                  <span className="text-[10px] text-gray-400 mt-1">Average per claim</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Total Return Claims</span>
+                  <span className="text-base font-extrabold text-slate-800">{counts.returns || 0}</span>
+                  <span className="text-[10px] text-gray-400 mt-1">Items received back</span>
                 </div>
               </div>
             )}
@@ -456,7 +651,7 @@ const VendorVariantGroupView = () => {
             <div className="space-y-3 mb-6">
               {[
                 { label: 'Total Products', value: variants.length, color: 'text-slate-800 font-bold' },
-                { label: 'Available', value: variants.reduce((s, v) => s + (v.stock || 0), 0), color: 'text-emerald-500 font-bold' },
+                { label: 'Available', value: inventorySummary.available !== undefined ? inventorySummary.available : variants.reduce((s, v) => s + (v.stock || 0), 0), color: 'text-emerald-500 font-bold' },
                 { label: 'Reserved', value: inventorySummary.reserved || 0, color: 'text-rose-500 font-bold' },
                 { label: 'Low Stock', value: variants.filter(v => v.stock > 0 && v.stock <= 5).length, color: 'text-amber-500 font-bold' },
                 { label: 'Out of Stock', value: variants.filter(v => v.stock === 0).length, color: 'text-slate-500 font-bold' },
@@ -491,13 +686,63 @@ const VendorVariantGroupView = () => {
           </div>
 
           {/* Stock History */}
-          <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm flex flex-col">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-sm font-bold text-slate-800">Stock History</h3>
-              <span className="text-xs text-[#fe4a03] font-bold cursor-pointer hover:underline">View All</span>
+          <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm flex flex-col justify-between">
+            <div>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-sm font-bold text-slate-800">Stock History</h3>
+                <span 
+                  className="text-xs text-[#fe4a03] font-bold cursor-pointer hover:underline"
+                  onClick={() => navigate('/vendor/portal/inventory')}
+                >
+                  View All
+                </span>
+              </div>
+              <div className="space-y-2.5 max-h-[220px] overflow-y-auto pr-1">
+                {variants && variants.length > 0 ? (
+                  variants.map((v, idx) => {
+                    const sizeAttr = v.attributes?.find(a => 
+                      ['size', 'size / net quantity', 'net quantity'].includes(a.attribute?.name?.toLowerCase())
+                    );
+                    const sizeLabel = sizeAttr?.option?.displayName || sizeAttr?.option?.storedValue || `Variant ${idx + 1}`;
+                    const isLow = (v.stock || 0) > 0 && (v.stock || 0) <= 5;
+                    const isOut = (v.stock || 0) === 0;
+
+                    return (
+                      <div key={v._id || idx} className="p-3 bg-gray-50/80 rounded-lg border border-gray-100 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs ${
+                            isOut ? 'bg-rose-100 text-rose-600' : isLow ? 'bg-amber-100 text-amber-600' : 'bg-emerald-100 text-emerald-600'
+                          }`}>
+                            <Box size={14} />
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-xs font-bold text-slate-800">{v.sku || 'SKU-N/A'} ({sizeLabel})</span>
+                            <span className="text-[10px] text-gray-400">
+                              Updated {new Date(v.updatedAt || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex flex-col items-end">
+                          <span className="text-xs font-extrabold text-slate-800">{v.stock || 0} units</span>
+                          <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
+                            isOut ? 'text-rose-600 bg-rose-50' : isLow ? 'text-amber-600 bg-amber-50' : 'text-emerald-600 bg-emerald-50'
+                          }`}>
+                            {isOut ? 'Out of Stock' : isLow ? 'Low Stock' : 'In Stock'}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="flex flex-col items-center justify-center text-center py-8">
+                    <p className="text-xs text-gray-400">No stock history records found.</p>
+                  </div>
+                )}
+              </div>
             </div>
-            <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
-              <p className="text-xs text-gray-400">No stock history records found.</p>
+            <div className="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center text-[11px] text-gray-400">
+              <span>Managed SKUs: {variants.length}</span>
+              <span className="font-bold text-slate-700">Total: {variants.reduce((s, v) => s + (v.stock || 0), 0)} units</span>
             </div>
           </div>
         </div>
@@ -508,9 +753,14 @@ const VendorVariantGroupView = () => {
           <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm flex flex-col">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-sm font-bold text-slate-800">Customer Reviews</h3>
-              <span className="text-xs text-[#fe4a03] font-bold cursor-pointer hover:underline">View All</span>
+              <span 
+                className="text-xs text-[#fe4a03] font-bold cursor-pointer hover:underline"
+                onClick={() => navigate('/vendor/portal/reviews')}
+              >
+                View All
+              </span>
             </div>
-            <div className="flex items-center gap-6 mb-6">
+            <div className="flex items-center gap-6 mb-4">
               <div className="flex flex-col items-center">
                 <span className="text-3xl font-extrabold text-slate-800">{avgRating}</span>
                 <div className="flex text-yellow-400 my-1">
@@ -533,20 +783,87 @@ const VendorVariantGroupView = () => {
                 ))}
               </div>
             </div>
-            <div className="flex-1 flex flex-col items-center justify-center text-center p-4">
-              <p className="text-xs text-gray-400">No reviews yet.</p>
-            </div>
+
+            {reviews && reviews.length > 0 ? (
+              <div className="space-y-2.5 max-h-[180px] overflow-y-auto pr-1">
+                {reviews.map((rev, idx) => (
+                  <div key={rev._id || idx} className="p-3 bg-gray-50/80 rounded-lg border border-gray-100 flex flex-col gap-1.5">
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-full bg-orange-100 text-[#fe4a03] flex items-center justify-center text-[10px] font-bold uppercase">
+                          {rev.user?.username?.charAt(0) || 'U'}
+                        </div>
+                        <span className="text-xs font-bold text-slate-800">{rev.user?.username || 'Customer'}</span>
+                        {rev.verifiedBuyer && (
+                          <span className="text-[9px] bg-emerald-50 text-emerald-600 px-1.5 py-0.5 rounded font-bold">Verified Buyer</span>
+                        )}
+                      </div>
+                      <div className="flex text-yellow-400">
+                        {[...Array(5)].map((_, i) => (
+                          <Star key={i} size={10} fill={i < rev.rating ? "currentColor" : "none"} className={i < rev.rating ? "text-yellow-400" : "text-gray-200"} />
+                        ))}
+                      </div>
+                    </div>
+                    {rev.review && (
+                      <p className="text-xs text-slate-600 italic">"{rev.review}"</p>
+                    )}
+                    <span className="text-[10px] text-gray-400">
+                      {new Date(rev.createdAt || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex-1 flex flex-col items-center justify-center text-center p-4">
+                <p className="text-xs text-gray-400">No customer reviews yet.</p>
+              </div>
+            )}
           </div>
 
           {/* Recent Orders */}
           <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm flex flex-col">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-sm font-bold text-slate-800">Recent Orders</h3>
-              <span className="text-xs text-[#fe4a03] font-bold cursor-pointer hover:underline">View All</span>
+              <span 
+                className="text-xs text-[#fe4a03] font-bold cursor-pointer hover:underline"
+                onClick={() => navigate('/vendor/portal/orders')}
+              >
+                View All
+              </span>
             </div>
-            <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
-              <p className="text-xs text-gray-400">No recent orders found.</p>
-            </div>
+            {recentOrders && recentOrders.length > 0 ? (
+              <div className="space-y-2.5 max-h-[220px] overflow-y-auto pr-1">
+                {recentOrders.map((ord, idx) => (
+                  <div key={ord._id || idx} className="p-3 bg-gray-50/80 rounded-lg border border-gray-100 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-orange-100/70 text-[#fe4a03] flex items-center justify-center font-bold text-xs">
+                        <ShoppingCart size={14} />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-xs font-bold text-slate-800">
+                          {ord.orderId || `#${(ord._id || '').toString().slice(-6).toUpperCase()}`}
+                        </span>
+                        <span className="text-[10px] text-gray-400">
+                          {ord.user?.username || ord.user?.email || 'Customer'} • {new Date(ord.createdAt || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end">
+                      <span className="text-xs font-extrabold text-slate-800">₹{(ord.amount || 0).toLocaleString()}</span>
+                      <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
+                        statusColors[ord.status?.toLowerCase()] || 'text-gray-600 bg-gray-100'
+                      }`}>
+                        {ord.status || 'Pending'}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
+                <p className="text-xs text-gray-400">No recent orders found.</p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -555,20 +872,77 @@ const VendorVariantGroupView = () => {
           <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm flex flex-col">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-sm font-bold text-slate-800">Questions & Answers</h3>
-              <span className="text-xs text-[#fe4a03] font-bold cursor-pointer hover:underline">View All</span>
+              <span 
+                className="text-xs text-[#fe4a03] font-bold cursor-pointer hover:underline"
+                onClick={() => navigate('/vendor/portal/tickets')}
+              >
+                View All
+              </span>
             </div>
-            <div className="flex-1 flex flex-col items-center justify-center text-center p-6">
-              <p className="text-xs text-gray-400">No questions found.</p>
-            </div>
+            {qa && qa.length > 0 ? (
+              <div className="space-y-2.5 max-h-[180px] overflow-y-auto pr-1">
+                {qa.map((item, idx) => (
+                  <div key={item._id || idx} className="p-3 bg-gray-50/80 rounded-lg border border-gray-100 flex items-center justify-between">
+                    <div className="flex flex-col">
+                      <span className="text-xs font-bold text-slate-800">{item.subject || 'Product Inquiry'}</span>
+                      <span className="text-[10px] text-gray-400">
+                        Ticket {item.ticketId || 'N/A'} • {new Date(item.createdAt || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      </span>
+                    </div>
+                    <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-blue-50 text-blue-600">
+                      {item.status || 'Open'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex-1 flex flex-col items-center justify-center text-center p-6">
+                <p className="text-xs text-gray-400">No questions or inquiries found.</p>
+                <button
+                  type="button"
+                  onClick={() => navigate('/vendor/portal/tickets')}
+                  className="mt-2 text-[11px] font-bold text-[#fe4a03] hover:underline cursor-pointer"
+                >
+                  Manage Tickets
+                </button>
+              </div>
+            )}
           </div>
+
           <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm flex flex-col">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-sm font-bold text-slate-800">Product Activity</h3>
-              <span className="text-xs text-[#fe4a03] font-bold cursor-pointer hover:underline">View All</span>
+              <span 
+                className="text-xs text-[#fe4a03] font-bold cursor-pointer hover:underline"
+                onClick={() => navigate(`/vendor/portal/products/${id}/view`)}
+              >
+                View All
+              </span>
             </div>
-            <div className="flex-1 flex flex-col items-center justify-center text-center p-6">
-              <p className="text-xs text-gray-400">No recent activity.</p>
-            </div>
+            {activity && activity.length > 0 ? (
+              <div className="space-y-2.5 max-h-[180px] overflow-y-auto pr-1">
+                {activity.map((act, idx) => (
+                  <div key={idx} className="p-2.5 bg-gray-50/80 rounded-lg border border-gray-100 flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <span className={`w-2 h-2 rounded-full ${
+                        act.type === 'order' ? 'bg-blue-500' : act.type === 'return' ? 'bg-rose-500' : 'bg-emerald-500'
+                      }`} />
+                      <div className="flex flex-col">
+                        <span className="text-xs font-bold text-slate-800">{act.action}</span>
+                        <span className="text-[10px] text-gray-400">{act.description}</span>
+                      </div>
+                    </div>
+                    <span className="text-[10px] text-gray-400 whitespace-nowrap ml-2">
+                      {new Date(act.date || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex-1 flex flex-col items-center justify-center text-center p-6">
+                <p className="text-xs text-gray-400">No recent activity.</p>
+              </div>
+            )}
           </div>
         </div>
 

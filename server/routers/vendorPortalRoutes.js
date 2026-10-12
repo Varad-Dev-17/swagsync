@@ -42,6 +42,7 @@ import {
   getVendorTransactions,
   getVendorPayoutHistory,
   requestVendorPayout,
+  updateVendorBankDetails,
 } from "../controllers/vendorPortalController.js";
 import { identifier } from "../middlewares/identification.js";
 import { isApprovedVendor } from "../middlewares/isApprovedVendor.js";
@@ -154,6 +155,7 @@ router.get("/payments/summary", getVendorEarningsSummary);
 router.get("/payments/transactions", getVendorTransactions);
 router.get("/payments/payouts", getVendorPayoutHistory);
 router.post("/payments/request-payout", requestVendorPayout);
+router.put("/payments/bank-details", updateVendorBankDetails);
 
 // 12. Image Uploads (Vendor scoped)
 router.post("/upload/image", upload.single("image"), async (req, res) => {

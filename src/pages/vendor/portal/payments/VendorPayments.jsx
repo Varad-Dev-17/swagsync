@@ -52,9 +52,16 @@ export default function VendorPayments() {
 
   // Request Payout Modal
   const [payoutModalOpen, setPayoutModalOpen] = useState(false);
-  const [requestAmount, setRequestAmount] = useState("");
-  const [requestNotes, setRequestNotes] = useState("");
-  const [submittingPayout, setSubmittingPayout] = useState(false);
+  // Bank Details Modal state
+  const [bankModalOpen, setBankModalOpen] = useState(false);
+  const [bankFormData, setBankFormData] = useState({
+    bankName: "",
+    accountHolderName: "",
+    accountNumber: "",
+    ifscCode: "",
+    upiId: "",
+  });
+  const [savingBank, setSavingBank] = useState(false);
 
   // Fetch summary
   const fetchSummary = useCallback(async (showToast = false) => {
@@ -64,7 +71,30 @@ export default function VendorPayments() {
 
       const res = await api.get("/vendor/portal/payments/summary");
       if (res.data.success) {
-        setSummary(res.data.data || {});
+        const payload = res.data.data || {};
+        const s = payload.summary || payload;
+        const bDetails = payload.bankDetails || s.bankDetails || {};
+
+        setSummary({
+          grossSales: s.grossSales !== undefined ? s.grossSales : (payload.grossSales || 0),
+          commission: s.commission !== undefined ? s.commission : (s.commissionAmount || payload.commission || payload.commissionAmount || 0),
+          commissionRate: s.commissionRate !== undefined ? s.commissionRate : (payload.commissionRate || 10),
+          netEarnings: s.netEarnings !== undefined ? s.netEarnings : (payload.netEarnings || 0),
+          completedPayouts: s.completedPayouts !== undefined ? s.completedPayouts : (payload.completedPayouts || 0),
+          pendingPayouts: s.pendingPayouts !== undefined ? s.pendingPayouts : (payload.pendingPayouts || 0),
+          availableBalance: s.availableBalance !== undefined ? s.availableBalance : (s.availablePayout !== undefined ? s.availablePayout : (payload.availablePayout || 0)),
+          bankDetails: bDetails,
+          storeName: payload.storeName || "",
+        });
+
+        setBankFormData({
+          bankName: bDetails.bankName || "",
+          accountHolderName: bDetails.accountHolderName || "",
+          accountNumber: bDetails.accountNumber || "",
+          ifscCode: bDetails.ifscCode || "",
+          upiId: bDetails.upiId || "",
+        });
+
         if (showToast) toast.success("Financial metrics refreshed");
       }
     } catch (err) {
@@ -82,8 +112,17 @@ export default function VendorPayments() {
       setLoadingPayouts(true);
       const res = await api.get(`/vendor/portal/payments/payouts?page=${page}&limit=10`);
       if (res.data.success) {
-        setPayouts(res.data.data.payouts || []);
-        setPayoutsPagination(res.data.data.pagination || { page: 1, limit: 10, total: 0, totalPages: 1 });
+        const list = Array.isArray(res.data.data)
+          ? res.data.data
+          : (res.data.data?.payouts || []);
+        const pagination = res.data.data?.pagination || {
+          page: 1,
+          limit: 10,
+          total: list.length,
+          totalPages: 1,
+        };
+        setPayouts(list);
+        setPayoutsPagination(pagination);
       }
     } catch (err) {
       toast.error("Failed to load payout history");
@@ -98,8 +137,15 @@ export default function VendorPayments() {
       setLoadingTx(true);
       const res = await api.get(`/vendor/portal/payments/transactions?page=${page}&limit=10`);
       if (res.data.success) {
-        setTransactions(res.data.data.transactions || []);
-        setTxPagination(res.data.data.pagination || { page: 1, limit: 10, total: 0, totalPages: 1 });
+        const list = res.data.data?.transactions || (Array.isArray(res.data.data) ? res.data.data : []);
+        const pagination = res.data.data?.pagination || {
+          page: 1,
+          limit: 10,
+          total: list.length,
+          totalPages: 1,
+        };
+        setTransactions(list);
+        setTxPagination(pagination);
       }
     } catch (err) {
       toast.error("Failed to load transaction ledger");
@@ -124,8 +170,8 @@ export default function VendorPayments() {
   const handleRequestPayout = async (e) => {
     e.preventDefault();
     const amountNum = Number(requestAmount);
-    if (!amountNum || amountNum < 500) {
-      return toast.error("Minimum payout withdrawal request is ₹500");
+    if (!amountNum || amountNum < 50) {
+      return toast.error("Minimum payout withdrawal request is ₹50");
     }
     if (amountNum > summary.availableBalance) {
       return toast.error("Requested amount exceeds available balance");
@@ -152,8 +198,27 @@ export default function VendorPayments() {
     }
   };
 
+  // Handle bank update
+  const handleUpdateBankDetails = async (e) => {
+    e.preventDefault();
+    setSavingBank(true);
+    try {
+      const res = await api.put("/vendor/portal/payments/bank-details", bankFormData);
+      if (res.data.success) {
+        toast.success("Settlement bank details updated successfully");
+        setBankModalOpen(false);
+        fetchSummary();
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to update bank details");
+    } finally {
+      setSavingBank(false);
+    }
+  };
+
   const getPayoutBadge = (status) => {
     switch (status) {
+      case "pending":
       case "requested":
         return <span className="px-2.5 py-1 text-xs font-bold rounded-full bg-amber-50 text-amber-700 border border-amber-200">Awaiting Admin Settlement</span>;
       case "processing":
@@ -161,6 +226,7 @@ export default function VendorPayments() {
       case "completed":
         return <span className="px-2.5 py-1 text-xs font-bold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">Settled & Transferred</span>;
       case "rejected":
+      case "failed":
         return <span className="px-2.5 py-1 text-xs font-bold rounded-full bg-rose-50 text-rose-700 border border-rose-200">Rejected</span>;
       default:
         return <span className="px-2.5 py-1 text-xs font-bold rounded-full bg-slate-100 text-slate-700">{status}</span>;
@@ -175,7 +241,7 @@ export default function VendorPayments() {
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-black text-slate-900 tracking-tight">Payments & Earnings</h1>
             <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-orange-100 text-[#fe4a03]">
-              Phase 4
+              Live
             </span>
           </div>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
@@ -186,15 +252,16 @@ export default function VendorPayments() {
           <button
             onClick={() => fetchSummary(true)}
             disabled={refreshing}
-            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-xs"
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-xs cursor-pointer"
           >
             <RefreshCw size={14} className={refreshing ? "animate-spin text-[#fe4a03]" : ""} />
             Refresh
           </button>
           <button
             onClick={() => setPayoutModalOpen(true)}
-            disabled={summary.availableBalance < 500}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#fe4a03] text-white text-xs font-bold hover:bg-[#e03f00] disabled:opacity-40 transition-colors shadow-md shadow-[#fe4a03]/25"
+            disabled={summary.availableBalance < 50}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#fe4a03] text-white text-xs font-bold hover:bg-[#e03f00] disabled:opacity-40 transition-colors shadow-md shadow-[#fe4a03]/25 cursor-pointer"
+            title={summary.availableBalance < 50 ? "Min ₹50 balance needed to request payout" : ""}
           >
             <ArrowUpRight size={15} /> Request Payout
           </button>
@@ -338,20 +405,20 @@ export default function VendorPayments() {
                   {payouts.map((p) => (
                     <tr key={p._id} className="hover:bg-slate-50/60">
                       <td className="py-3 px-3 font-mono font-bold text-slate-900">
-                        #{p.payoutNumber || p._id.slice(-6).toUpperCase()}
+                        #{p.payoutNumber || p.payoutId || p._id?.slice(-6)?.toUpperCase()}
                       </td>
                       <td className="py-3 px-3 font-bold text-slate-900">
-                        ₹{p.amount.toLocaleString("en-IN")}
+                        ₹{Number(p.amount || 0).toLocaleString("en-IN")}
                       </td>
                       <td className="py-3 px-3">{getPayoutBadge(p.status)}</td>
                       <td className="py-3 px-3 text-slate-500">
                         {new Date(p.requestedAt || p.createdAt).toLocaleDateString("en-IN")}
                       </td>
                       <td className="py-3 px-3 font-mono text-[11px] text-slate-600">
-                        {p.transactionReference || "Pending Bank UTR"}
+                        {p.referenceNumber || p.transactionReference || "Pending Bank UTR"}
                       </td>
                       <td className="py-3 px-3 text-slate-500 italic max-w-xs truncate">
-                        {p.adminRemarks || "—"}
+                        {p.adminRemarks || p.notes || "—"}
                       </td>
                     </tr>
                   ))}
@@ -418,7 +485,7 @@ export default function VendorPayments() {
                     <th className="py-2.5 px-3">Delivered Date</th>
                     <th className="py-2.5 px-3">Units</th>
                     <th className="py-2.5 px-3">Gross Value</th>
-                    <th className="py-2.5 px-3">Platform Fee ({summary.commissionRate}%)</th>
+                    <th className="py-2.5 px-3">Platform Fee ({summary.commissionRate || 10}%)</th>
                     <th className="py-2.5 px-3 text-right">Net Credited</th>
                   </tr>
                 </thead>
@@ -427,19 +494,28 @@ export default function VendorPayments() {
                     <tr key={idx} className="hover:bg-slate-50/60">
                       <td className="py-3 px-3 font-bold text-slate-900">
                         #{tx.orderNumber || tx.orderId}
+                        {tx.productTitle && (
+                          <p className="text-[11px] font-normal text-slate-500 truncate max-w-[180px]">
+                            {tx.productTitle}
+                          </p>
+                        )}
                       </td>
                       <td className="py-3 px-3 text-slate-500">
-                        {new Date(tx.deliveredAt).toLocaleDateString("en-IN")}
+                        {tx.deliveredAt || tx.orderDate
+                          ? new Date(tx.deliveredAt || tx.orderDate).toLocaleDateString("en-IN")
+                          : "—"}
                       </td>
-                      <td className="py-3 px-3 text-slate-600">{tx.itemCount} items</td>
+                      <td className="py-3 px-3 text-slate-600">
+                        {tx.itemCount || tx.quantity || 1} {((tx.itemCount || tx.quantity || 1) === 1 ? 'item' : 'items')}
+                      </td>
                       <td className="py-3 px-3 font-semibold text-slate-800">
-                        ₹{tx.grossAmount.toLocaleString("en-IN")}
+                        ₹{Number(tx.grossAmount !== undefined ? tx.grossAmount : (tx.totalPrice || 0)).toLocaleString("en-IN")}
                       </td>
                       <td className="py-3 px-3 font-medium text-amber-700">
-                        -₹{tx.commission.toLocaleString("en-IN")}
+                        -₹{Number(tx.commission !== undefined ? tx.commission : (tx.commissionAmount || 0)).toLocaleString("en-IN")}
                       </td>
                       <td className="py-3 px-3 text-right font-black text-emerald-600">
-                        +₹{tx.netAmount.toLocaleString("en-IN")}
+                        +₹{Number(tx.netAmount !== undefined ? tx.netAmount : (tx.netEarnings || 0)).toLocaleString("en-IN")}
                       </td>
                     </tr>
                   ))}
@@ -477,14 +553,22 @@ export default function VendorPayments() {
       {/* TAB 3: Settlement Bank Account */}
       {activeTab === "bank" && (
         <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs max-w-xl space-y-4">
-          <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
-            <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
-              <Building2 size={20} />
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
+                <Building2 size={20} />
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-900 text-sm">Disbursement Account On File</h3>
+                <p className="text-xs text-slate-400">Direct deposit destination for all payout wire transfers</p>
+              </div>
             </div>
-            <div>
-              <h3 className="font-bold text-slate-900 text-sm">Disbursement Account On File</h3>
-              <p className="text-xs text-slate-400">Direct deposit destination for all payout wire transfers</p>
-            </div>
+            <button
+              onClick={() => setBankModalOpen(true)}
+              className="px-3.5 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-[#fe4a03] hover:bg-orange-50 hover:border-orange-200 transition-colors cursor-pointer"
+            >
+              {summary.bankDetails?.accountNumber ? "Edit Details" : "Configure Bank"}
+            </button>
           </div>
 
           <div className="space-y-3 text-xs">
@@ -527,8 +611,8 @@ export default function VendorPayments() {
           <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100 text-[11px] text-slate-500 flex items-start gap-2">
             <ShieldCheck size={16} className="text-emerald-600 shrink-0 mt-0.5" />
             <span>
-              Bank details are verified during vendor onboarding. To update your payout bank credentials,
-              contact your SwagSync merchant relationship desk.
+              Direct wire transfers and automated settlements are transferred to this validated account.
+              You can update your credentials anytime using the edit button above.
             </span>
           </div>
         </div>
@@ -547,7 +631,7 @@ export default function VendorPayments() {
               </div>
               <button
                 onClick={() => setPayoutModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 p-1"
+                className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
               >
                 <X size={18} />
               </button>
@@ -568,14 +652,14 @@ export default function VendorPayments() {
                 <input
                   type="number"
                   required
-                  min={500}
+                  min={50}
                   max={summary.availableBalance}
-                  placeholder="Min ₹500"
+                  placeholder="Min ₹50"
                   value={requestAmount}
                   onChange={(e) => setRequestAmount(e.target.value)}
                   className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#fe4a03]/30 font-bold"
                 />
-                <p className="text-[11px] text-slate-400 mt-1">Minimum settlement request: ₹500</p>
+                <p className="text-[11px] text-slate-400 mt-1">Minimum settlement request: ₹50</p>
               </div>
 
               <div>
@@ -595,16 +679,126 @@ export default function VendorPayments() {
                 <button
                   type="button"
                   onClick={() => setPayoutModalOpen(false)}
-                  className="px-3.5 py-1.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                  className="px-3.5 py-1.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submittingPayout}
-                  className="px-4 py-1.5 rounded-xl bg-[#fe4a03] text-white text-xs font-bold hover:bg-[#e03f00] disabled:opacity-50 transition-colors shadow-xs"
+                  className="px-4 py-1.5 rounded-xl bg-[#fe4a03] text-white text-xs font-bold hover:bg-[#e03f00] disabled:opacity-50 transition-colors shadow-xs cursor-pointer"
                 >
                   {submittingPayout ? "Submitting..." : "Submit Payout Request"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Bank Details Modal */}
+      {bankModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
+                  <Building2 size={16} />
+                </div>
+                <h3 className="font-bold text-slate-900 text-sm">Settlement Bank Credentials</h3>
+              </div>
+              <button
+                onClick={() => setBankModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateBankDetails} className="mt-4 space-y-3.5">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Bank Name <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. HDFC Bank, ICICI Bank, SBI"
+                  value={bankFormData.bankName}
+                  onChange={(e) => setBankFormData({ ...bankFormData, bankName: e.target.value })}
+                  className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#fe4a03]/30 font-medium"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Account Holder Name <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Full name as per bank record"
+                  value={bankFormData.accountHolderName}
+                  onChange={(e) => setBankFormData({ ...bankFormData, accountHolderName: e.target.value })}
+                  className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#fe4a03]/30 font-medium"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Account Number <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Enter full bank account number"
+                  value={bankFormData.accountNumber}
+                  onChange={(e) => setBankFormData({ ...bankFormData, accountNumber: e.target.value })}
+                  className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#fe4a03]/30 font-mono font-medium"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  IFSC Code <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. HDFC0001234"
+                  value={bankFormData.ifscCode}
+                  onChange={(e) => setBankFormData({ ...bankFormData, ifscCode: e.target.value.toUpperCase() })}
+                  className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#fe4a03]/30 font-mono font-medium uppercase"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  UPI VPA / ID (Optional)
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. storename@okhdfcbank"
+                  value={bankFormData.upiId}
+                  onChange={(e) => setBankFormData({ ...bankFormData, upiId: e.target.value })}
+                  className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#fe4a03]/30 font-mono font-medium"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setBankModalOpen(false)}
+                  className="px-3.5 py-1.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingBank}
+                  className="px-4 py-1.5 rounded-xl bg-[#fe4a03] text-white text-xs font-bold hover:bg-[#e03f00] disabled:opacity-50 transition-colors shadow-xs cursor-pointer"
+                >
+                  {savingBank ? "Saving..." : "Save Bank Details"}
                 </button>
               </div>
             </form>

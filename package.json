@@ -32,6 +32,7 @@
     "lucide-react": "^1.21.0",
     "mongoose": "^8.14.0",
     "multer": "^2.2.0",
+    "node-cron": "^4.6.0",
     "nodemailer": "^9.0.1",
     "razorpay": "^2.9.8",
     "react": "^19.2.6",
