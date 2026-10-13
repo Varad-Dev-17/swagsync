@@ -11,15 +11,16 @@ const runTest = async () => {
   console.log("==========================================");
   console.log(`Sender:    ${process.env.NODE_CODE_SENDING_EMAIL_ADDRESS}`);
   console.log(`Recipient: ${targetEmail}`);
+  console.log(`Mode:      ${process.env.BREVO_API_KEY ? "Brevo HTTPS REST API (Port 443)" : "SMTP Relay (" + (process.env.SMTP_HOST || "smtp.gmail.com") + ")"}`);
   console.log("------------------------------------------");
 
-  // Step 1: Verify transporter connection
-  console.log("Step 1: Testing SMTP connection and authentication...");
+  // Step 1: Verify connection
+  console.log("Step 1: Testing email service connection and authentication...");
   try {
-    const verified = await transport.verify();
-    console.log("✓ SMTP Server verified successfully!");
+    await transport.verify();
+    console.log("✓ Email service connection verified successfully!");
   } catch (verifyErr) {
-    console.error("✗ SMTP Connection verification failed:", verifyErr.message);
+    console.error("✗ Email service verification failed:", verifyErr.message);
     process.exit(1);
   }
 
