@@ -9,6 +9,7 @@ import { forgotPasswordEmailTemplate } from "../utils/forgotPasswordEmailTemplat
 import jwt from "jsonwebtoken";
 import { getNextSequence } from "../utils/counterHelper.js";
 import { createNotification, createAdminNotification } from "../utils/notificationHelper.js";
+import { sendWelcomeDiscountEmail } from "./newsletterController.js";
 
 import {
   signupSchema,
@@ -185,20 +186,11 @@ export const verifyVerificationCode = async (req, res) => {
       existingUser.verificationCodeValidation = undefined;
       await existingUser.save();
 
-      // Automatically enroll verified customer into newsletter subscribers (skip admin)
+      // Automatically enroll verified customer into newsletter subscribers and send WELCOME10 coupon email (skip admin)
       if (!existingUser.isAdmin) {
-        Subscriber.findOneAndUpdate(
-          { email: existingUser.email.toLowerCase() },
-          {
-            $setOnInsert: {
-              email: existingUser.email.toLowerCase(),
-              isSubscribed: true,
-              source: "registration",
-              subscribedAt: new Date(),
-            },
-          },
-          { upsert: true }
-        ).catch((e) => console.error("Auto-subscribe user error:", e.message));
+        sendWelcomeDiscountEmail(existingUser.email.toLowerCase()).catch((e) =>
+          console.error("Auto-subscribe welcome email error:", e.message)
+        );
       }
 
       const token = jwt.sign(
