@@ -32,14 +32,17 @@ export const checkAndSendExpiringCouponAlerts = async () => {
     });
 
     if (!expiringCoupons || expiringCoupons.length === 0) {
-      console.log("[Promo Cron] No coupons expiring within 36 hours.");
       return 0;
     }
 
     const subscribers = await Subscriber.find({ isSubscribed: true }).select("email").lean();
-    if (!subscribers || subscribers.length === 0) return 0;
+    const customerUsers = await User.find({ role: "customer" }).select("email").lean();
 
-    const emails = [...new Set(subscribers.map((s) => s.email.trim().toLowerCase()))];
+    const subscriberEmails = (subscribers || []).map((s) => s.email?.trim().toLowerCase());
+    const customerEmails = (customerUsers || []).map((u) => u.email?.trim().toLowerCase());
+    const emails = [...new Set([...subscriberEmails, ...customerEmails])].filter(Boolean);
+
+    if (emails.length === 0) return 0;
     let totalSent = 0;
 
     for (const coupon of expiringCoupons) {
@@ -80,7 +83,6 @@ export const checkAndSendExpiringCouponAlerts = async () => {
       coupon.expiryReminderSent = true;
       await coupon.save();
       totalSent += emails.length;
-      console.log(`[Promo Cron] Sent expiry alert for coupon ${coupon.code} to ${emails.length} subscribers.`);
     }
 
     return totalSent;
@@ -112,7 +114,6 @@ export const sendWeeklyNewArrivalsDigest = async () => {
         : await Product.find({ status: "Active" }).sort({ createdAt: -1 }).limit(4).lean();
 
     if (!productsToFeature || productsToFeature.length === 0) {
-      console.log("[Promo Cron] No products to feature this week.");
       return 0;
     }
 
@@ -231,7 +232,6 @@ export const sendWeeklyNewArrivalsDigest = async () => {
       );
     }
 
-    console.log(`[Promo Cron] Dispatched weekly new arrivals digest to ${emails.length} subscribers.`);
     return emails.length;
   } catch (err) {
     console.error("[Promo Cron - New Arrivals Digest Error]:", err.message);
@@ -257,7 +257,6 @@ export const checkAndSendAbandonedCartAlerts = async () => {
       .lean();
 
     if (!abandonedCarts || abandonedCarts.length === 0) {
-      console.log("[Promo Cron] No abandoned carts to process.");
       return 0;
     }
 
@@ -332,7 +331,6 @@ export const checkAndSendAbandonedCartAlerts = async () => {
       }
     }
 
-    console.log(`[Promo Cron] Dispatched ${sentCount} abandoned cart recovery emails.`);
     return sentCount;
   } catch (err) {
     console.error("[Promo Cron - Abandoned Cart Error]:", err.message);
@@ -345,17 +343,29 @@ export const checkAndSendAbandonedCartAlerts = async () => {
  */
 export const initPromoCronJobs = () => {
   // 1. Expiring coupons check: Daily at 10:00 AM (0 10 * * *)
-  cron.schedule("0 10 * * *", () => {
-    checkAndSendExpiringCouponAlerts();
-  });
+  cron.schedule(
+    "0 10 * * *",
+    () => {
+      checkAndSendExpiringCouponAlerts();
+    },
+    { timezone: "Asia/Kolkata" }
+  );
 
   // 2. Weekly New Arrivals: Every Friday at 11:00 AM (0 11 * * 5)
-  cron.schedule("0 11 * * 5", () => {
-    sendWeeklyNewArrivalsDigest();
-  });
+  cron.schedule(
+    "0 11 * * 5",
+    () => {
+      sendWeeklyNewArrivalsDigest();
+    },
+    { timezone: "Asia/Kolkata" }
+  );
 
   // 3. Abandoned Cart Recovery: Daily at 7:00 PM (0 19 * * *)
-  cron.schedule("0 19 * * *", () => {
-    checkAndSendAbandonedCartAlerts();
-  });
+  cron.schedule(
+    "0 19 * * *",
+    () => {
+      checkAndSendAbandonedCartAlerts();
+    },
+    { timezone: "Asia/Kolkata" }
+  );
 };
